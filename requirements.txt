@@ -1,0 +1,30 @@
+# Core dependencies
+flask==2.3.3
+flask-cors==4.0.0
+python-dotenv==1.0.0
+werkzeug==2.3.7
+
+# Document processing
+python-docx==0.8.11
+PyPDF2==3.0.1
+pypdf==3.17.1
+
+# AI/LLM related
+requests==2.31.0
+websocket-client==1.6.4
+websockets==11.0.3
+
+# Data processing
+pyyaml==6.0.1
+pandas==2.1.1
+numpy==1.24.3
+
+# Utility libraries
+python-dateutil==2.8.2
+pathlib2==2.3.7
+
+# Development tools
+pytest==7.4.2
+pytest-cov==4.1.0
+black==23.9.1
+flake8==6.1.0

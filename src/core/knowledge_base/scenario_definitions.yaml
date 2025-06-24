@@ -1,0 +1,101 @@
+scenarios:
+  - scenario_name: Product Proposal
+    keywords: ["product requirement", "user story", "feature list", "development plan", "roadmap", "MVP", "target audience", "business value"]
+    typical_reporter_roles: ["Product Manager", "Project Manager"]
+    typical_reader_roles: ["Development Team", "QA Team", "Marketing", "Sales", "Management"]
+    recommended_reviewer_roles: ["Technical Reviewer", "Market Analyst", "QA Specialist"]
+    default_review_focus: ["Market Viability", "Technical Feasibility", "Completeness"]
+
+  - scenario_name: Technical Report
+    keywords: ["performance metrics", "algorithm analysis", "experimental results", "system architecture", "API documentation", "benchmark", "implementation details"]
+    typical_reporter_roles: ["Lead Engineer", "Data Scientist", "Researcher"]
+    typical_reader_roles: ["Technical Team", "CTO", "Project Manager", "R&D Department"]
+    recommended_reviewer_roles: ["Technical Reviewer", "QA Specialist", "Management Representative"]
+    default_review_focus: ["Technical Accuracy", "Methodology", "Data Validity", "Clarity of Findings"]
+
+  - scenario_name: Market Analysis
+    keywords: ["market research", "competitor analysis", "SWOT analysis", "target market", "customer segmentation", "growth strategy", "sales forecast"]
+    typical_reporter_roles: ["Market Analyst", "Business Development Manager"]
+    typical_reader_roles: ["Marketing Department", "Sales Department", "Product Management", "Executive Team"]
+    recommended_reviewer_roles: ["Market Analyst", "Management Representative", "Sales Lead"]
+    default_review_focus: ["Market Understanding", "Competitive Insight", "Strategic Recommendations", "Actionability"]
+
+  - scenario_name: Meeting Minutes
+    description: "Documentation of meeting discussions, decisions, and action items"
+    keywords: ["meeting", "agenda", "attendees", "discussion", "decision", "action item", "follow-up", "next steps"]
+    typical_reporter_roles: ["Meeting Secretary", "Project Manager", "Team Lead"]
+    typical_reader_roles: ["Meeting Attendees", "Stakeholders", "Management", "Team Members"]
+    recommended_reviewer_roles: ["Meeting Facilitator", "Key Stakeholder", "Action Item Owner"]
+    default_review_focus: ["Accuracy of Decisions", "Clarity of Action Items", "Completeness", "Timeline Feasibility"]
+    suggested_tools: ["content_filler", "virtual_reviewer"]
+    quality_criteria: ["All decisions documented", "Action items have owners and deadlines", "Clear next steps"]
+
+  - scenario_name: Research Paper
+    description: "Academic or scientific research documentation with methodology and findings"
+    keywords: ["research", "methodology", "hypothesis", "experiment", "results", "analysis", "conclusion", "literature review", "citation"]
+    typical_reporter_roles: ["Researcher", "Data Scientist", "Academic", "Analyst"]
+    typical_reader_roles: ["Academic Community", "Peer Reviewers", "Research Team", "Scientific Community"]
+    recommended_reviewer_roles: ["Subject Matter Expert", "Methodology Reviewer", "Statistical Reviewer"]
+    default_review_focus: ["Methodology Validity", "Data Analysis", "Literature Review", "Conclusion Support", "Reproducibility"]
+    suggested_tools: ["document_parser", "virtual_reviewer", "style_generator"]
+    quality_criteria: ["Clear methodology", "Valid statistical analysis", "Proper citations", "Reproducible results"]
+
+  - scenario_name: Business Plan
+    description: "Comprehensive business strategy and operational plan document"
+    keywords: ["business plan", "strategy", "financial projections", "market opportunity", "competitive analysis", "revenue model", "funding"]
+    typical_reporter_roles: ["Entrepreneur", "Business Analyst", "Strategy Consultant"]
+    typical_reader_roles: ["Investors", "Board Members", "Management Team", "Stakeholders"]
+    recommended_reviewer_roles: ["Financial Analyst", "Market Analyst", "Legal Reviewer", "Management Representative"]
+    default_review_focus: ["Financial Viability", "Market Opportunity", "Competitive Position", "Risk Assessment", "Implementation Plan"]
+    suggested_tools: ["content_filler", "virtual_reviewer", "style_generator"]
+    quality_criteria: ["Realistic financial projections", "Clear value proposition", "Comprehensive risk analysis", "Actionable implementation plan"]
+
+  - scenario_name: User Manual
+    description: "Instructional documentation for end users"
+    keywords: ["user guide", "instructions", "how to", "tutorial", "step by step", "troubleshooting", "FAQ", "getting started"]
+    typical_reporter_roles: ["Technical Writer", "Product Manager", "Support Engineer"]
+    typical_reader_roles: ["End Users", "Customer Support", "Training Team"]
+    recommended_reviewer_roles: ["User Experience Reviewer", "Technical Reviewer", "End User Representative"]
+    default_review_focus: ["Clarity of Instructions", "Completeness", "User-Friendliness", "Accuracy", "Accessibility"]
+    suggested_tools: ["content_filler", "style_generator", "document_output"]
+    quality_criteria: ["Clear step-by-step instructions", "Comprehensive coverage", "User-friendly language", "Effective troubleshooting"]
+
+  - scenario_name: Policy Document
+    description: "Organizational policies, procedures, and guidelines"
+    keywords: ["policy", "procedure", "guidelines", "compliance", "standards", "regulations", "governance", "framework"]
+    typical_reporter_roles: ["Policy Analyst", "Compliance Officer", "Legal Counsel", "HR Manager"]
+    typical_reader_roles: ["Employees", "Management", "Compliance Team", "Auditors"]
+    recommended_reviewer_roles: ["Legal Reviewer", "Compliance Specialist", "Management Representative", "HR Representative"]
+    default_review_focus: ["Legal Compliance", "Clarity of Requirements", "Enforceability", "Completeness", "Consistency"]
+    suggested_tools: ["virtual_reviewer", "style_generator", "document_output"]
+    quality_criteria: ["Legal compliance", "Clear requirements", "Enforceable guidelines", "Consistent terminology"]
+
+  - scenario_name: Project Proposal
+    description: "Proposal for new projects including scope, timeline, and resources"
+    keywords: ["project proposal", "scope", "timeline", "budget", "resources", "deliverables", "milestones", "risk assessment"]
+    typical_reporter_roles: ["Project Manager", "Team Lead", "Business Analyst"]
+    typical_reader_roles: ["Management", "Stakeholders", "Project Team", "Resource Managers"]
+    recommended_reviewer_roles: ["Project Management Expert", "Resource Manager", "Risk Analyst", "Stakeholder Representative"]
+    default_review_focus: ["Scope Clarity", "Timeline Feasibility", "Resource Requirements", "Risk Assessment", "Success Criteria"]
+    suggested_tools: ["content_filler", "virtual_reviewer", "meeting_review"]
+    quality_criteria: ["Clear scope definition", "Realistic timeline", "Adequate resource planning", "Comprehensive risk analysis"]
+
+  - scenario_name: Training Material
+    description: "Educational content for training and development purposes"
+    keywords: ["training", "education", "learning objectives", "curriculum", "assessment", "skills development", "knowledge transfer"]
+    typical_reporter_roles: ["Training Specialist", "Subject Matter Expert", "Instructional Designer"]
+    typical_reader_roles: ["Trainees", "Trainers", "HR Department", "Management"]
+    recommended_reviewer_roles: ["Subject Matter Expert", "Instructional Designer", "Training Manager"]
+    default_review_focus: ["Learning Objectives", "Content Accuracy", "Instructional Design", "Assessment Methods", "Engagement"]
+    suggested_tools: ["content_filler", "style_generator", "virtual_reviewer"]
+    quality_criteria: ["Clear learning objectives", "Accurate content", "Engaging delivery", "Effective assessments"]
+
+  - scenario_name: Government Document
+    description: "政府机关、事业单位等公共部门制发的具有法定效力和规范作用的公文，包括通知、公告、决定、意见、办法、规定等各类公文"
+    keywords: ["政府", "公文", "通知", "公告", "决定", "意见", "办法", "规定", "条例", "法规", "政策", "行政", "机关", "部门", "单位", "发文", "印发", "执行", "贯彻", "落实", "督办", "检查", "考核", "评估", "汇报", "请示", "批复", "函", "会议纪要", "工作方案", "实施方案", "应急预案", "党委", "政府", "人大", "政协", "法院", "检察院", "公安", "财政", "教育", "卫生", "环保", "住建", "交通", "农业", "商务", "文化", "体育", "民政", "人社", "国资", "审计", "统计", "税务", "工商", "质监", "食药监", "安监", "消防"]
+    typical_reporter_roles: ["政府机关工作人员", "公务员", "秘书", "办公室主任", "部门负责人", "政策制定者", "法规起草人", "公文写作员"]
+    typical_reader_roles: ["上级机关", "下级单位", "相关部门", "社会公众", "企事业单位", "人民群众", "新闻媒体", "监督机构"]
+    recommended_reviewer_roles: ["政策法规审查员", "公文格式审查员", "领导审批员", "合规性审查员", "语言文字审查员"]
+    default_review_focus: ["政策合规性", "格式规范性", "语言准确性", "逻辑严密性", "可操作性", "法律依据", "程序合法性"]
+    suggested_tools: ["government_document_formatter", "policy_compliance_checker", "virtual_reviewer", "style_generator"]
+    quality_criteria: ["符合公文格式标准", "政策依据充分", "内容准确无误", "语言规范严谨", "逻辑清晰完整", "程序合法合规", "具有可操作性"]

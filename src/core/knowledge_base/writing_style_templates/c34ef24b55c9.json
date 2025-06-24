@@ -1,0 +1,42 @@
+{
+  "document_name": "公司通知范文",
+  "analysis_time": "2025-06-24T18:07:52.426251",
+  "style_features": {
+    "sentence_structure": {
+      "average_length": 61.5,
+      "long_short_ratio": 0.75,
+      "complex_ratio": 0.5,
+      "total_sentences": 4
+    },
+    "vocabulary_choice": {
+      "formality_score": 6.97,
+      "technical_density": 0.0,
+      "modifier_usage": 0.0,
+      "action_verb_ratio": 0.0
+    },
+    "expression_style": {
+      "passive_active_ratio": 0.0,
+      "person_usage": {
+        "first_person": 0,
+        "second_person": 0,
+        "third_person": 0
+      },
+      "tone_strength": 0.0
+    },
+    "text_organization": {
+      "paragraph_count": 10,
+      "average_paragraph_length": 23.5,
+      "connector_density": 0.0,
+      "summary_usage": 0
+    },
+    "language_habits": {
+      "colloquial_level": 0.0,
+      "formal_structure_usage": 0.0,
+      "de_structure_density": 3.48
+    }
+  },
+  "style_type": "formal_official",
+  "confidence_score": 1.0,
+  "style_prompt": "请按照正式公文风格进行内容生成，具体要求如下：\n\n【文风特征】\n- 严谨规范\n- 用词准确\n- 逻辑清晰\n- 格式标准\n\n【句式要求】\n- 适当使用长句，保持表达的完整性和逻辑性\n- 优先使用主动语态，让表达更直接有力\n\n【词汇要求】\n- 使用通俗易懂的词汇\n- 避免过于正式或生僻的表达\n\n【组织结构】\n- 减少机械化的过渡词使用\n- 通过内容逻辑自然过渡\n\n【特别注意】\n- 避免AI生成痕迹，让内容自然流畅\n- 保持与原文档风格的一致性\n- 确保内容准确、逻辑清晰",
+  "template_id": "c34ef24b55c9"
+}

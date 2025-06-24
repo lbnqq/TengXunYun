@@ -1,0 +1,49 @@
+{
+  "templates": [
+    {
+      "template_id": "9162898bb4f2",
+      "name": "正式公文",
+      "style_type": "formal_official",
+      "style_name": "正式公文风格",
+      "confidence_score": 1.0,
+      "created_time": "2025-06-24T18:07:52.416784",
+      "description": "文风模板：正式公文"
+    },
+    {
+      "template_id": "9a739e7b9dc9",
+      "name": "商务报告",
+      "style_type": "business_professional",
+      "style_name": "商务专业风格",
+      "confidence_score": 1.0,
+      "created_time": "2025-06-24T18:07:52.418784",
+      "description": "文风模板：商务报告"
+    },
+    {
+      "template_id": "f203691d205a",
+      "name": "学术论文",
+      "style_type": "formal_official",
+      "style_name": "正式公文风格",
+      "confidence_score": 1.0,
+      "created_time": "2025-06-24T18:07:52.421792",
+      "description": "文风模板：学术论文"
+    },
+    {
+      "template_id": "fa3212625233",
+      "name": "生活化描述",
+      "style_type": "narrative_descriptive",
+      "style_name": "叙述描述风格",
+      "confidence_score": 1.0,
+      "created_time": "2025-06-24T18:07:52.422784",
+      "description": "文风模板：生活化描述"
+    },
+    {
+      "template_id": "c34ef24b55c9",
+      "name": "公司通知范文",
+      "style_type": "formal_official",
+      "style_name": "正式公文风格",
+      "confidence_score": 1.0,
+      "created_time": "2025-06-24T18:07:52.426251",
+      "description": "文风模板：公司通知范文"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+styles:
+  professional:
+    description: "Formal, objective, and data-driven writing. Avoids colloquialisms and personal opinions unless supported by data."
+    example_phrase: "Analysis indicates a statistically significant increase."
+  casual:
+    description: "Friendly, approachable, and informal tone. Uses simpler language and may include personal anecdotes."
+    example_phrase: "Hey everyone, it looks like we're seeing a pretty cool jump in numbers!"
+  technical:
+    description: "Precise, uses specific jargon and terminology relevant to the field. Focuses on detail and accuracy."
+    example_phrase: "The implemented algorithm exhibits O(n log n) time complexity." 

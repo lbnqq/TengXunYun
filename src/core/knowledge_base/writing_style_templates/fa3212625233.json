@@ -1,0 +1,42 @@
+{
+  "document_name": "生活化描述",
+  "analysis_time": "2025-06-24T18:07:52.422784",
+  "style_features": {
+    "sentence_structure": {
+      "average_length": 19.0,
+      "long_short_ratio": 0.4,
+      "complex_ratio": 0.6,
+      "total_sentences": 10
+    },
+    "vocabulary_choice": {
+      "formality_score": 0.0,
+      "technical_density": 4.72,
+      "modifier_usage": 47.17,
+      "action_verb_ratio": 0.0
+    },
+    "expression_style": {
+      "passive_active_ratio": 1.0,
+      "person_usage": {
+        "first_person": 7,
+        "second_person": 0,
+        "third_person": 0
+      },
+      "tone_strength": -4.72
+    },
+    "text_organization": {
+      "paragraph_count": 6,
+      "average_paragraph_length": 33.33,
+      "connector_density": 4.72,
+      "summary_usage": 0
+    },
+    "language_habits": {
+      "colloquial_level": 23.58,
+      "formal_structure_usage": 0.0,
+      "de_structure_density": 51.89
+    }
+  },
+  "style_type": "narrative_descriptive",
+  "confidence_score": 1.0,
+  "style_prompt": "请按照叙述描述风格进行内容生成，具体要求如下：\n\n【文风特征】\n- 生动形象\n- 细节丰富\n- 情感真实\n- 故事性强\n\n【句式要求】\n- 长短句结合，保持节奏感和可读性\n- 适当使用被动语态，体现客观性\n\n【词汇要求】\n- 使用通俗易懂的词汇\n- 避免过于正式或生僻的表达\n\n【组织结构】\n- 减少机械化的过渡词使用\n- 通过内容逻辑自然过渡\n\n【特别注意】\n- 避免AI生成痕迹，让内容自然流畅\n- 保持与原文档风格的一致性\n- 确保内容准确、逻辑清晰",
+  "template_id": "fa3212625233"
+}

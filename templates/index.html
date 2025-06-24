@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>办公文档智能代理</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="static/css/enhanced-ui.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f7fafc;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tool-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tool-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .tool-card.active {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+        .tab-btn {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+        .tab-btn.active {
+            background-color: #667eea;
+            color: white;
+        }
+        .tab-btn:hover {
+            background-color: #e5e7eb;
+        }
+        .tab-btn.active:hover {
+            background-color: #5a67d8;
+        }
+        .message-bubble {
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .message-user {
+            background-color: #3b82f6;
+            color: white;
+            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+        }
+        .message-assistant {
+            background-color: #f3f4f6;
+            color: #374151;
+            margin-right: auto;
+            border-radius: 18px 18px 18px 4px;
+        }
+        .material-item {
+            transition: all 0.3s ease;
+        }
+        .material-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .style-template-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .style-template-item:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+        .style-template-item.selected {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+        }
+        .progress-step {
+            transition: all 0.3s ease;
+        }
+        .progress-step.completed {
+            background-color: #10b981;
+            color: white;
+        }
+        .progress-step.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-robot text-3xl"></i>
+                    <h1 class="text-2xl font-bold">办公文档智能代理</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="status-indicator" class="flex items-center space-x-2">
+                        <div id="status-dot" class="w-3 h-3 bg-green-400 rounded-full"></div>
+                        <span id="status-text">系统正常</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Welcome Section -->
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">智能文档处理平台</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                上传您的文档，我们的AI代理将自动分析内容、生成建议、优化格式，并提供专业的文档处理服务。
+                支持多种AI模型和API服务。
+            </p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="max-w-6xl mx-auto mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button class="tab-btn active px-4 py-2 rounded-lg font-medium transition-colors" data-tab="upload">
+                        <i class="fas fa-upload mr-2"></i>文档上传
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium transition-colors" data-tab="document-fill">
+                        <i class="fas fa-edit mr-2"></i>复杂文档填充
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium transition-colors" data-tab="writing-style">
+                        <i class="fas fa-pen-fancy mr-2"></i>文风对齐
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium transition-colors" data-tab="format">
+                        <i class="fas fa-align-left mr-2"></i>格式对齐
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium transition-colors" data-tab="analysis">
+                        <i class="fas fa-chart-line mr-2"></i>智能分析
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium transition-colors" data-tab="tools">
+                        <i class="fas fa-tools mr-2"></i>处理工具
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium transition-colors" data-tab="results">
+                        <i class="fas fa-file-alt mr-2"></i>处理结果
+                    </button>
+                </div>
+
+                <!-- Upload Tab -->
+                <div id="upload-tab" class="tab-content active">
+                    <div class="text-center mb-6">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">上传文档</h3>
+                        <p class="text-gray-600">拖拽文件到下方区域或点击选择文件</p>
+                    </div>
+
+                    <!-- API Configuration -->
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-cog text-blue-500 mr-2"></i>AI模型配置
+                        </h4>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">API类型</label>
+                                <select id="api-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="xingcheng">讯飞星火 (Xingcheng)</option>
+                                    <option value="multi">多API自动选择</option>
+                                    <option value="mock">模拟模式</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">模型选择</label>
+                                <select id="model-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">自动选择</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600">
+                            <p><strong>讯飞星火:</strong> 国内领先的大语言模型，支持中文文档处理</p>
+                            <p><strong>多API自动选择:</strong> 自动在七牛云、Together.ai、OpenRouter、SiliconFlow中选择可用服务</p>
+                            <p><strong>模拟模式:</strong> 离线演示模式，无需API密钥</p>
+                        </div>
+                    </div>
+
+                    <div id="upload-area" class="upload-area rounded-lg p-8 text-center cursor-pointer">
+                        <input type="file" id="file-input" class="hidden" accept=".txt,.pdf,.docx">
+                        <div id="upload-content">
+                            <i class="fas fa-file-upload text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600 mb-2">选择文件或拖拽到此处</p>
+                            <p class="text-sm text-gray-500">支持 TXT、PDF、DOCX 格式，最大 16MB</p>
+                        </div>
+                        <div id="file-info" class="hidden">
+                            <i class="fas fa-file-alt text-4xl text-blue-500 mb-4"></i>
+                            <p id="file-name" class="font-semibold text-gray-800"></p>
+                            <p id="file-size" class="text-sm text-gray-600"></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 text-center">
+                        <button id="process-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-magic mr-2"></i>
+                            开始处理
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Document Fill Tab -->
+                <div id="document-fill-tab" class="tab-content">
+                    <div class="space-y-6">
+                        <!-- 功能介绍 -->
+                        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+                            <h4 class="text-xl font-bold text-blue-800 mb-3">
+                                <i class="fas fa-magic mr-2"></i>复杂文档智能填充
+                            </h4>
+                            <p class="text-blue-700 mb-4">
+                                上传包含待填写字段的文档模板，系统将智能识别空白区域，通过多轮对话引导您填写，最终生成完整文档。
+                            </p>
+                            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                                <div class="bg-white p-3 rounded-lg">
+                                    <h5 class="font-semibold text-gray-800 mb-2">✨ 核心功能</h5>
+                                    <ul class="text-gray-600 space-y-1">
+                                        <li>• 智能识别待填写字段</li>
+                                        <li>• 多轮对话引导填写</li>
+                                        <li>• 补充材料智能提取</li>
+                                        <li>• 文风对齐和润色</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg">
+                                    <h5 class="font-semibold text-gray-800 mb-2">📋 支持文档</h5>
+                                    <ul class="text-gray-600 space-y-1">
+                                        <li>• 入职申请表</li>
+                                        <li>• 合同协议模板</li>
+                                        <li>• 报告表格</li>
+                                        <li>• 各类登记表</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 文档上传区域 -->
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-file-upload text-blue-500 mr-2"></i>第一步：上传文档模板
+                            </h5>
+                            <div id="fill-upload-area" class="upload-area rounded-lg p-8 text-center cursor-pointer border-2 border-dashed border-gray-300">
+                                <input type="file" id="fill-file-input" class="hidden" accept=".txt,.pdf,.docx">
+                                <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">上传包含待填写字段的文档</p>
+                                <p class="text-sm text-gray-500">支持 TXT、PDF、DOCX 格式</p>
+                                <p class="text-xs text-gray-400 mt-2">示例：姓名：_______ 日期：____年____月____日</p>
+                            </div>
+                            <div id="fill-file-info" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p id="fill-file-name" class="font-medium text-gray-800"></p>
+                                        <p id="fill-file-size" class="text-sm text-gray-600"></p>
+                                    </div>
+                                    <button id="start-fill-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                        <i class="fas fa-play mr-2"></i>开始分析
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 补充材料上传 -->
+                        <div id="supplementary-materials-section" class="hidden bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-paperclip text-green-500 mr-2"></i>第二步：上传补充材料（可选）
+                            </h5>
+                            <p class="text-gray-600 mb-4">上传相关文档作为填写参考，系统会自动提取有用信息</p>
+
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-green-400 transition-colors" id="material-upload-area">
+                                    <input type="file" id="material-file-input" class="hidden" accept=".txt,.pdf,.docx" multiple>
+                                    <i class="fas fa-plus-circle text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-gray-600">添加补充材料</p>
+                                    <p class="text-xs text-gray-500">个人简历、工作证明、项目文档等</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <h6 class="font-medium text-gray-700">材料类型示例：</h6>
+                                    <div class="text-sm text-gray-600 space-y-1">
+                                        <div class="flex items-center"><i class="fas fa-user text-blue-500 w-4"></i><span class="ml-2">个人简历</span></div>
+                                        <div class="flex items-center"><i class="fas fa-certificate text-green-500 w-4"></i><span class="ml-2">工作证明</span></div>
+                                        <div class="flex items-center"><i class="fas fa-project-diagram text-purple-500 w-4"></i><span class="ml-2">项目文档</span></div>
+                                        <div class="flex items-center"><i class="fas fa-file-alt text-orange-500 w-4"></i><span class="ml-2">其他参考</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="materials-list" class="space-y-2">
+                                <!-- 已上传的材料列表 -->
+                            </div>
+
+                            <div class="mt-4 flex space-x-3">
+                                <button id="continue-without-materials" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    <i class="fas fa-arrow-right mr-2"></i>跳过此步骤
+                                </button>
+                                <button id="continue-with-materials" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-300" disabled>
+                                    <i class="fas fa-check mr-2"></i>继续填写
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 文风设置 -->
+                        <div id="writing-style-section" class="hidden bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-pen-fancy text-purple-500 mr-2"></i>第三步：设置文风模板（可选）
+                            </h5>
+                            <p class="text-gray-600 mb-4">选择或创建文风模板，确保生成内容符合您的写作风格</p>
+
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <h6 class="font-medium text-gray-700 mb-3">选择已有模板</h6>
+                                    <div id="style-templates-list" class="space-y-2 max-h-40 overflow-y-auto">
+                                        <!-- 文风模板列表 -->
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="font-medium text-gray-700 mb-3">上传范文创建新模板</h6>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 transition-colors" id="style-reference-upload">
+                                        <input type="file" id="style-file-input" class="hidden" accept=".txt,.pdf,.docx">
+                                        <i class="fas fa-file-text text-2xl text-gray-400 mb-2"></i>
+                                        <p class="text-gray-600">上传范文</p>
+                                        <p class="text-xs text-gray-500">系统将分析其写作风格</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex space-x-3">
+                                <button id="skip-style-setting" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    <i class="fas fa-arrow-right mr-2"></i>使用默认风格
+                                </button>
+                                <button id="start-conversation" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    <i class="fas fa-comments mr-2"></i>开始对话填写
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 对话填写区域 -->
+                        <div id="conversation-section" class="hidden bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-comments text-blue-500 mr-2"></i>第四步：智能对话填写
+                            </h5>
+
+                            <!-- 进度指示器 -->
+                            <div id="fill-progress" class="mb-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-600">填写进度</span>
+                                    <span id="progress-text" class="text-sm font-medium text-blue-600">0/0</span>
+                                </div>
+                                <div class="bg-gray-200 rounded-full h-2">
+                                    <div id="fill-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <!-- 对话历史 -->
+                            <div id="conversation-history" class="bg-gray-50 rounded-lg p-4 mb-4 max-h-96 overflow-y-auto">
+                                <div class="text-center text-gray-500 py-8">
+                                    <i class="fas fa-robot text-3xl mb-2"></i>
+                                    <p>AI助手将引导您完成文档填写</p>
+                                </div>
+                            </div>
+
+                            <!-- 用户输入 -->
+                            <div class="flex space-x-3">
+                                <textarea id="user-input"
+                                         class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                         rows="3"
+                                         placeholder="请输入您的回答..."></textarea>
+                                <div class="flex flex-col space-y-2">
+                                    <button id="send-message" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                    <button id="upload-material-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-300" title="上传补充材料">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 填写结果 -->
+                        <div id="fill-result-section" class="hidden bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>填写完成
+                            </h5>
+                            <div id="fill-result-content" class="space-y-4">
+                                <!-- 填写结果内容 -->
+                            </div>
+                            <div class="mt-6 flex space-x-3">
+                                <button id="download-filled-doc" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition duration-300">
+                                    <i class="fas fa-download mr-2"></i>下载填写文档
+                                </button>
+                                <button id="restart-fill" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition duration-300">
+                                    <i class="fas fa-redo mr-2"></i>重新填写
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Writing Style Tab -->
+                <div id="writing-style-tab" class="tab-content">
+                    <div class="space-y-6">
+                        <!-- 功能介绍 -->
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6">
+                            <h4 class="text-xl font-bold text-purple-800 mb-3">
+                                <i class="fas fa-pen-fancy mr-2"></i>文风分析与对齐
+                            </h4>
+                            <p class="text-purple-700 mb-4">
+                                上传范文分析写作风格，创建个人文风模板，在后续内容生成中保持一致的写作风格。
+                            </p>
+                            <div class="grid md:grid-cols-3 gap-4 text-sm">
+                                <div class="bg-white p-3 rounded-lg">
+                                    <h5 class="font-semibold text-gray-800 mb-2">📊 分析维度</h5>
+                                    <ul class="text-gray-600 space-y-1">
+                                        <li>• 句式结构分析</li>
+                                        <li>• 词汇选择偏好</li>
+                                        <li>• 表达方式特点</li>
+                                        <li>• 文本组织习惯</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg">
+                                    <h5 class="font-semibold text-gray-800 mb-2">🎯 优化效果</h5>
+                                    <ul class="text-gray-600 space-y-1">
+                                        <li>• 去除AI生成痕迹</li>
+                                        <li>• 长短句自然结合</li>
+                                        <li>• 减少被动语态</li>
+                                        <li>• 保持个人风格</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg">
+                                    <h5 class="font-semibold text-gray-800 mb-2">💾 模板管理</h5>
+                                    <ul class="text-gray-600 space-y-1">
+                                        <li>• 保存文风模板</li>
+                                        <li>• 重复使用偏好</li>
+                                        <li>• 团队风格统一</li>
+                                        <li>• 场景化应用</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 文风分析 -->
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-microscope text-blue-500 mr-2"></i>文风分析
+                            </h5>
+
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <h6 class="font-medium text-gray-700 mb-3">上传范文</h6>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors" id="style-analysis-upload">
+                                        <input type="file" id="style-analysis-input" class="hidden" accept=".txt,.pdf,.docx">
+                                        <i class="fas fa-file-text text-3xl text-gray-400 mb-3"></i>
+                                        <p class="text-gray-600 mb-2">上传您的范文</p>
+                                        <p class="text-sm text-gray-500">系统将分析其写作风格特征</p>
+                                    </div>
+                                    <div id="style-file-info" class="hidden mt-4 p-3 bg-gray-50 rounded">
+                                        <p id="style-file-name" class="font-medium text-gray-800"></p>
+                                        <p id="style-file-size" class="text-sm text-gray-600"></p>
+                                        <button id="analyze-style-btn" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                            <i class="fas fa-search mr-2"></i>开始分析
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h6 class="font-medium text-gray-700 mb-3">或直接粘贴文本</h6>
+                                    <textarea id="style-text-input"
+                                             class="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                             placeholder="粘贴您的范文内容..."></textarea>
+                                    <button id="analyze-text-btn" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                        <i class="fas fa-search mr-2"></i>分析文本
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 分析结果 -->
+                        <div id="style-analysis-result" class="hidden bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-chart-bar text-green-500 mr-2"></i>分析结果
+                            </h5>
+                            <div id="style-analysis-content" class="space-y-4">
+                                <!-- 分析结果内容 -->
+                            </div>
+                            <div class="mt-6 flex space-x-3">
+                                <button id="save-style-template" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition duration-300">
+                                    <i class="fas fa-save mr-2"></i>保存为模板
+                                </button>
+                                <button id="test-style-generation" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg transition duration-300">
+                                    <i class="fas fa-magic mr-2"></i>测试生成效果
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 文风模板管理 -->
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-bookmark text-orange-500 mr-2"></i>文风模板管理
+                            </h5>
+                            <div class="flex justify-between items-center mb-4">
+                                <p class="text-gray-600">管理您保存的文风模板</p>
+                                <button id="refresh-templates" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    <i class="fas fa-sync mr-2"></i>刷新列表
+                                </button>
+                            </div>
+                            <div id="style-templates-management" class="space-y-3">
+                                <!-- 模板列表 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Tab -->
+                <div id="analysis-tab" class="tab-content">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-brain text-purple-500 mr-2"></i>文档场景分析
+                            </h4>
+                            <div id="scenario-analysis" class="space-y-3">
+                                <div class="bg-white p-3 rounded border">
+                                    <span class="text-sm text-gray-600">文档类型：</span>
+                                    <span id="doc-type" class="font-medium">-</span>
+                                </div>
+                                <div class="bg-white p-3 rounded border">
+                                    <span class="text-sm text-gray-600">适用场景：</span>
+                                    <span id="doc-scenario" class="font-medium">-</span>
+                                </div>
+                                <div class="bg-white p-3 rounded border">
+                                    <span class="text-sm text-gray-600">关键信息：</span>
+                                    <span id="key-info" class="font-medium">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-chart-pie text-blue-500 mr-2"></i>内容结构分析
+                            </h4>
+                            <div id="structure-analysis" class="space-y-3">
+                                <div class="bg-white p-3 rounded border">
+                                    <span class="text-sm text-gray-600">段落数量：</span>
+                                    <span id="paragraphs" class="font-medium">-</span>
+                                </div>
+                                <div class="bg-white p-3 rounded border">
+                                    <span class="text-sm text-gray-600">字符统计：</span>
+                                    <span id="char-count" class="font-medium">-</span>
+                                </div>
+                                <div class="bg-white p-3 rounded border">
+                                    <span class="text-sm text-gray-600">文档完整性：</span>
+                                    <span id="completeness" class="font-medium">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools Tab -->
+                <div id="tools-tab" class="tab-content">
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="tool-card bg-white rounded-lg shadow-lg p-6 border-2 border-transparent" data-tool="content-filler">
+                            <div class="text-center">
+                                <i class="fas fa-edit text-3xl text-blue-500 mb-4"></i>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2">内容填充</h4>
+                                <p class="text-gray-600 text-sm mb-4">智能填充文档内容，补充缺失信息</p>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    开始填充
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card bg-white rounded-lg shadow-lg p-6 border-2 border-transparent" data-tool="style-generator">
+                            <div class="text-center">
+                                <i class="fas fa-palette text-3xl text-green-500 mb-4"></i>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2">样式生成</h4>
+                                <p class="text-gray-600 text-sm mb-4">生成专业样式模板，提升文档美观度</p>
+                                <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    生成样式
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card bg-white rounded-lg shadow-lg p-6 border-2 border-transparent" data-tool="virtual-reviewer">
+                            <div class="text-center">
+                                <i class="fas fa-user-check text-3xl text-purple-500 mb-4"></i>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2">虚拟审阅</h4>
+                                <p class="text-gray-600 text-sm mb-4">模拟专业审阅流程，提供修改建议</p>
+                                <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    开始审阅
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card bg-white rounded-lg shadow-lg p-6 border-2 border-transparent" data-tool="meeting-review">
+                            <div class="text-center">
+                                <i class="fas fa-users text-3xl text-orange-500 mb-4"></i>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2">会议回顾</h4>
+                                <p class="text-gray-600 text-sm mb-4">处理会议相关文档，生成会议纪要</p>
+                                <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    生成纪要
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card bg-white rounded-lg shadow-lg p-6 border-2 border-transparent" data-tool="document-output">
+                            <div class="text-center">
+                                <i class="fas fa-file-export text-3xl text-red-500 mb-4"></i>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2">文档输出</h4>
+                                <p class="text-gray-600 text-sm mb-4">生成最终文档，支持多种格式导出</p>
+                                <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    导出文档
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card bg-white rounded-lg shadow-lg p-6 border-2 border-transparent" data-tool="format-alignment">
+                            <div class="text-center">
+                                <i class="fas fa-align-left text-3xl text-teal-500 mb-4"></i>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2">格式对齐</h4>
+                                <p class="text-gray-600 text-sm mb-4">智能文档格式对齐，保持格式一致性</p>
+                                <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    格式对齐
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="tool-card bg-white rounded-lg shadow-lg p-6 border-2 border-transparent" data-tool="batch-process">
+                            <div class="text-center">
+                                <i class="fas fa-layer-group text-3xl text-indigo-500 mb-4"></i>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2">批量处理</h4>
+                                <p class="text-gray-600 text-sm mb-4">批量处理多个文档，提高工作效率</p>
+                                <button class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                                    批量处理
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Format Alignment Tab -->
+                <div id="format-tab" class="tab-content">
+                    <div class="space-y-6">
+                        <!-- 格式对齐说明 -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold text-blue-800 mb-3">
+                                <i class="fas fa-info-circle mr-2"></i>格式对齐功能
+                            </h4>
+                            <p class="text-blue-700 mb-3">
+                                上传两个文档，通过自然语言对话要求文档格式对齐。系统会自动分析目标文档的格式规范，并将源文档调整为相同格式。
+                            </p>
+                            <div class="text-sm text-blue-600">
+                                <p><strong>示例：</strong>"让文档1与文档2格式对齐"</p>
+                                <p><strong>功能：</strong>自动保存格式模板，支持重复使用</p>
+                            </div>
+                        </div>
+
+                        <!-- 文档上传区域 -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-white rounded-lg shadow-lg p-6">
+                                <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                    <i class="fas fa-file-upload text-blue-500 mr-2"></i>源文档 (待调整格式)
+                                </h5>
+                                <div id="source-upload-area" class="upload-area rounded-lg p-6 text-center cursor-pointer border-2 border-dashed border-gray-300">
+                                    <input type="file" id="source-file-input" class="hidden" accept=".txt,.pdf,.docx">
+                                    <i class="fas fa-file-alt text-3xl text-gray-400 mb-3"></i>
+                                    <p class="text-gray-600 mb-2">上传源文档</p>
+                                    <p class="text-sm text-gray-500">支持 TXT、PDF、DOCX</p>
+                                </div>
+                                <div id="source-file-info" class="hidden mt-4 p-3 bg-gray-50 rounded">
+                                    <p id="source-file-name" class="font-medium text-gray-800"></p>
+                                    <p id="source-file-size" class="text-sm text-gray-600"></p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg shadow-lg p-6">
+                                <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                    <i class="fas fa-file-check text-green-500 mr-2"></i>目标文档 (格式参考)
+                                </h5>
+                                <div id="target-upload-area" class="upload-area rounded-lg p-6 text-center cursor-pointer border-2 border-dashed border-gray-300">
+                                    <input type="file" id="target-file-input" class="hidden" accept=".txt,.pdf,.docx">
+                                    <i class="fas fa-file-alt text-3xl text-gray-400 mb-3"></i>
+                                    <p class="text-gray-600 mb-2">上传目标文档</p>
+                                    <p class="text-sm text-gray-500">作为格式参考</p>
+                                </div>
+                                <div id="target-file-info" class="hidden mt-4 p-3 bg-gray-50 rounded">
+                                    <p id="target-file-name" class="font-medium text-gray-800"></p>
+                                    <p id="target-file-size" class="text-sm text-gray-600"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 自然语言输入 -->
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-comments text-purple-500 mr-2"></i>格式对齐指令
+                            </h5>
+                            <div class="space-y-4">
+                                <textarea id="format-instruction"
+                                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                         rows="3"
+                                         placeholder="请输入格式对齐指令，例如：让文档1与文档2格式对齐"></textarea>
+                                <div class="flex space-x-3">
+                                    <button id="format-align-btn"
+                                           class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                           disabled>
+                                        <i class="fas fa-magic mr-2"></i>执行格式对齐
+                                    </button>
+                                    <button id="show-templates-btn"
+                                           class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">
+                                        <i class="fas fa-list mr-2"></i>查看格式模板
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 格式模板列表 -->
+                        <div id="format-templates-section" class="hidden bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-bookmark text-orange-500 mr-2"></i>已保存的格式模板
+                            </h5>
+                            <div id="templates-list" class="space-y-3">
+                                <!-- 模板列表将在这里动态生成 -->
+                            </div>
+                        </div>
+
+                        <!-- 格式对齐结果 -->
+                        <div id="format-result-section" class="hidden bg-white rounded-lg shadow-lg p-6">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>格式对齐结果
+                            </h5>
+                            <div id="format-result-content" class="space-y-4">
+                                <!-- 结果内容将在这里显示 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div id="results-tab" class="tab-content">
+                    <div id="results-content" class="space-y-4">
+                        <!-- Results will be populated here -->
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-file-alt text-4xl mb-4"></i>
+                            <p>处理结果将在这里显示</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Status -->
+        <div id="processing-status" class="hidden max-w-4xl mx-auto mt-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="spinner w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800">正在处理文档...</h4>
+                        <p class="text-gray-600">请稍候，AI正在分析您的文档</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="error-section" class="hidden max-w-4xl mx-auto mt-8">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-red-800">处理失败</h3>
+                </div>
+                <p id="error-message" class="text-red-700 mt-2"></p>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="mt-16 grid md:grid-cols-3 gap-8">
+            <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                <div class="text-center">
+                    <i class="fas fa-brain text-3xl text-purple-500 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">智能分析</h3>
+                    <p class="text-gray-600">AI自动分析文档内容，识别文档类型和关键信息</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                <div class="text-center">
+                    <i class="fas fa-magic text-3xl text-blue-500 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">内容优化</h3>
+                    <p class="text-gray-600">智能填充内容，生成专业建议，提升文档质量</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                <div class="text-center">
+                    <i class="fas fa-palette text-3xl text-green-500 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">样式生成</h3>
+                    <p class="text-gray-600">自动生成专业样式模板，确保文档美观统一</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2024 办公文档智能代理. 支持多种AI模型和API服务.</p>
+        </div>
+    </footer>
+
+    <script src="static/js/app.js"></script>
+    <script src="static/js/document-fill.js"></script>
+    <script src="static/js/writing-style.js"></script>
+</body>
+</html>
