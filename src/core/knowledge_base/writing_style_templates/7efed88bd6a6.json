@@ -1,0 +1,63 @@
+{
+  "document_name": "曾-任务书.docx",
+  "analysis_time": "2025-06-25T12:00:38.064529",
+  "style_features": {
+    "sentence_structure": {
+      "average_length": 6.0,
+      "long_short_ratio": 0.0,
+      "complex_ratio": 0.0,
+      "total_sentences": 1,
+      "long_sentences": 0,
+      "short_sentences": 1
+    },
+    "vocabulary_choice": {
+      "formality_score": 0.0,
+      "technical_density": 0.0,
+      "modifier_usage": 0.0,
+      "action_verb_ratio": 0.0
+    },
+    "expression_style": {
+      "passive_active_ratio": 0,
+      "person_usage": {
+        "first_person": 0,
+        "second_person": 0,
+        "third_person": 0
+      },
+      "tone_strength": 0.0,
+      "passive_count": 0,
+      "active_count": 0
+    },
+    "text_organization": {
+      "paragraph_count": 0,
+      "average_paragraph_length": 0,
+      "connector_density": 0.0,
+      "summary_usage": 0,
+      "enumeration_usage": 0
+    },
+    "language_habits": {
+      "colloquial_level": 0.0,
+      "formal_structure_usage": 0.0,
+      "de_structure_density": 0.0
+    },
+    "emotional_tone": {
+      "positive_ratio": 0,
+      "negative_ratio": 0,
+      "neutral_ratio": 1.0,
+      "intensity": 0
+    },
+    "professionalism": {
+      "domain_specificity": 0.0,
+      "authority_indicators": 166.67,
+      "precision_level": 0.0
+    },
+    "rhetorical_devices": {
+      "metaphor_usage": 0.0,
+      "parallel_structure": 0.0,
+      "question_usage": 0.0
+    }
+  },
+  "style_type": "concise_practical",
+  "confidence_score": 0.7,
+  "style_prompt": "请按照简洁实用风格进行内容生成，具体要求如下：\n\n【文风特征】\n- 言简意赅\n- 直接有效\n- 操作性强\n- 易于理解\n\n【句式要求】\n- 多使用短句，保持表达的简洁明了\n- 避免冗长复杂的句式结构\n- 使用简单直接的句式结构\n\n【词汇要求】\n- 使用通俗易懂的词汇\n- 避免过于正式或生僻的表达\n- 减少不必要的修饰词，保持表达简洁\n\n【表达方式】\n- 优先使用主动语态，让表达更直接有力\n- 避免使用第一人称，保持客观中立\n\n【组织结构】\n- 减少机械化的过渡词使用\n- 通过内容逻辑自然过渡\n\n【语调风格】\n- 保持中性客观的语调\n- 保持平和的表达强度\n- 体现专业权威性，使用准确的数据和引用\n\n【特别注意】\n- 避免AI生成痕迹，让内容自然流畅\n- 保持与原文档风格的一致性\n- 确保内容准确、逻辑清晰\n\n【避免事项】\n- 避免冗余和重复表达\n- 避免过于复杂的句式结构\n- 避免不必要的修饰词汇\n- 避免明显的AI生成痕迹\n- 避免逻辑不清或前后矛盾\n- 避免语法错误和用词不当",
+  "template_id": "7efed88bd6a6"
+}

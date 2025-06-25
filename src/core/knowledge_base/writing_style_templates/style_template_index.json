@@ -44,6 +44,15 @@
       "confidence_score": 1.0,
       "created_time": "2025-06-24T18:07:52.426251",
       "description": "文风模板：公司通知范文"
+    },
+    {
+      "template_id": "7efed88bd6a6",
+      "name": "曾-任务书.docx",
+      "style_type": "concise_practical",
+      "style_name": "简洁实用风格",
+      "confidence_score": 0.7,
+      "created_time": "2025-06-25T12:00:38.064529",
+      "description": "文风模板：曾-任务书.docx"
     }
   ]
 }

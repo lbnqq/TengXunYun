@@ -41,6 +41,27 @@ from src.core.monitoring import get_performance_monitor, PerformanceTimer
 # 导入批量处理模块
 from src.core.tools.batch_processor import get_batch_processor
 
+# 加载环境变量
+load_dotenv()
+
+# 获取当前文件所在目录
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+
+# 创建Flask应用，指定模板和静态文件路径
+app = Flask(__name__,
+           template_folder=os.path.join(project_root, 'templates'),
+           static_folder=os.path.join(project_root, 'static'))
+CORS(app)
+
+# Configuration
+app.config['UPLOAD_FOLDER'] = os.path.join(project_root, 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'docx'}
+
+# Ensure upload directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 # 性能监控中间件
 @app.before_request
 def before_request():
@@ -891,7 +912,6 @@ def upload_file():
         print("🚀 UPLOAD REQUEST RECEIVED")
         print("=" * 80)
 
-        try:
         # Debug request information
         print(f"📋 Request method: {request.method}")
         print(f"📋 Request content type: {request.content_type}")
@@ -1147,15 +1167,6 @@ def upload_file():
                     return jsonify({'error': f'Processing failed: {str(e)} (Mock mode also failed: {str(mock_error)})'}), 500
             
             return jsonify({'error': f'Processing failed: {str(e)}'}), 500
-            
-    except Exception as e:
-        print(f"❌ UPLOAD ERROR OCCURRED:")
-        print(f"   - Error type: {type(e).__name__}")
-        print(f"   - Error message: {str(e)}")
-        print(f"   - Full traceback:")
-        print(traceback.format_exc())
-        print("=" * 80)
-        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
 
 @app.route('/api/health')
 def health_check():
@@ -1219,22 +1230,22 @@ def format_alignment():
         global format_coordinator
 
         try:
-        # 初始化格式协调器
-        if format_coordinator is None:
-            format_coordinator = FormatAlignmentCoordinator()
+            # 初始化格式协调器
+            if format_coordinator is None:
+                format_coordinator = FormatAlignmentCoordinator()
 
-        # 获取请求数据
-        data = request.get_json()
-        user_input = data.get('user_input', '')
-        uploaded_files = data.get('uploaded_files', {})
+            # 获取请求数据
+            data = request.get_json()
+            user_input = data.get('user_input', '')
+            uploaded_files = data.get('uploaded_files', {})
 
-        # 处理用户请求
-        result = format_coordinator.process_user_request(user_input, uploaded_files)
+            # 处理用户请求
+            result = format_coordinator.process_user_request(user_input, uploaded_files)
 
-        return jsonify(result)
+            return jsonify(result)
 
-    except Exception as e:
-        return jsonify({'error': f'格式对齐处理失败: {str(e)}'}), 500
+        except Exception as e:
+            return jsonify({'error': f'格式对齐处理失败: {str(e)}'}), 500
 
 @app.route('/api/format-templates', methods=['GET'])
 def list_format_templates():
@@ -1339,22 +1350,22 @@ def start_document_fill():
         global fill_coordinator
 
         try:
-        if fill_coordinator is None:
-            fill_coordinator = DocumentFillCoordinator()
+            if fill_coordinator is None:
+                fill_coordinator = DocumentFillCoordinator()
 
-        data = request.get_json()
-        document_content = data.get('document_content', '')
-        document_name = data.get('document_name', '')
+            data = request.get_json()
+            document_content = data.get('document_content', '')
+            document_name = data.get('document_name', '')
 
-        if not document_content:
-            return jsonify({'error': '缺少文档内容'}), 400
+            if not document_content:
+                return jsonify({'error': '缺少文档内容'}), 400
 
-        result = fill_coordinator.start_document_fill(document_content, document_name)
+            result = fill_coordinator.start_document_fill(document_content, document_name)
 
-        return jsonify(result)
+            return jsonify(result)
 
-    except Exception as e:
-        return jsonify({'error': f'启动文档填充失败: {str(e)}'}), 500
+        except Exception as e:
+            return jsonify({'error': f'启动文档填充失败: {str(e)}'}), 500
 
 @app.route('/api/document-fill/respond', methods=['POST'])
 def respond_to_fill_question():
@@ -1363,21 +1374,21 @@ def respond_to_fill_question():
         global fill_coordinator
 
         try:
-        if fill_coordinator is None:
-            return jsonify({'error': '文档填充会话未初始化'}), 400
+            if fill_coordinator is None:
+                return jsonify({'error': '文档填充会话未初始化'}), 400
 
-        data = request.get_json()
-        user_input = data.get('user_input', '')
+            data = request.get_json()
+            user_input = data.get('user_input', '')
 
-        if not user_input:
-            return jsonify({'error': '缺少用户输入'}), 400
+            if not user_input:
+                return jsonify({'error': '缺少用户输入'}), 400
 
-        result = fill_coordinator.process_user_response(user_input)
+            result = fill_coordinator.process_user_response(user_input)
 
-        return jsonify(result)
+            return jsonify(result)
 
-    except Exception as e:
-        return jsonify({'error': f'处理用户回复失败: {str(e)}'}), 500
+        except Exception as e:
+            return jsonify({'error': f'处理用户回复失败: {str(e)}'}), 500
 
 @app.route('/api/document-fill/status', methods=['GET'])
 def get_fill_status():
@@ -1477,22 +1488,22 @@ def analyze_writing_style():
         global style_analyzer
 
         try:
-        if style_analyzer is None:
-            style_analyzer = WritingStyleAnalyzer()
+            if style_analyzer is None:
+                style_analyzer = WritingStyleAnalyzer()
 
-        data = request.get_json()
-        document_content = data.get('document_content', '')
-        document_name = data.get('document_name', '')
+            data = request.get_json()
+            document_content = data.get('document_content', '')
+            document_name = data.get('document_name', '')
 
-        if not document_content:
-            return jsonify({'error': '缺少文档内容'}), 400
+            if not document_content:
+                return jsonify({'error': '缺少文档内容'}), 400
 
-        result = style_analyzer.analyze_writing_style(document_content, document_name)
+            result = style_analyzer.analyze_writing_style(document_content, document_name)
 
-        return jsonify(result)
+            return jsonify(result)
 
-    except Exception as e:
-        return jsonify({'error': f'文风分析失败: {str(e)}'}), 500
+        except Exception as e:
+            return jsonify({'error': f'文风分析失败: {str(e)}'}), 500
 
 @app.route('/api/writing-style/save-template', methods=['POST'])
 def save_writing_style_template():

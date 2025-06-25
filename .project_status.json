@@ -77,6 +77,13 @@
       "hash": "610dbb86a13a27926e622137771f8030",
       "extension": ".md"
     },
+    "docs\\README.md": {
+      "path": "docs\\README.md",
+      "size": 4110,
+      "modified_time": 1750820465.9049537,
+      "hash": "0b49b1a5a6ca298688ebd9b2d98b0da3",
+      "extension": ".md"
+    },
     "docs\\use_cases.md": {
       "path": "docs\\use_cases.md",
       "size": 7137,
@@ -86,9 +93,9 @@
     },
     "docs\\项目开发规范.md": {
       "path": "docs\\项目开发规范.md",
-      "size": 14135,
-      "modified_time": 1750819537.3313732,
-      "hash": "b6e3c865271843a9c716cf0a7a56c5dc",
+      "size": 14142,
+      "modified_time": 1750820750.0748477,
+      "hash": "382a51ade083c4d0f7b72177aa4407fe",
       "extension": ".md"
     },
     "docs\\项目当前状态全貌.md": {
@@ -159,6 +166,13 @@
       "size": 6131,
       "modified_time": 1750820032.086054,
       "hash": "7c34696e3928c387965f2693996154ab",
+      "extension": ".md"
+    },
+    "docs\\reports\\文档整理后状态检测.md": {
+      "path": "docs\\reports\\文档整理后状态检测.md",
+      "size": 1565,
+      "modified_time": 1750820433.1741276,
+      "hash": "b5f66a3757072ad4014cc892da41d047",
       "extension": ".md"
     },
     "docs\\reports\\项目状态增量检测报告.md": {
@@ -807,13 +821,13 @@
     }
   },
   "statistics": {
-    "total_files": 115,
-    "total_size": 1402819,
+    "total_files": 117,
+    "total_size": 1408501,
     "file_types": {
       ".py": 69,
       ".example": 1,
       ".html": 6,
-      ".md": 19,
+      ".md": 21,
       ".txt": 4,
       ".bat": 1,
       ".yaml": 3,
@@ -821,6 +835,6 @@
       ".css": 1,
       ".js": 5
     },
-    "scan_time": "2025-06-25T11:00:33.154109"
+    "scan_time": "2025-06-25T11:11:02.361613"
   }
 }
