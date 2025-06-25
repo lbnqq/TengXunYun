@@ -3,8 +3,11 @@ import time
 import json
 import requests
 import logging
+import hashlib
+import threading
 from typing import List, Dict, Optional, Tuple, Any
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from .base_llm import BaseLLMClient
 
 # 配置日志
@@ -85,29 +88,53 @@ class EnhancedMultiLLMClient(BaseLLMClient):
             } for endpoint in self.api_endpoints.keys()
         }
 
-        # 请求缓存（简单的内存缓存）
+        # 智能缓存系统
         self.request_cache = {}
         self.cache_ttl = 300  # 5分钟缓存
+        self.cache_lock = threading.RLock()
+
+        # 性能优化配置
+        self.max_concurrent_requests = 3
+        self.request_timeout_base = 30
+        self.adaptive_timeout = True
+
+        # 智能重试配置
+        self.max_retries = 3
+        self.retry_delays = [1, 2, 4]  # 指数退避
+        self.circuit_breaker_threshold = 5  # 连续失败阈值
+
+        # 负载均衡配置
+        self.load_balancing_enabled = True
+        self.health_check_interval = 60  # 健康检查间隔（秒）
+        self.last_health_check = {}
+
+        # 线程池
+        self.executor = ThreadPoolExecutor(max_workers=self.max_concurrent_requests)
 
         # 初始化统计
         available_endpoints = sum(1 for endpoint in self.api_endpoints.values() if endpoint.get('key'))
         logger.info(f"EnhancedMultiLLMClient initialized with {available_endpoints}/{len(self.api_endpoints)} available API endpoints")
+
+        # 启动健康检查
+        self._start_health_monitoring()
     
     def generate(self, prompt: str, **kwargs) -> str:
         """
-        实现BaseLLMClient的generate方法，带有增强的错误处理
+        实现BaseLLMClient的generate方法，带有增强的错误处理和性能优化
         """
         messages = [{"role": "user", "content": prompt}]
         model = kwargs.get('model', 'auto')
         options = kwargs.get('options', {})
 
-        # 检查缓存
+        # 检查智能缓存
         cache_key = self._generate_cache_key(messages, model, options)
         cached_response = self._get_cached_response(cache_key)
         if cached_response:
             logger.info("Returning cached response")
+            self._update_cache_hit_stats()
             return cached_response
 
+        start_time = time.time()
         try:
             response = self.chat_completion(messages, model, options)
             content = response['choices'][0]['message']['content']
@@ -115,10 +142,19 @@ class EnhancedMultiLLMClient(BaseLLMClient):
             # 缓存成功的响应
             self._cache_response(cache_key, content)
 
+            # 记录性能指标
+            processing_time = time.time() - start_time
+            self._record_performance_metrics('generate', processing_time, True)
+
             return content
         except Exception as e:
+            processing_time = time.time() - start_time
             error_msg = f"Error generating response: {str(e)}"
             logger.error(error_msg)
+
+            # 记录错误指标
+            self._record_performance_metrics('generate', processing_time, False, str(e))
+
             return error_msg
 
     def _generate_cache_key(self, messages: List[Dict], model: str, options: Dict) -> str:
@@ -490,22 +526,91 @@ class EnhancedMultiLLMClient(BaseLLMClient):
         return error_msg, None
     
     def call_multi_cloud(self, messages: List[Dict], model: str = None, options: Dict = None) -> Tuple[str, Optional[Dict]]:
-        """依次尝试多个云API，返回第一个成功的结果"""
+        """智能负载均衡的多云API调用"""
+        if self.load_balancing_enabled:
+            return self._call_with_load_balancing(messages, model, options)
+        else:
+            return self._call_sequential(messages, model, options)
+
+    def _call_with_load_balancing(self, messages: List[Dict], model: str = None, options: Dict = None) -> Tuple[str, Optional[Dict]]:
+        """基于负载均衡的API调用"""
+        # 获取健康的API端点，按优先级和性能排序
+        healthy_apis = self._get_healthy_apis_sorted()
+
+        if not healthy_apis:
+            logger.error("No healthy API endpoints available")
+            return "[API Error: No healthy endpoints available]", None
+
+        # 尝试调用健康的API
+        for api_name in healthy_apis:
+            try:
+                logger.info(f"Trying {api_name} API (load balanced)")
+                content, response_message = self._call_single_api(api_name, messages, model, options)
+                if content and not str(content).startswith("[API Error"):
+                    logger.info(f"✅ Success with {api_name} API")
+                    return content, response_message
+            except Exception as e:
+                logger.warning(f"❌ {api_name} API failed: {e}")
+                continue
+
+        return "[API Error: All healthy endpoints failed]", None
+
+    def _call_sequential(self, messages: List[Dict], model: str = None, options: Dict = None) -> Tuple[str, Optional[Dict]]:
+        """顺序调用API（原有逻辑）"""
         api_funcs = [
-            lambda: self.call_xingcheng_api(messages, model, options),
-            lambda: self.call_openrouter_api(messages, model, options),
-            lambda: self.call_together_api(messages, model, options),
-            lambda: self.call_qiniu_api(messages, model, options)
+            ('qiniu', lambda: self.call_qiniu_api(messages, model, options)),
+            ('together', lambda: self.call_together_api(messages, model, options)),
+            ('openrouter', lambda: self.call_openrouter_api(messages, model, options)),
+            ('xingcheng', lambda: self.call_xingcheng_api(messages, model, options))
         ]
-        
-        for i, api_func in enumerate(api_funcs):
-            print(f"Trying API {i+1}/{len(api_funcs)}...")
+
+        for i, (api_name, api_func) in enumerate(api_funcs):
+            if not self.api_endpoints[api_name].get('key'):
+                continue
+
+            print(f"Trying {api_name} API ({i+1}/{len(api_funcs)})...")
             content, response_message = api_func()
             if content and not str(content).startswith("[API Error"):
-                print(f"✅ Success with API {i+1}")
+                print(f"✅ Success with {api_name} API")
                 return content, response_message
-        
+
         return "[API Error: All cloud APIs failed]", None
+
+    def _get_healthy_apis_sorted(self) -> List[str]:
+        """获取健康的API端点，按性能排序"""
+        healthy_apis = []
+
+        for api_name, stats in self.api_stats.items():
+            if (stats['is_healthy'] and
+                self.api_endpoints[api_name].get('key') and
+                stats['consecutive_failures'] < self.circuit_breaker_threshold):
+
+                # 计算API的性能分数（响应时间越短分数越高）
+                avg_time = stats.get('average_response_time', float('inf'))
+                success_rate = (stats['successful_requests'] / max(stats['total_requests'], 1))
+                priority = self.api_endpoints[api_name].get('priority', 10)
+
+                # 综合评分：成功率 * 1000 - 平均响应时间 - 优先级 * 100
+                score = success_rate * 1000 - avg_time - priority * 100
+
+                healthy_apis.append((api_name, score))
+
+        # 按分数降序排序
+        healthy_apis.sort(key=lambda x: x[1], reverse=True)
+        return [api_name for api_name, _ in healthy_apis]
+
+    def _call_single_api(self, api_name: str, messages: List[Dict], model: str = None, options: Dict = None) -> Tuple[str, Optional[Dict]]:
+        """调用单个API"""
+        if api_name == 'qiniu':
+            return self.call_qiniu_api(messages, model, options)
+        elif api_name == 'together':
+            return self.call_together_api(messages, model, options)
+        elif api_name == 'openrouter':
+            return self.call_openrouter_api(messages, model, options)
+        elif api_name == 'xingcheng':
+            return self.call_xingcheng_api(messages, model, options)
+        else:
+            raise ValueError(f"Unknown API: {api_name}")
     
     def chat_completion(self, messages: List[Dict], model: str = "auto", options: Optional[Dict] = None) -> Dict:
         """
@@ -590,6 +695,172 @@ class EnhancedMultiLLMClient(BaseLLMClient):
         
         models.append("auto")  # 自动模式
         return models
+
+    # ==================== 新增的优化方法 ====================
+
+    def _generate_cache_key(self, messages: List[Dict], model: str, options: Dict) -> str:
+        """生成缓存键"""
+        cache_data = {
+            'messages': messages,
+            'model': model,
+            'options': options
+        }
+        cache_str = json.dumps(cache_data, sort_keys=True)
+        return hashlib.md5(cache_str.encode()).hexdigest()
+
+    def _get_cached_response(self, cache_key: str) -> Optional[str]:
+        """获取缓存的响应"""
+        with self.cache_lock:
+            if cache_key in self.request_cache:
+                cached_item = self.request_cache[cache_key]
+                if time.time() - cached_item['timestamp'] < self.cache_ttl:
+                    return cached_item['response']
+                else:
+                    # 清理过期缓存
+                    del self.request_cache[cache_key]
+        return None
+
+    def _cache_response(self, cache_key: str, response: str):
+        """缓存响应"""
+        with self.cache_lock:
+            self.request_cache[cache_key] = {
+                'response': response,
+                'timestamp': time.time()
+            }
+
+            # 清理过期缓存（简单的LRU策略）
+            if len(self.request_cache) > 1000:  # 最大缓存1000条
+                self._cleanup_cache()
+
+    def _cleanup_cache(self):
+        """清理过期缓存"""
+        current_time = time.time()
+        expired_keys = [
+            key for key, value in self.request_cache.items()
+            if current_time - value['timestamp'] > self.cache_ttl
+        ]
+        for key in expired_keys:
+            del self.request_cache[key]
+
+    def _update_cache_hit_stats(self):
+        """更新缓存命中统计"""
+        if not hasattr(self, 'cache_stats'):
+            self.cache_stats = {'hits': 0, 'misses': 0}
+        self.cache_stats['hits'] += 1
+
+    def _record_performance_metrics(self, operation: str, duration: float, success: bool, error: str = None):
+        """记录性能指标"""
+        if not hasattr(self, 'performance_metrics'):
+            self.performance_metrics = {
+                'operations': {},
+                'total_requests': 0,
+                'successful_requests': 0,
+                'failed_requests': 0,
+                'average_response_time': 0.0
+            }
+
+        # 记录操作级别的指标
+        if operation not in self.performance_metrics['operations']:
+            self.performance_metrics['operations'][operation] = {
+                'count': 0,
+                'success_count': 0,
+                'total_time': 0.0,
+                'avg_time': 0.0,
+                'errors': []
+            }
+
+        op_metrics = self.performance_metrics['operations'][operation]
+        op_metrics['count'] += 1
+        op_metrics['total_time'] += duration
+        op_metrics['avg_time'] = op_metrics['total_time'] / op_metrics['count']
+
+        if success:
+            op_metrics['success_count'] += 1
+            self.performance_metrics['successful_requests'] += 1
+        else:
+            if error and len(op_metrics['errors']) < 10:  # 保留最近10个错误
+                op_metrics['errors'].append({
+                    'error': error,
+                    'timestamp': datetime.now().isoformat()
+                })
+            self.performance_metrics['failed_requests'] += 1
+
+        # 更新全局指标
+        self.performance_metrics['total_requests'] += 1
+        total_time = sum(op['total_time'] for op in self.performance_metrics['operations'].values())
+        self.performance_metrics['average_response_time'] = total_time / self.performance_metrics['total_requests']
+
+    def _start_health_monitoring(self):
+        """启动健康监控"""
+        def health_check():
+            while True:
+                try:
+                    self._perform_health_checks()
+                    time.sleep(self.health_check_interval)
+                except Exception as e:
+                    logger.error(f"Health check error: {e}")
+                    time.sleep(self.health_check_interval)
+
+        # 在后台线程中运行健康检查
+        health_thread = threading.Thread(target=health_check, daemon=True)
+        health_thread.start()
+
+    def _perform_health_checks(self):
+        """执行健康检查"""
+        for endpoint_name, endpoint_config in self.api_endpoints.items():
+            if not endpoint_config.get('key'):
+                continue
+
+            # 检查连续失败次数
+            stats = self.api_stats[endpoint_name]
+            if stats['consecutive_failures'] >= self.circuit_breaker_threshold:
+                stats['is_healthy'] = False
+                logger.warning(f"Circuit breaker activated for {endpoint_name}")
+            else:
+                stats['is_healthy'] = True
+
+    def get_performance_report(self) -> Dict[str, Any]:
+        """获取性能报告"""
+        report = {
+            'cache_stats': getattr(self, 'cache_stats', {'hits': 0, 'misses': 0}),
+            'performance_metrics': getattr(self, 'performance_metrics', {}),
+            'api_stats': self.api_stats,
+            'cache_size': len(self.request_cache),
+            'healthy_endpoints': sum(1 for stats in self.api_stats.values() if stats['is_healthy'])
+        }
+
+        # 计算缓存命中率
+        cache_stats = report['cache_stats']
+        total_cache_requests = cache_stats['hits'] + cache_stats['misses']
+        if total_cache_requests > 0:
+            report['cache_hit_rate'] = cache_stats['hits'] / total_cache_requests
+        else:
+            report['cache_hit_rate'] = 0.0
+
+        return report
+
+    def clear_cache(self):
+        """清空缓存"""
+        with self.cache_lock:
+            self.request_cache.clear()
+            logger.info("Cache cleared")
+
+    def get_health_status(self) -> Dict[str, Any]:
+        """获取健康状态"""
+        return {
+            'healthy_endpoints': [
+                name for name, stats in self.api_stats.items()
+                if stats['is_healthy'] and self.api_endpoints[name].get('key')
+            ],
+            'unhealthy_endpoints': [
+                name for name, stats in self.api_stats.items()
+                if not stats['is_healthy'] and self.api_endpoints[name].get('key')
+            ],
+            'total_endpoints': len([
+                name for name in self.api_endpoints.keys()
+                if self.api_endpoints[name].get('key')
+            ])
+        }
 
 
 # 向后兼容的类别名

@@ -1,0 +1,119 @@
+# Pre-commit hooks configuration
+# 项目开发规范 - 代码质量检查配置
+#
+# Author: AI Assistant (Claude)
+# Created: 2025-06-25
+# AI Assisted: 是 - Claude 3.5 Sonnet
+
+repos:
+  # Python代码格式化
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+
+  # Python代码风格检查
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=88, --extend-ignore=E203,W503]
+
+  # Python导入排序
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=88]
+
+  # Python类型检查
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.3.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-requests]
+        args: [--ignore-missing-imports]
+
+  # 通用代码检查
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      # 检查文件大小
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      # 检查合并冲突标记
+      - id: check-merge-conflict
+      # 检查YAML语法
+      - id: check-yaml
+      # 检查JSON语法
+      - id: check-json
+      # 检查XML语法
+      - id: check-xml
+      # 移除行尾空格
+      - id: trailing-whitespace
+      # 确保文件以换行符结尾
+      - id: end-of-file-fixer
+      # 检查Python语法
+      - id: check-ast
+      # 检查文档字符串
+      - id: check-docstring-first
+
+  # 安全检查
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, src/, -f, json, -o, bandit-report.json]
+        pass_filenames: false
+
+  # JavaScript/TypeScript检查
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.42.0
+    hooks:
+      - id: eslint
+        files: \.(js|ts|jsx|tsx)$
+        additional_dependencies:
+          - eslint@8.42.0
+          - eslint-config-standard@17.1.0
+
+  # CSS/SCSS格式化
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.0
+    hooks:
+      - id: prettier
+        files: \.(css|scss|html|js|json|md|yaml|yml)$
+
+  # 提交信息检查
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.2.2
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # 自定义检查脚本
+  - repo: local
+    hooks:
+      # 检查文件头注释
+      - id: check-file-headers
+        name: Check file headers
+        entry: python tools/check_file_headers.py
+        language: system
+        files: \.(py|js)$
+        
+      # 检查测试覆盖率
+      - id: check-test-coverage
+        name: Check test coverage
+        entry: python -m pytest --cov=src --cov-fail-under=80
+        language: system
+        pass_filenames: false
+        stages: [push]
+        
+      # 项目状态检查
+      - id: project-status-check
+        name: Project status check
+        entry: python tools/project_status_checker.py --no-save
+        language: system
+        pass_filenames: false
+        stages: [commit]

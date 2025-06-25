@@ -17,12 +17,22 @@ class DocumentFillManager {
         // 文档上传
         const fillFileInput = document.getElementById('fill-file-input');
         const fillUploadArea = document.getElementById('fill-upload-area');
-        
+
+        console.log('Initializing document fill listeners...');
+        console.log('fillFileInput:', fillFileInput);
+        console.log('fillUploadArea:', fillUploadArea);
+
         if (fillFileInput && fillUploadArea) {
-            fillUploadArea.addEventListener('click', () => fillFileInput.click());
+            fillUploadArea.addEventListener('click', () => {
+                console.log('Upload area clicked');
+                fillFileInput.click();
+            });
             fillUploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
             fillUploadArea.addEventListener('drop', this.handleFileDrop.bind(this));
             fillFileInput.addEventListener('change', this.handleFileSelect.bind(this));
+            console.log('Event listeners added successfully');
+        } else {
+            console.error('Failed to find upload elements');
         }
 
         // 开始分析按钮

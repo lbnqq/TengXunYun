@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import uuid
+import time
 import traceback
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, send_from_directory
@@ -18,6 +19,57 @@ from src.llm_clients.multi_llm import MultiLLMClient
 from src.core.tools.format_alignment_coordinator import FormatAlignmentCoordinator
 from src.core.tools.document_fill_coordinator import DocumentFillCoordinator
 from src.core.tools.writing_style_analyzer import WritingStyleAnalyzer
+
+# 导入数据库相关模块
+from src.core.database import (
+    DatabaseManager,
+    AppSettingsRepository,
+    DocumentRepository,
+    TemplateRepository,
+    PerformanceRepository,
+    BatchProcessingRepository,
+    DocumentRecord,
+    DocumentType,
+    IntentType,
+    ProcessingStatus,
+    get_database_manager
+)
+
+# 导入性能监控模块
+from src.core.monitoring import get_performance_monitor, PerformanceTimer
+
+# 导入批量处理模块
+from src.core.tools.batch_processor import get_batch_processor
+
+# 性能监控中间件
+@app.before_request
+def before_request():
+    """请求前的性能监控"""
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    """请求后的性能监控"""
+    if hasattr(request, 'start_time'):
+        duration = (time.time() - request.start_time) * 1000  # 转换为毫秒
+
+        # 只记录API请求的性能
+        if request.path.startswith('/api/'):
+            # 记录性能指标
+            record_performance(
+                f"api_request_{request.endpoint or 'unknown'}",
+                duration,
+                200 <= response.status_code < 400,
+                None if 200 <= response.status_code < 400 else f"HTTP {response.status_code}",
+                {
+                    'method': request.method,
+                    'path': request.path,
+                    'status_code': response.status_code,
+                    'content_length': response.content_length or 0
+                }
+            )
+
+    return response
 
 # Load environment variables
 load_dotenv()
@@ -46,6 +98,26 @@ orchestrator_instance = None
 format_coordinator = None
 fill_coordinator = None
 style_analyzer = None
+
+# 初始化数据库
+db_manager = None
+settings_repo = None
+document_repo = None
+template_repo = None
+
+def init_database():
+    """初始化数据库连接"""
+    global db_manager, settings_repo, document_repo, template_repo
+    try:
+        db_manager = get_database_manager()
+        settings_repo = AppSettingsRepository()
+        document_repo = DocumentRepository()
+        template_repo = TemplateRepository()
+        print("✅ 数据库初始化成功")
+        return True
+    except Exception as e:
+        print(f"❌ 数据库初始化失败: {e}")
+        return False
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -814,11 +886,12 @@ def test_ai_features():
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     """Handle file upload and processing."""
-    print("=" * 80)
-    print("🚀 UPLOAD REQUEST RECEIVED")
-    print("=" * 80)
+    with PerformanceTimer('file_upload_and_processing') as timer:
+        print("=" * 80)
+        print("🚀 UPLOAD REQUEST RECEIVED")
+        print("=" * 80)
 
-    try:
+        try:
         # Debug request information
         print(f"📋 Request method: {request.method}")
         print(f"📋 Request content type: {request.content_type}")
@@ -879,6 +952,31 @@ def upload_file():
             print(f"❌ ERROR: File not found on disk after save!")
             return jsonify({'error': 'File save failed'}), 500
 
+        # 计算文件哈希值
+        import hashlib
+        with open(filepath, 'rb') as f:
+            file_hash = hashlib.md5(f.read()).hexdigest()
+
+        # 创建数据库记录
+        document_record_id = None
+        if document_repo is not None:
+            try:
+                record = DocumentRecord(
+                    original_filename=filename,
+                    file_path=filepath,
+                    file_size=file_size_on_disk,
+                    file_hash=file_hash,
+                    document_type=DocumentType.GENERAL_DOCUMENT,  # 稍后会更新
+                    intent_type=IntentType.GENERAL_PROCESSING,    # 稍后会更新
+                    processing_status=ProcessingStatus.PROCESSING,
+                    confidence_score=0.0
+                )
+                document_record_id = document_repo.create_document_record(record)
+                print(f"📝 Created database record with ID: {document_record_id}")
+            except Exception as e:
+                print(f"⚠️ Failed to create database record: {e}")
+                # 继续处理，不因数据库错误中断
+
         # Process document
         print(f"🔄 Starting document processing...")
         try:
@@ -929,7 +1027,30 @@ def upload_file():
                 print(f"❌ Result is not a dictionary: {result}")
 
             print(f"✅ Processing completed successfully")
-            
+
+            # 更新数据库记录
+            if document_record_id is not None and document_repo is not None:
+                try:
+                    # 从结果中提取信息更新记录
+                    processing_time_ms = 0  # 可以计算实际处理时间
+                    confidence_score = 0.8  # 默认置信度，可以从结果中提取
+
+                    if isinstance(result, dict):
+                        # 尝试从结果中提取置信度
+                        scenario_analysis = result.get('scenario_analysis', {})
+                        if isinstance(scenario_analysis, dict):
+                            confidence_score = scenario_analysis.get('confidence', 0.8)
+
+                    # 更新处理状态为完成
+                    document_repo.update_processing_status(
+                        document_record_id,
+                        ProcessingStatus.COMPLETED,
+                        processing_time_ms=processing_time_ms
+                    )
+                    print(f"📝 Updated database record {document_record_id} to completed")
+                except Exception as e:
+                    print(f"⚠️ Failed to update database record: {e}")
+
             # Clean up uploaded file
             print(f"🧹 Cleaning up file: {filepath}")
             os.remove(filepath)
@@ -970,6 +1091,18 @@ def upload_file():
             print(f"   - Error message: {str(e)}")
             print(f"   - Full traceback:")
             print(traceback.format_exc())
+
+            # 更新数据库记录为失败状态
+            if document_record_id is not None and document_repo is not None:
+                try:
+                    document_repo.update_processing_status(
+                        document_record_id,
+                        ProcessingStatus.FAILED,
+                        error_message=str(e)
+                    )
+                    print(f"📝 Updated database record {document_record_id} to failed")
+                except Exception as db_error:
+                    print(f"⚠️ Failed to update database record: {db_error}")
 
             # Clean up file on error
             if os.path.exists(filepath):
@@ -1082,9 +1215,10 @@ def get_config():
 @app.route('/api/format-alignment', methods=['POST'])
 def format_alignment():
     """处理文档格式对齐请求"""
-    global format_coordinator
+    with PerformanceTimer('format_alignment') as timer:
+        global format_coordinator
 
-    try:
+        try:
         # 初始化格式协调器
         if format_coordinator is None:
             format_coordinator = FormatAlignmentCoordinator()
@@ -1201,9 +1335,10 @@ def get_available_models():
 @app.route('/api/document-fill/start', methods=['POST'])
 def start_document_fill():
     """开始文档填充流程"""
-    global fill_coordinator
+    with PerformanceTimer('document_fill_start') as timer:
+        global fill_coordinator
 
-    try:
+        try:
         if fill_coordinator is None:
             fill_coordinator = DocumentFillCoordinator()
 
@@ -1224,9 +1359,10 @@ def start_document_fill():
 @app.route('/api/document-fill/respond', methods=['POST'])
 def respond_to_fill_question():
     """响应文档填充问题"""
-    global fill_coordinator
+    with PerformanceTimer('document_fill_respond') as timer:
+        global fill_coordinator
 
-    try:
+        try:
         if fill_coordinator is None:
             return jsonify({'error': '文档填充会话未初始化'}), 400
 
@@ -1337,9 +1473,10 @@ def add_supplementary_material():
 @app.route('/api/writing-style/analyze', methods=['POST'])
 def analyze_writing_style():
     """分析文档写作风格"""
-    global style_analyzer
+    with PerformanceTimer('writing_style_analyze') as timer:
+        global style_analyzer
 
-    try:
+        try:
         if style_analyzer is None:
             style_analyzer = WritingStyleAnalyzer()
 
@@ -1453,11 +1590,123 @@ def set_writing_style_template():
     except Exception as e:
         return jsonify({'error': f'设置文风模板失败: {str(e)}'}), 500
 
+# 数据库相关API端点
+@app.route('/api/database/stats', methods=['GET'])
+def get_database_stats():
+    """获取数据库统计信息"""
+    try:
+        if db_manager is None:
+            return jsonify({'error': '数据库未初始化'}), 500
+
+        stats = db_manager.get_database_stats()
+        doc_stats = document_repo.get_statistics() if document_repo else {}
+
+        return jsonify({
+            'success': True,
+            'database_stats': stats,
+            'document_stats': doc_stats
+        })
+    except Exception as e:
+        return jsonify({'error': f'获取数据库统计失败: {str(e)}'}), 500
+
+@app.route('/api/documents/history', methods=['GET'])
+def get_document_history():
+    """获取文档处理历史"""
+    try:
+        if document_repo is None:
+            return jsonify({'error': '数据库未初始化'}), 500
+
+        limit = request.args.get('limit', 50, type=int)
+        status = request.args.get('status', None)
+
+        records = document_repo.get_processing_history(limit=limit, status=status)
+
+        # 转换为字典格式
+        history = [record.to_dict() for record in records]
+
+        return jsonify({
+            'success': True,
+            'history': history,
+            'count': len(history)
+        })
+    except Exception as e:
+        return jsonify({'error': f'获取文档历史失败: {str(e)}'}), 500
+
+@app.route('/api/templates/personal', methods=['GET'])
+def get_personal_templates():
+    """获取个人模板列表"""
+    try:
+        if template_repo is None:
+            return jsonify({'error': '数据库未初始化'}), 500
+
+        document_type = request.args.get('document_type', None)
+        category = request.args.get('category', None)
+
+        templates = template_repo.get_templates(document_type=document_type, category=category)
+
+        # 转换为字典格式
+        template_list = [template.to_dict() for template in templates]
+
+        return jsonify({
+            'success': True,
+            'templates': template_list,
+            'count': len(template_list)
+        })
+    except Exception as e:
+        return jsonify({'error': f'获取个人模板失败: {str(e)}'}), 500
+
+@app.route('/api/settings', methods=['GET'])
+def get_app_settings():
+    """获取应用设置"""
+    try:
+        if settings_repo is None:
+            return jsonify({'error': '数据库未初始化'}), 500
+
+        settings = settings_repo.get_all_settings()
+
+        return jsonify({
+            'success': True,
+            'settings': settings
+        })
+    except Exception as e:
+        return jsonify({'error': f'获取应用设置失败: {str(e)}'}), 500
+
+@app.route('/api/settings', methods=['POST'])
+def update_app_settings():
+    """更新应用设置"""
+    try:
+        if settings_repo is None:
+            return jsonify({'error': '数据库未初始化'}), 500
+
+        data = request.get_json()
+
+        updated_count = 0
+        for key, value in data.items():
+            if settings_repo.set_setting(key, value):
+                updated_count += 1
+
+        return jsonify({
+            'success': True,
+            'updated_count': updated_count,
+            'message': f'成功更新 {updated_count} 个设置'
+        })
+    except Exception as e:
+        return jsonify({'error': f'更新应用设置失败: {str(e)}'}), 500
+
 if __name__ == '__main__':
     print("Starting Office Document Agent Web Server...")
     print(f"Project root: {project_root}")
     print(f"Template folder: {app.template_folder}")
     print(f"Static folder: {app.static_folder}")
+
+    # 初始化数据库
+    print("Initializing database...")
+    if init_database():
+        print("✅ Database initialized successfully")
+    else:
+        print("❌ Database initialization failed")
+        print("Warning: Some features may not work properly")
+
     print("Web interface will be available at: http://localhost:5000")
     print("API endpoints:")
     print("  - GET  /api/health     - Health check")
@@ -1479,5 +1728,441 @@ if __name__ == '__main__':
     else:
         print("Warning: No API keys found in .env file")
         print("The system will use mock mode for testing")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+
+# ==================== 仪表板相关API端点 ====================
+
+@app.route('/dashboard')
+def dashboard():
+    """仪表板页面"""
+    return render_template('dashboard.html')
+
+@app.route('/api/performance/stats')
+def get_performance_stats():
+    """获取性能统计数据"""
+    try:
+        performance_repo = PerformanceRepository()
+
+        # 获取24小时内的统计数据
+        stats = performance_repo.get_performance_stats()
+
+        # 获取内存中的性能监控数据
+        performance_monitor = get_performance_monitor()
+        monitor_stats = performance_monitor.get_performance_summary()
+
+        # 合并统计数据
+        combined_stats = {
+            'total_requests': stats.get('total_requests', 0) + monitor_stats.get('total_operations', 0),
+            'successful_requests': stats.get('successful_requests', 0) + monitor_stats.get('successful_operations', 0),
+            'failed_requests': stats.get('failed_requests', 0) + monitor_stats.get('failed_operations', 0),
+            'success_rate': 0.0,
+            'avg_duration_ms': stats.get('avg_duration_ms', 0.0),
+            'cache_hit_rate': 0.0,
+            'recent_requests': monitor_stats.get('total_operations', 0),
+            'time_change': 'N/A'
+        }
+
+        # 计算成功率
+        total = combined_stats['total_requests']
+        if total > 0:
+            combined_stats['success_rate'] = combined_stats['successful_requests'] / total
+
+        # 获取LLM客户端的性能报告
+        if orchestrator and hasattr(orchestrator.llm_client, 'get_performance_report'):
+            llm_stats = orchestrator.llm_client.get_performance_report()
+            combined_stats.update({
+                'cache_hit_rate': llm_stats.get('cache_hit_rate', 0.0),
+                'healthy_endpoints': llm_stats.get('healthy_endpoints', 0)
+            })
+
+        return jsonify({
+            'success': True,
+            'data': combined_stats
+        })
+    except Exception as e:
+        print(f"Error getting performance stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/performance/health')
+def get_api_health():
+    """获取API健康状态"""
+    try:
+        health_data = {
+            'endpoints': []
+        }
+
+        if orchestrator and hasattr(orchestrator.llm_client, 'get_health_status'):
+            health_status = orchestrator.llm_client.get_health_status()
+
+            # 转换为前端需要的格式
+            for endpoint in health_status.get('healthy_endpoints', []):
+                health_data['endpoints'].append({
+                    'name': endpoint,
+                    'healthy': True,
+                    'avg_response_time': 0,  # TODO: 从统计中获取
+                    'success_rate': 1.0
+                })
+
+            for endpoint in health_status.get('unhealthy_endpoints', []):
+                health_data['endpoints'].append({
+                    'name': endpoint,
+                    'healthy': False,
+                    'warning': True,
+                    'avg_response_time': 0,
+                    'success_rate': 0.0
+                })
+
+        return jsonify({
+            'success': True,
+            'data': health_data
+        })
+    except Exception as e:
+        print(f"Error getting API health: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/performance/operations')
+def get_operation_breakdown():
+    """获取操作类型分解统计"""
+    try:
+        performance_repo = PerformanceRepository()
+        db_breakdown = performance_repo.get_operation_breakdown()
+
+        # 获取内存中的操作统计
+        performance_monitor = get_performance_monitor()
+        monitor_stats = performance_monitor.get_operation_stats()
+
+        # 合并数据库和内存中的统计
+        combined_breakdown = {}
+
+        # 添加数据库中的数据
+        for item in db_breakdown:
+            op = item['operation']
+            combined_breakdown[op] = item
+
+        # 添加内存中的数据
+        for op, stats in monitor_stats.items():
+            if op in combined_breakdown:
+                # 合并统计
+                combined_breakdown[op]['count'] += stats['count']
+                combined_breakdown[op]['success_count'] += stats['success_count']
+                # 重新计算平均值
+                total_count = combined_breakdown[op]['count']
+                if total_count > 0:
+                    combined_breakdown[op]['success_rate'] = combined_breakdown[op]['success_count'] / total_count
+            else:
+                # 新增操作类型
+                combined_breakdown[op] = {
+                    'operation': op,
+                    'count': stats['count'],
+                    'success_count': stats['success_count'],
+                    'success_rate': stats['success_rate'],
+                    'avg_duration_ms': stats['avg_time'],
+                    'total_input_tokens': 0,
+                    'total_output_tokens': 0
+                }
+
+        # 转换为列表格式
+        breakdown_list = list(combined_breakdown.values())
+        breakdown_list.sort(key=lambda x: x['count'], reverse=True)
+
+        return jsonify({
+            'success': True,
+            'data': breakdown_list
+        })
+    except Exception as e:
+        print(f"Error getting operation breakdown: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/performance/history')
+def get_processing_history():
+    """获取处理历史记录"""
+    try:
+        page = int(request.args.get('page', 1))
+        size = int(request.args.get('size', 10))
+        filter_type = request.args.get('filter', 'all')
+
+        # TODO: 实现分页和筛选逻辑
+        # 这里先返回模拟数据
+        mock_records = [
+            {
+                'id': str(uuid.uuid4()),
+                'timestamp': datetime.now().isoformat(),
+                'operation': 'document_parse',
+                'success': True,
+                'duration_ms': 1250,
+                'api_endpoint': 'qiniu'
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'timestamp': datetime.now().isoformat(),
+                'operation': 'content_generate',
+                'success': True,
+                'duration_ms': 2100,
+                'api_endpoint': 'together'
+            }
+        ]
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'records': mock_records,
+                'total': len(mock_records),
+                'page': page,
+                'size': size
+            }
+        })
+    except Exception as e:
+        print(f"Error getting processing history: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/performance/export', methods=['POST'])
+def export_performance_data():
+    """导出性能数据"""
+    try:
+        data = request.get_json()
+        filter_type = data.get('filter', 'all')
+        format_type = data.get('format', 'csv')
+
+        # TODO: 实现实际的导出逻辑
+        # 这里返回一个简单的CSV内容
+        csv_content = "timestamp,operation,success,duration_ms,api_endpoint\n"
+        csv_content += "2024-01-01T10:00:00,document_parse,true,1250,qiniu\n"
+        csv_content += "2024-01-01T10:01:00,content_generate,true,2100,together\n"
+
+        from flask import Response
+        return Response(
+            csv_content,
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=performance_export.csv'}
+        )
+    except Exception as e:
+        print(f"Error exporting performance data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ==================== 批量处理相关API端点 ====================
+
+@app.route('/batch')
+def batch_page():
+    """批量处理页面"""
+    return render_template('batch.html')
+
+@app.route('/api/batch/create', methods=['POST'])
+def create_batch_job():
+    """创建批量处理作业"""
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        files = data.get('files', [])
+        processing_config = data.get('processing_config', {})
+
+        if not name or not files:
+            return jsonify({
+                'success': False,
+                'error': '作业名称和文件列表不能为空'
+            }), 400
+
+        # 获取批量处理器
+        batch_processor = get_batch_processor()
+
+        # 注册处理器函数（如果还没有注册）
+        if not hasattr(batch_processor, '_processors_registered'):
+            register_batch_processors(batch_processor)
+            batch_processor._processors_registered = True
+
+        # 创建作业
+        job_id = batch_processor.create_batch_job(name, files, processing_config)
+
+        return jsonify({
+            'success': True,
+            'job_id': job_id,
+            'message': '批量处理作业创建成功'
+        })
+
+    except Exception as e:
+        print(f"Error creating batch job: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/batch/start/<job_id>', methods=['POST'])
+def start_batch_job(job_id):
+    """启动批量处理作业"""
+    try:
+        batch_processor = get_batch_processor()
+        success = batch_processor.start_batch_job(job_id)
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': '批量处理作业启动成功'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '启动作业失败'
+            }), 400
+
+    except Exception as e:
+        print(f"Error starting batch job: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/batch/jobs')
+def get_batch_jobs():
+    """获取批量处理作业列表"""
+    try:
+        batch_processor = get_batch_processor()
+        jobs = batch_processor.list_active_jobs()
+
+        return jsonify({
+            'success': True,
+            'jobs': jobs
+        })
+
+    except Exception as e:
+        print(f"Error getting batch jobs: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/batch/job/<job_id>')
+def get_batch_job_status(job_id):
+    """获取批量处理作业状态"""
+    try:
+        batch_processor = get_batch_processor()
+        job_status = batch_processor.get_job_status(job_id)
+
+        if job_status:
+            return jsonify({
+                'success': True,
+                'job': job_status
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '作业不存在'
+            }), 404
+
+    except Exception as e:
+        print(f"Error getting batch job status: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/batch/cancel/<job_id>', methods=['POST'])
+def cancel_batch_job(job_id):
+    """取消批量处理作业"""
+    try:
+        batch_processor = get_batch_processor()
+        success = batch_processor.cancel_job(job_id)
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': '作业取消成功'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '取消作业失败'
+            }), 400
+
+    except Exception as e:
+        print(f"Error cancelling batch job: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+def register_batch_processors(batch_processor):
+    """注册批量处理器函数"""
+
+    def document_parse_processor(file_path, config):
+        """文档解析处理器"""
+        try:
+            # 这里应该调用实际的文档解析逻辑
+            # 为了演示，我们返回一个模拟结果
+            time.sleep(1)  # 模拟处理时间
+            return {
+                'success': True,
+                'output_path': file_path.replace('.', '_parsed.'),
+                'message': f'文档解析完成: {os.path.basename(file_path)}'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    def format_cleanup_processor(file_path, config):
+        """格式整理处理器"""
+        try:
+            time.sleep(2)  # 模拟处理时间
+            return {
+                'success': True,
+                'output_path': file_path.replace('.', '_formatted.'),
+                'message': f'格式整理完成: {os.path.basename(file_path)}'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    def content_generation_processor(file_path, config):
+        """内容生成处理器"""
+        try:
+            time.sleep(3)  # 模拟处理时间
+            return {
+                'success': True,
+                'output_path': file_path.replace('.', '_generated.'),
+                'message': f'内容生成完成: {os.path.basename(file_path)}'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    def style_transfer_processor(file_path, config):
+        """风格转换处理器"""
+        try:
+            time.sleep(2.5)  # 模拟处理时间
+            return {
+                'success': True,
+                'output_path': file_path.replace('.', '_styled.'),
+                'message': f'风格转换完成: {os.path.basename(file_path)}'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    # 注册处理器
+    batch_processor.register_processor('document_parse', document_parse_processor)
+    batch_processor.register_processor('format_cleanup', format_cleanup_processor)
+    batch_processor.register_processor('content_generation', content_generation_processor)
+    batch_processor.register_processor('style_transfer', style_transfer_processor)
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)

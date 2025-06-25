@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量处理 - 办公文档智能代理</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="static/css/enhanced-ui.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .drop-zone {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+            border-color: #667eea;
+            background-color: #f7fafc;
+        }
+        .file-item {
+            transition: all 0.3s ease;
+        }
+        .file-item:hover {
+            background-color: #f9fafb;
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 0.3s ease;
+        }
+        .job-card {
+            transition: all 0.3s ease;
+        }
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-processing { background-color: #dbeafe; color: #1e40af; }
+        .status-completed { background-color: #d1fae5; color: #065f46; }
+        .status-failed { background-color: #fee2e2; color: #991b1b; }
+        .status-cancelled { background-color: #f3f4f6; color: #374151; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-layer-group text-white text-2xl mr-3"></i>
+                    <h1 class="text-white text-xl font-bold">批量处理</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white hover:text-gray-200 transition-colors">
+                        <i class="fas fa-home mr-2"></i>返回主页
+                    </a>
+                    <a href="/dashboard" class="text-white hover:text-gray-200 transition-colors">
+                        <i class="fas fa-chart-line mr-2"></i>性能监控
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 创建批量作业 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-plus-circle mr-2 text-blue-600"></i>创建批量处理作业
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 文件上传区域 -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">选择文件</h3>
+                    <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 mb-2">拖拽文件到此处或点击选择</p>
+                        <p class="text-sm text-gray-500">支持 .docx, .pdf, .txt 等格式</p>
+                        <input type="file" id="fileInput" multiple accept=".docx,.pdf,.txt,.md" class="hidden">
+                        <button id="selectFilesBtn" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            选择文件
+                        </button>
+                    </div>
+                    
+                    <!-- 文件列表 -->
+                    <div id="fileList" class="mt-4 space-y-2">
+                        <!-- 文件项将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+                
+                <!-- 处理配置 -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">处理配置</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">作业名称</label>
+                            <input type="text" id="jobName" class="w-full border border-gray-300 rounded-md px-3 py-2" 
+                                   placeholder="输入作业名称">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">处理类型</label>
+                            <select id="operationType" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                                <option value="document_parse">文档解析</option>
+                                <option value="format_cleanup">格式整理</option>
+                                <option value="content_generation">内容生成</option>
+                                <option value="style_transfer">风格转换</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">并行度</label>
+                            <select id="parallelism" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                                <option value="1">1个文件同时处理</option>
+                                <option value="2">2个文件同时处理</option>
+                                <option value="3" selected>3个文件同时处理</option>
+                                <option value="4">4个文件同时处理</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">输出目录</label>
+                            <input type="text" id="outputDir" class="w-full border border-gray-300 rounded-md px-3 py-2" 
+                                   placeholder="默认：output/batch_processing" value="output/batch_processing">
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" id="overwriteFiles" class="mr-2">
+                            <label for="overwriteFiles" class="text-sm text-gray-700">覆盖已存在的文件</label>
+                        </div>
+                    </div>
+                    
+                    <button id="startBatchBtn" class="w-full mt-6 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400" disabled>
+                        <i class="fas fa-play mr-2"></i>开始批量处理
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 活跃作业列表 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-tasks mr-2 text-indigo-600"></i>批量处理作业
+                </h2>
+                <button id="refreshJobsBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-sync-alt mr-2"></i>刷新
+                </button>
+            </div>
+            
+            <div id="jobsList" class="space-y-4">
+                <!-- 作业卡片将通过JavaScript动态生成 -->
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-inbox text-4xl mb-4"></i>
+                    <p>暂无批量处理作业</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 作业详情模态框 -->
+    <div id="jobDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">作业详情</h3>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="jobDetailContent">
+                <!-- 详情内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载指示器 -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span class="text-gray-700">处理中...</span>
+        </div>
+    </div>
+
+    <script src="static/js/batch.js"></script>
+</body>
+</html>
