@@ -1,0 +1,3 @@
+# ...existing code...
+# 请将原 src/doc_processor.py 内容粘贴到此处，路径已同步到新项目根目录。
+# 其余依赖文件（如 layout_analyzer.py、ocr_engine.py、table_parser.py）同理迁移。

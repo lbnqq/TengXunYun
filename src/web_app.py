@@ -912,12 +912,13 @@ def upload_file():
         print("🚀 UPLOAD REQUEST RECEIVED")
         print("=" * 80)
 
-        # Debug request information
-        print(f"📋 Request method: {request.method}")
-        print(f"📋 Request content type: {request.content_type}")
-        print(f"📋 Request files: {list(request.files.keys())}")
-        print(f"📋 Request form data: {dict(request.form)}")
-        print(f"📋 Request headers: {dict(request.headers)}")
+        try:
+            # Debug request information
+            print(f"📋 Request method: {request.method}")
+            print(f"📋 Request content type: {request.content_type}")
+            print(f"📋 Request files: {list(request.files.keys())}")
+            print(f"📋 Request form data: {dict(request.form)}")
+            print(f"📋 Request headers: {dict(request.headers)}")
 
         if 'file' not in request.files:
             print("❌ ERROR: No file provided in request")
@@ -1315,6 +1316,23 @@ def apply_format_template(template_id):
 
     except Exception as e:
         return jsonify({'error': f'应用模板失败: {str(e)}'}), 500
+
+@app.route('/api/format-alignment/preview/<session_id>')
+def preview_formatted_document(session_id):
+    """在浏览器中预览格式化文档"""
+    try:
+        # 这里应该从会话中获取HTML内容
+        # 为了演示，我们创建一个基本的HTML页面
+        html_content = request.args.get('html_content', '')
+
+        if not html_content:
+            return "No content to preview", 404
+
+        # 直接返回HTML内容，浏览器会渲染它
+        return html_content
+
+    except Exception as e:
+        return f"Preview error: {str(e)}", 500
 
 @app.route('/api/models')
 def get_available_models():

@@ -46,6 +46,9 @@
 - **多API支持**: 支持讯飞星火、七牛云、Together.ai、OpenRouter等多种AI服务
 - **智能文档处理**: 自动分析文档内容、结构和场景
 - **专业工具集**: 内容填充、样式生成、虚拟审阅、会议回顾等
+- **🧠 语义空间行为分析**: 基于语义空间映射的深度文风分析算法
+- **🎨 增强文风分析**: 多维度文风特征提取和智能对齐
+- **🔄 综合文风处理**: 集成量化分析、LLM评估和语义行为分析
 - **Web界面**: 现代化的用户界面，支持拖拽上传
 - **离线模式**: 支持模拟模式，无需API密钥即可体验
 
@@ -219,6 +222,44 @@ GET /api/config
 GET /api/models
 ```
 
+### 🆕 增强文风分析接口
+```http
+POST /api/writing-style/analyze-enhanced
+Content-Type: application/json
+
+{
+  "content": "文档内容",
+  "document_name": "文档名称",
+  "use_enhanced": true,
+  "analysis_type": "comprehensive"
+}
+```
+
+### 🧠 语义空间行为分析接口
+```http
+POST /api/writing-style/semantic-behavior
+Content-Type: application/json
+
+{
+  "content": "文档内容",
+  "document_name": "文档名称",
+  "analysis_depth": "comprehensive"
+}
+```
+
+### 🔄 语义风格比较接口
+```http
+POST /api/writing-style/compare-semantic
+Content-Type: application/json
+
+{
+  "document1_content": "第一个文档内容",
+  "document2_content": "第二个文档内容",
+  "doc1_name": "文档1名称",
+  "doc2_name": "文档2名称"
+}
+```
+
 ## 🎯 使用场景
 
 1. **企业文档处理**: 批量处理公司文档，提升工作效率
@@ -249,4 +290,9 @@ MIT License
 
 ---
 
-**注意**: 使用前请确保您有相应API服务的有效密钥，并遵守各服务的使用条款。 
+**最后更新**: 2025-06-25
+**更新人**: AI Assistant
+**版本**: v2.1
+**新增功能**: 语义空间行为分析、增强文风分析、综合文风处理
+
+**注意**: 使用前请确保您有相应API服务的有效密钥，并遵守各服务的使用条款。

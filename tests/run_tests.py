@@ -22,6 +22,34 @@ from test_format_alignment import TestFormatAlignment
 from test_writing_style import TestWritingStyle
 from test_integration import TestIntegration
 
+# 导入新增功能测试模块
+try:
+    from test_semantic_behavior_engine import TestSemanticUnitIdentifier, TestSemanticSpaceMapper, TestSemanticBehaviorAnalyzer
+    SEMANTIC_TESTS_AVAILABLE = True
+except ImportError:
+    SEMANTIC_TESTS_AVAILABLE = False
+    print("⚠️ 语义行为分析测试模块不可用")
+
+try:
+    from test_comprehensive_style_processor import TestQuantitativeFeatureExtractor, TestComprehensiveStyleProcessor
+    COMPREHENSIVE_TESTS_AVAILABLE = True
+except ImportError:
+    COMPREHENSIVE_TESTS_AVAILABLE = False
+    print("⚠️ 综合文风处理测试模块不可用")
+
+# 导入其他测试模块
+try:
+    from test_llm_clients import TestLLMClients
+    LLM_TESTS_AVAILABLE = True
+except ImportError:
+    LLM_TESTS_AVAILABLE = False
+
+try:
+    from test_basic_functionality import TestBasicFunctionality
+    BASIC_TESTS_AVAILABLE = True
+except ImportError:
+    BASIC_TESTS_AVAILABLE = False
+
 
 class TestResult:
     """测试结果收集器"""
@@ -150,7 +178,7 @@ class CustomTestRunner:
     
     def run_all_tests(self):
         """运行所有测试"""
-        print("开始执行格式对齐和文风对齐功能测试")
+        print("开始执行办公文档智能代理系统全面测试")
         print(f"测试开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         start_time = time.time()
@@ -161,6 +189,33 @@ class CustomTestRunner:
             (unittest.TestLoader().loadTestsFromTestCase(TestWritingStyle), "文风对齐测试"),
             (unittest.TestLoader().loadTestsFromTestCase(TestIntegration), "集成测试")
         ]
+
+        # 添加新增功能测试
+        if SEMANTIC_TESTS_AVAILABLE:
+            test_suites.extend([
+                (unittest.TestLoader().loadTestsFromTestCase(TestSemanticUnitIdentifier), "语义单元识别测试"),
+                (unittest.TestLoader().loadTestsFromTestCase(TestSemanticSpaceMapper), "语义空间映射测试"),
+                (unittest.TestLoader().loadTestsFromTestCase(TestSemanticBehaviorAnalyzer), "语义行为分析测试")
+            ])
+            print("✅ 已加载语义空间行为分析测试")
+
+        if COMPREHENSIVE_TESTS_AVAILABLE:
+            test_suites.extend([
+                (unittest.TestLoader().loadTestsFromTestCase(TestQuantitativeFeatureExtractor), "量化特征提取测试"),
+                (unittest.TestLoader().loadTestsFromTestCase(TestComprehensiveStyleProcessor), "综合文风处理测试")
+            ])
+            print("✅ 已加载综合文风处理测试")
+
+        # 添加其他可用测试
+        if LLM_TESTS_AVAILABLE:
+            test_suites.append((unittest.TestLoader().loadTestsFromTestCase(TestLLMClients), "LLM客户端测试"))
+            print("✅ 已加载LLM客户端测试")
+
+        if BASIC_TESTS_AVAILABLE:
+            test_suites.append((unittest.TestLoader().loadTestsFromTestCase(TestBasicFunctionality), "基础功能测试"))
+            print("✅ 已加载基础功能测试")
+
+        print(f"📊 总共加载了 {len(test_suites)} 个测试套件")
         
         # 运行每个测试套件
         all_results = []

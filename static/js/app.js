@@ -945,7 +945,27 @@ function showFormatAlignmentResult(result) {
             button.textContent = action.label;
 
             if (action.type === 'download') {
-                button.addEventListener('click', () => downloadFormattedDocument(action.data));
+                button.addEventListener('click', () => {
+                    // 创建两个按钮：预览和下载
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'flex space-x-2';
+
+                    const previewBtn = document.createElement('button');
+                    previewBtn.className = 'bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm';
+                    previewBtn.textContent = '浏览器预览';
+                    previewBtn.addEventListener('click', () => previewFormattedDocument(action.data));
+
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.className = 'bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm';
+                    downloadBtn.textContent = '下载文档';
+                    downloadBtn.addEventListener('click', () => downloadFormattedDocument(action.data));
+
+                    buttonContainer.appendChild(previewBtn);
+                    buttonContainer.appendChild(downloadBtn);
+
+                    // 替换原按钮
+                    button.parentNode.replaceChild(buttonContainer, button);
+                });
             } else if (action.type === 'save_template') {
                 button.addEventListener('click', () => saveFormatTemplate(action.template_id));
             }
@@ -962,15 +982,87 @@ function showFormatAlignmentResult(result) {
     loadFormatTemplates();
 }
 
+// 预览格式化文档
+function previewFormattedDocument(htmlContent) {
+    try {
+        // 在新窗口中打开HTML内容
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+            showNotification('文档预览已打开', 'success');
+        } else {
+            // 如果弹窗被阻止，则在当前页面显示
+            showFormattedDocumentModal(htmlContent);
+        }
+    } catch (error) {
+        console.error('Preview error:', error);
+        showNotification('预览失败', 'error');
+    }
+}
+
+function showFormattedDocumentModal(htmlContent) {
+    // 创建模态框显示HTML内容
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto m-4">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-semibold">格式化文档预览</h3>
+                <div class="flex space-x-2">
+                    <button id="downloadFromModal" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                        下载文档
+                    </button>
+                    <button id="closeModal" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">
+                        关闭
+                    </button>
+                </div>
+            </div>
+            <div class="p-4">
+                <iframe srcdoc="${htmlContent.replace(/"/g, '&quot;')}"
+                        class="w-full h-96 border rounded"></iframe>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // 添加事件监听器
+    modal.querySelector('#closeModal').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+
+    modal.querySelector('#downloadFromModal').addEventListener('click', () => {
+        downloadFormattedDocument(htmlContent);
+        document.body.removeChild(modal);
+    });
+
+    // 点击背景关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
 // 下载格式化文档
 function downloadFormattedDocument(htmlContent) {
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'formatted_document.html';
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `formatted_document_${Date.now()}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showNotification('文档下载成功', 'success');
+    } catch (error) {
+        console.error('Download error:', error);
+        showNotification('下载失败', 'error');
+    }
 }
 
 // 保存格式模板

@@ -5,19 +5,44 @@ from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 import hashlib
 
+# 导入增强的文风分析组件
+try:
+    from .comprehensive_style_processor import ComprehensiveStyleProcessor
+    from .enhanced_style_extractor import EnhancedStyleExtractor
+    from .style_alignment_engine import StyleAlignmentEngine
+    ENHANCED_FEATURES_AVAILABLE = True
+except ImportError:
+    ENHANCED_FEATURES_AVAILABLE = False
+    print("Warning: Enhanced style analysis features not available. Using basic functionality.")
+
 class WritingStyleAnalyzer:
     """
     文风分析器
     分析文档的写作风格特征，生成文风模板，支持文风对齐功能
+    现已集成增强的文风分析功能
     """
-    
-    def __init__(self, storage_path: str = "src/core/knowledge_base/writing_style_templates"):
+
+    def __init__(self, storage_path: str = "src/core/knowledge_base/writing_style_templates", llm_client=None):
         self.tool_name = "文风分析器"
         self.description = "分析文档写作风格，生成文风模板，支持文风对齐和润色功能"
         self.storage_path = storage_path
-        
+        self.llm_client = llm_client
+
         # 确保存储目录存在
         os.makedirs(storage_path, exist_ok=True)
+
+        # 初始化增强功能组件
+        if ENHANCED_FEATURES_AVAILABLE and llm_client:
+            self.enhanced_processor = ComprehensiveStyleProcessor(
+                llm_client=llm_client,
+                storage_path=os.path.join(storage_path, "enhanced_analysis")
+            )
+            self.use_enhanced_features = True
+            print("✅ 增强文风分析功能已启用")
+        else:
+            self.enhanced_processor = None
+            self.use_enhanced_features = False
+            print("⚠️ 使用基础文风分析功能")
         
         # 文风特征分析维度
         self.style_dimensions = {
@@ -72,50 +97,655 @@ class WritingStyleAnalyzer:
             }
         }
     
-    def analyze_writing_style(self, document_content: str, document_name: str = None) -> Dict[str, Any]:
+    def analyze_writing_style(self, document_content: str, document_name: str = None,
+                             use_enhanced: bool = None) -> Dict[str, Any]:
         """
         分析文档的写作风格
-        
+
         Args:
             document_content: 文档内容
             document_name: 文档名称
-            
+            use_enhanced: 是否使用增强功能（None时自动判断）
+
         Returns:
             文风分析结果
         """
+        # 决定是否使用增强功能
+        if use_enhanced is None:
+            use_enhanced = self.use_enhanced_features
+
+        if use_enhanced and self.enhanced_processor:
+            return self._analyze_with_enhanced_features(document_content, document_name)
+        else:
+            return self._analyze_with_basic_features(document_content, document_name)
+
+    def _analyze_with_enhanced_features(self, document_content: str, document_name: str = None) -> Dict[str, Any]:
+        """使用增强功能进行文风分析"""
+        try:
+            print(f"🔍 使用增强功能分析文档: {document_name or '未命名文档'}")
+
+            # 使用综合文风处理器进行分析
+            enhanced_result = self.enhanced_processor.extract_comprehensive_style_features(
+                document_content, document_name, include_advanced_analysis=True
+            )
+
+            # 转换为兼容的格式
+            analysis_result = {
+                "document_name": document_name or "未命名文档",
+                "analysis_time": datetime.now().isoformat(),
+                "analysis_method": "enhanced",
+                "document_stats": self._get_document_statistics(document_content),
+                "enhanced_analysis": enhanced_result,
+                "style_features": self._extract_style_features_from_enhanced(enhanced_result),
+                "style_type": self._determine_style_type_from_enhanced(enhanced_result),
+                "confidence_score": self._calculate_confidence_from_enhanced(enhanced_result),
+                "style_prompt": self._generate_style_prompt_from_enhanced(enhanced_result),
+                "template_id": self._generate_template_id(document_name, {}),
+                "detailed_analysis": enhanced_result.get("advanced_features", {}),
+                "writing_recommendations": self._generate_recommendations_from_enhanced(enhanced_result),
+                "style_comparison": {}
+            }
+
+            print("✅ 增强文风分析完成")
+            return analysis_result
+
+        except Exception as e:
+            print(f"❌ 增强分析失败，回退到基础分析: {str(e)}")
+            return self._analyze_with_basic_features(document_content, document_name)
+
+    def _analyze_with_basic_features(self, document_content: str, document_name: str = None) -> Dict[str, Any]:
+        """使用基础功能进行文风分析"""
         try:
             analysis_result = {
                 "document_name": document_name or "未命名文档",
                 "analysis_time": datetime.now().isoformat(),
+                "analysis_method": "basic",
+                "document_stats": self._get_document_statistics(document_content),
                 "style_features": {},
                 "style_type": None,
                 "confidence_score": 0.0,
                 "style_prompt": "",
-                "template_id": None
+                "template_id": None,
+                "detailed_analysis": {},
+                "writing_recommendations": [],
+                "style_comparison": {}
             }
-            
+
             # 分析各个维度的文风特征
             style_features = self._analyze_style_features(document_content)
             analysis_result["style_features"] = style_features
-            
+
             # 识别文风类型
             style_type, confidence = self._identify_style_type(document_content, style_features)
             analysis_result["style_type"] = style_type
             analysis_result["confidence_score"] = confidence
-            
+
+            # 生成详细分析报告
+            detailed_analysis = self._generate_detailed_analysis(document_content, style_features, style_type)
+            analysis_result["detailed_analysis"] = detailed_analysis
+
+            # 生成写作建议
+            recommendations = self._generate_writing_recommendations(style_features, style_type)
+            analysis_result["writing_recommendations"] = recommendations
+
+            # 生成风格对比
+            style_comparison = self._generate_style_comparison(style_features)
+            analysis_result["style_comparison"] = style_comparison
+
             # 生成文风提示词
-            style_prompt = self._generate_style_prompt(style_features, style_type)
+            style_prompt = self._generate_enhanced_style_prompt(style_features, style_type, detailed_analysis)
             analysis_result["style_prompt"] = style_prompt
-            
+
             # 生成模板ID
             template_id = self._generate_template_id(document_name, style_features)
             analysis_result["template_id"] = template_id
-            
+
             return analysis_result
-            
+
         except Exception as e:
             return {"error": f"文风分析失败: {str(e)}"}
-    
+
+    def _extract_style_features_from_enhanced(self, enhanced_result: Dict[str, Any]) -> Dict[str, Any]:
+        """从增强分析结果中提取风格特征"""
+        style_features = {}
+
+        try:
+            basic_features = enhanced_result.get("basic_features", {})
+
+            # 提取量化特征
+            quant_features = basic_features.get("quantitative_features", {})
+            if quant_features:
+                lexical = quant_features.get("lexical_features", {})
+                syntactic = quant_features.get("syntactic_features", {})
+
+                style_features["lexical_richness"] = lexical.get("ttr", 0)
+                style_features["avg_word_length"] = lexical.get("avg_word_length", 0)
+                style_features["formal_density"] = lexical.get("formal_word_density", 0)
+                style_features["avg_sentence_length"] = syntactic.get("avg_sentence_length", 0)
+                style_features["sentence_variety"] = syntactic.get("sentence_length_std", 0)
+
+            # 提取LLM特征
+            llm_features = basic_features.get("llm_features", {})
+            if llm_features:
+                evaluations = llm_features.get("evaluations", {})
+                for dimension, eval_data in evaluations.items():
+                    if isinstance(eval_data, dict) and "score" in eval_data:
+                        style_features[f"llm_{dimension}"] = eval_data["score"]
+
+        except Exception as e:
+            style_features["extraction_error"] = str(e)
+
+        return style_features
+
+    def _determine_style_type_from_enhanced(self, enhanced_result: Dict[str, Any]) -> str:
+        """从增强分析结果中确定风格类型"""
+        try:
+            advanced_features = enhanced_result.get("advanced_features", {})
+            comprehensive_analysis = advanced_features.get("comprehensive_analysis", {})
+
+            if comprehensive_analysis.get("success"):
+                parsed_analysis = comprehensive_analysis.get("parsed_analysis", {})
+                overall_style = parsed_analysis.get("overall_style", {})
+
+                # 从LLM分析中提取风格类型
+                style_type = overall_style.get("主要风格类型", "")
+                if style_type:
+                    # 映射到内部风格类型
+                    style_mapping = {
+                        "正式公文": "formal_official",
+                        "商务专业": "business_professional",
+                        "学术研究": "academic_research",
+                        "叙述描述": "narrative_descriptive",
+                        "简洁实用": "concise_practical"
+                    }
+                    return style_mapping.get(style_type, "business_professional")
+
+            # 回退到基于特征的判断
+            style_features = self._extract_style_features_from_enhanced(enhanced_result)
+            formal_score = style_features.get("llm_正式程度", 3.0)
+
+            if formal_score >= 4.0:
+                return "formal_official"
+            elif formal_score >= 3.5:
+                return "business_professional"
+            else:
+                return "concise_practical"
+
+        except Exception:
+            return "business_professional"
+
+    def _calculate_confidence_from_enhanced(self, enhanced_result: Dict[str, Any]) -> float:
+        """从增强分析结果中计算置信度"""
+        try:
+            basic_features = enhanced_result.get("basic_features", {})
+
+            # 基于成功提取的特征数量计算置信度
+            feature_vector = basic_features.get("feature_vector", [])
+            if feature_vector:
+                base_confidence = min(len(feature_vector) / 20.0, 1.0)  # 假设20个特征为满分
+            else:
+                base_confidence = 0.5
+
+            # 如果有LLM分析，提高置信度
+            llm_features = basic_features.get("llm_features", {})
+            if llm_features.get("evaluations"):
+                base_confidence = min(base_confidence + 0.2, 1.0)
+
+            # 如果有高级分析，进一步提高置信度
+            advanced_features = enhanced_result.get("advanced_features", {})
+            if advanced_features:
+                base_confidence = min(base_confidence + 0.1, 1.0)
+
+            return round(base_confidence, 3)
+
+        except Exception:
+            return 0.7  # 默认置信度
+
+    def _generate_style_prompt_from_enhanced(self, enhanced_result: Dict[str, Any]) -> str:
+        """从增强分析结果中生成风格提示词"""
+        try:
+            style_features = self._extract_style_features_from_enhanced(enhanced_result)
+            style_type = self._determine_style_type_from_enhanced(enhanced_result)
+
+            # 获取风格类型信息
+            style_info = self.style_types.get(style_type, {})
+            style_name = style_info.get("name", "标准风格")
+            characteristics = style_info.get("characteristics", [])
+
+            # 构建提示词
+            prompt_parts = [f"请按照{style_name}进行写作"]
+
+            if characteristics:
+                prompt_parts.append(f"特点：{', '.join(characteristics)}")
+
+            # 添加具体的风格指导
+            if style_features.get("formal_density", 0) > 10:
+                prompt_parts.append("使用正式词汇和表达")
+
+            if style_features.get("avg_sentence_length", 0) > 15:
+                prompt_parts.append("采用较长的复合句结构")
+            elif style_features.get("avg_sentence_length", 0) < 10:
+                prompt_parts.append("使用简洁明了的短句")
+
+            return "；".join(prompt_parts)
+
+        except Exception:
+            return "请保持原有的写作风格"
+
+    def _generate_recommendations_from_enhanced(self, enhanced_result: Dict[str, Any]) -> List[str]:
+        """从增强分析结果中生成写作建议"""
+        recommendations = []
+
+        try:
+            style_features = self._extract_style_features_from_enhanced(enhanced_result)
+
+            # 基于特征给出建议
+            if style_features.get("lexical_richness", 0) < 0.5:
+                recommendations.append("建议增加词汇多样性，避免重复使用相同词汇")
+
+            if style_features.get("sentence_variety", 0) < 3:
+                recommendations.append("建议增加句式变化，使用长短句结合的方式")
+
+            if style_features.get("formal_density", 0) < 5:
+                recommendations.append("如需提高正式程度，可增加正式词汇的使用")
+
+            # 从LLM分析中提取建议
+            advanced_features = enhanced_result.get("advanced_features", {})
+            comprehensive_analysis = advanced_features.get("comprehensive_analysis", {})
+
+            if comprehensive_analysis.get("success"):
+                parsed_analysis = comprehensive_analysis.get("parsed_analysis", {})
+                style_summary = parsed_analysis.get("style_summary", {})
+
+                improvement_suggestions = style_summary.get("改进建议", "")
+                if improvement_suggestions and improvement_suggestions != "无":
+                    recommendations.append(improvement_suggestions)
+
+            return recommendations[:5]  # 最多返回5条建议
+
+        except Exception:
+            return ["建议保持当前写作风格的一致性"]
+
+    def analyze_with_semantic_behavior(self, document_content: str, document_name: str = None) -> Dict[str, Any]:
+        """
+        使用语义空间行为算法进行文风分析
+
+        Args:
+            document_content: 文档内容
+            document_name: 文档名称
+
+        Returns:
+            语义行为分析结果
+        """
+        if not self.use_enhanced_features or not self.enhanced_processor:
+            return {"error": "增强功能未启用，无法进行语义行为分析"}
+
+        try:
+            print(f"🧠 开始语义空间行为分析: {document_name or '未命名文档'}")
+
+            # 使用综合处理器的语义分析功能
+            semantic_result = self.enhanced_processor.analyze_semantic_behavior(
+                document_content, document_name, "comprehensive"
+            )
+
+            if semantic_result.get("success"):
+                # 转换为兼容的格式
+                analysis_result = {
+                    "document_name": document_name or "未命名文档",
+                    "analysis_time": datetime.now().isoformat(),
+                    "analysis_method": "semantic_behavior",
+                    "semantic_analysis": semantic_result,
+                    "style_features": self._extract_semantic_style_features(semantic_result),
+                    "style_type": self._determine_semantic_style_type(semantic_result),
+                    "confidence_score": self._calculate_semantic_confidence(semantic_result),
+                    "style_prompt": self._generate_semantic_style_prompt(semantic_result),
+                    "template_id": self._generate_template_id(document_name, {}),
+                    "detailed_analysis": semantic_result.get("comprehensive_insights", {}),
+                    "writing_recommendations": self._generate_semantic_recommendations(semantic_result),
+                    "style_comparison": {}
+                }
+
+                print("✅ 语义空间行为分析完成")
+                return analysis_result
+            else:
+                return {"error": f"语义分析失败: {semantic_result.get('error', '未知错误')}"}
+
+        except Exception as e:
+            return {"error": f"语义空间行为分析失败: {str(e)}"}
+
+    def _extract_semantic_style_features(self, semantic_result: Dict[str, Any]) -> Dict[str, Any]:
+        """从语义分析结果中提取风格特征"""
+        style_features = {}
+
+        try:
+            # 从最终画像中提取特征
+            final_profile = semantic_result.get("semantic_analysis", {}).get("final_profile", {})
+            if final_profile.get("success"):
+                style_scores = final_profile.get("style_scores", {})
+
+                # 映射到传统特征名称
+                style_features.update({
+                    "conceptual_organization": style_scores.get("conceptual_organization", 3.0),
+                    "semantic_coherence": style_scores.get("semantic_coherence", 3.0),
+                    "creative_association": style_scores.get("creative_association", 3.0),
+                    "emotional_expression": style_scores.get("emotional_expression", 3.0),
+                    "cognitive_complexity": style_scores.get("cognitive_complexity", 3.0),
+                    "thematic_focus": style_scores.get("thematic_focus", 3.0)
+                })
+
+                # 添加特征向量长度
+                feature_vector = final_profile.get("feature_vector", [])
+                style_features["feature_vector_length"] = len(feature_vector)
+                style_features["feature_vector_norm"] = final_profile.get("comparative_metrics", {}).get("feature_vector_norm", 0.0)
+
+        except Exception as e:
+            style_features["extraction_error"] = str(e)
+
+        return style_features
+
+    def _determine_semantic_style_type(self, semantic_result: Dict[str, Any]) -> str:
+        """从语义分析结果中确定风格类型"""
+        try:
+            final_profile = semantic_result.get("semantic_analysis", {}).get("final_profile", {})
+            if final_profile.get("success"):
+                classification = final_profile.get("style_classification", {})
+                primary_style = classification.get("primary_style", "")
+
+                # 映射到内部风格类型
+                style_mapping = {
+                    "系统性思维型": "academic_research",
+                    "逻辑连贯型": "business_professional",
+                    "创新联想型": "creative_narrative",
+                    "情感表达型": "narrative_descriptive",
+                    "复杂思维型": "academic_research",
+                    "专注聚焦型": "formal_official"
+                }
+
+                return style_mapping.get(primary_style, "business_professional")
+
+            return "business_professional"
+
+        except Exception:
+            return "business_professional"
+
+    def _calculate_semantic_confidence(self, semantic_result: Dict[str, Any]) -> float:
+        """计算语义分析的置信度"""
+        try:
+            # 基于分析成功的阶段数量
+            analysis_summary = semantic_result.get("semantic_analysis", {}).get("analysis_summary", {})
+            stages_completed = analysis_summary.get("stages_completed", 0)
+            max_stages = 4
+
+            base_confidence = stages_completed / max_stages
+
+            # 如果有最终画像，提高置信度
+            final_profile = semantic_result.get("semantic_analysis", {}).get("final_profile", {})
+            if final_profile.get("success"):
+                profile_confidence = final_profile.get("comparative_metrics", {}).get("style_score_average", 3.0) / 5.0
+                base_confidence = (base_confidence + profile_confidence) / 2
+
+            return min(1.0, max(0.0, base_confidence))
+
+        except Exception:
+            return 0.7
+
+    def _generate_semantic_style_prompt(self, semantic_result: Dict[str, Any]) -> str:
+        """生成语义风格提示词"""
+        try:
+            final_profile = semantic_result.get("semantic_analysis", {}).get("final_profile", {})
+            if final_profile.get("success"):
+                classification = final_profile.get("style_classification", {})
+                primary_style = classification.get("primary_style", "综合型")
+                characteristics = classification.get("style_characteristics", [])
+
+                prompt_parts = [f"请按照{primary_style}进行写作"]
+
+                if characteristics:
+                    prompt_parts.append(f"特点：{', '.join(characteristics)}")
+
+                # 添加具体的语义指导
+                style_scores = final_profile.get("style_scores", {})
+                if style_scores.get("conceptual_organization", 0) > 4.0:
+                    prompt_parts.append("注重概念的系统性组织")
+                if style_scores.get("creative_association", 0) > 4.0:
+                    prompt_parts.append("发挥创新联想能力")
+                if style_scores.get("emotional_expression", 0) > 4.0:
+                    prompt_parts.append("增强情感表达力")
+
+                return "；".join(prompt_parts)
+
+            return "请保持语义连贯和逻辑清晰的写作风格"
+
+        except Exception:
+            return "请保持原有的写作风格"
+
+    def _generate_semantic_recommendations(self, semantic_result: Dict[str, Any]) -> List[str]:
+        """生成语义分析建议"""
+        recommendations = []
+
+        try:
+            # 从综合洞察中提取建议
+            comprehensive_insights = semantic_result.get("comprehensive_insights", {})
+            actionable_recommendations = comprehensive_insights.get("actionable_recommendations", [])
+            recommendations.extend(actionable_recommendations[:3])
+
+            # 从最终画像中提取改进建议
+            final_profile = semantic_result.get("semantic_analysis", {}).get("final_profile", {})
+            if final_profile.get("success"):
+                profile_summary = final_profile.get("profile_summary", {})
+                improvements = profile_summary.get("potential_improvements", [])
+                for improvement in improvements[:2]:
+                    recommendations.append(f"建议提升{improvement}")
+
+            # 如果没有具体建议，提供通用建议
+            if not recommendations:
+                recommendations = [
+                    "建议保持概念组织的系统性",
+                    "注意语义连贯性和逻辑性",
+                    "适当增加创新性表达"
+                ]
+
+            return recommendations[:5]
+
+        except Exception:
+            return ["建议保持当前的语义风格特征"]
+
+    def compare_semantic_styles(self, document1_content: str, document2_content: str,
+                              doc1_name: str = None, doc2_name: str = None) -> Dict[str, Any]:
+        """
+        比较两个文档的语义风格
+
+        Args:
+            document1_content: 第一个文档内容
+            document2_content: 第二个文档内容
+            doc1_name: 第一个文档名称
+            doc2_name: 第二个文档名称
+
+        Returns:
+            语义风格比较结果
+        """
+        if not self.use_enhanced_features or not self.enhanced_processor:
+            return {"error": "增强功能未启用，无法进行语义风格比较"}
+
+        comparison_result = {
+            "comparison_time": datetime.now().isoformat(),
+            "document1_name": doc1_name or "文档1",
+            "document2_name": doc2_name or "文档2",
+            "document1_analysis": {},
+            "document2_analysis": {},
+            "semantic_comparison": {},
+            "style_compatibility": "unknown",
+            "comparison_summary": {},
+            "success": False
+        }
+
+        try:
+            print(f"🔍 开始语义风格比较: {doc1_name or '文档1'} vs {doc2_name or '文档2'}")
+
+            # 分析第一个文档
+            doc1_analysis = self.analyze_with_semantic_behavior(document1_content, doc1_name)
+            comparison_result["document1_analysis"] = doc1_analysis
+
+            # 分析第二个文档
+            doc2_analysis = self.analyze_with_semantic_behavior(document2_content, doc2_name)
+            comparison_result["document2_analysis"] = doc2_analysis
+
+            # 如果两个分析都成功，进行比较
+            if (not doc1_analysis.get("error") and not doc2_analysis.get("error") and
+                self.enhanced_processor.semantic_analysis_enabled):
+
+                # 使用综合处理器的语义比较功能
+                semantic_comparison = self.enhanced_processor.compare_semantic_profiles(
+                    document1_content, document2_content, doc1_name, doc2_name
+                )
+                comparison_result["semantic_comparison"] = semantic_comparison
+
+                # 生成兼容性评估
+                if semantic_comparison.get("success"):
+                    profile_comparison = semantic_comparison.get("profile_comparison", {})
+                    similarity_score = profile_comparison.get("similarity_score", 0.0)
+
+                    if similarity_score > 0.8:
+                        comparison_result["style_compatibility"] = "高度兼容"
+                    elif similarity_score > 0.6:
+                        comparison_result["style_compatibility"] = "较为兼容"
+                    elif similarity_score > 0.4:
+                        comparison_result["style_compatibility"] = "部分兼容"
+                    else:
+                        comparison_result["style_compatibility"] = "差异较大"
+
+                # 生成比较摘要
+                comparison_result["comparison_summary"] = self._generate_semantic_comparison_summary(
+                    doc1_analysis, doc2_analysis, semantic_comparison
+                )
+
+                comparison_result["success"] = True
+                print("✅ 语义风格比较完成")
+            else:
+                comparison_result["error"] = "文档分析失败，无法进行语义比较"
+                print("❌ 语义风格比较失败")
+
+        except Exception as e:
+            comparison_result["error"] = str(e)
+            print(f"❌ 语义风格比较失败: {str(e)}")
+
+        return comparison_result
+
+    def _generate_semantic_comparison_summary(self, doc1_analysis: Dict[str, Any],
+                                            doc2_analysis: Dict[str, Any],
+                                            semantic_comparison: Dict[str, Any]) -> Dict[str, Any]:
+        """生成语义比较摘要"""
+        summary = {
+            "overall_similarity": 0.0,
+            "style_differences": [],
+            "common_characteristics": [],
+            "recommendation": ""
+        }
+
+        try:
+            # 整体相似度
+            if semantic_comparison.get("success"):
+                profile_comparison = semantic_comparison.get("profile_comparison", {})
+                summary["overall_similarity"] = profile_comparison.get("similarity_score", 0.0)
+
+                # 维度差异
+                dimension_diffs = profile_comparison.get("dimension_differences", {})
+                differences = []
+                similarities = []
+
+                for dimension, diff_data in dimension_diffs.items():
+                    difference = diff_data.get("difference", 0)
+                    if difference > 1.0:  # 差异较大
+                        differences.append(f"{dimension}差异较大")
+                    elif difference < 0.5:  # 相似度较高
+                        similarities.append(f"{dimension}较为相似")
+
+                summary["style_differences"] = differences[:3]
+                summary["common_characteristics"] = similarities[:3]
+
+            # 生成建议
+            similarity_score = summary["overall_similarity"]
+            if similarity_score > 0.7:
+                summary["recommendation"] = "两个文档风格相近，可以进行风格对齐"
+            elif similarity_score > 0.4:
+                summary["recommendation"] = "两个文档风格有一定差异，建议重点调整差异较大的维度"
+            else:
+                summary["recommendation"] = "两个文档风格差异较大，需要全面的风格迁移"
+
+        except Exception as e:
+            summary["error"] = str(e)
+
+        return summary
+
+    def _get_document_statistics(self, content: str) -> Dict[str, Any]:
+        """获取文档基础统计信息"""
+        lines = content.split('\n')
+        sentences = re.split(r'[。！？.!?]', content)
+        paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+        words = re.findall(r'[\u4e00-\u9fff]+', content)
+
+        return {
+            "total_characters": len(content),
+            "total_lines": len(lines),
+            "total_sentences": len([s for s in sentences if s.strip()]),
+            "total_paragraphs": len(paragraphs),
+            "total_words": len(words),
+            "average_sentence_length": round(len(content) / max(len([s for s in sentences if s.strip()]), 1), 1),
+            "average_paragraph_length": round(len(content) / max(len(paragraphs), 1), 1),
+            "reading_time_minutes": round(len(words) / 200, 1)  # 假设每分钟200字
+        }
+
+    def _generate_detailed_analysis(self, content: str, features: Dict[str, Any], style_type: str) -> Dict[str, Any]:
+        """生成详细分析报告"""
+        return {
+            "readability_analysis": self._analyze_readability(content, features),
+            "tone_analysis": self._analyze_tone_details(content, features),
+            "structure_analysis": self._analyze_structure_details(content, features),
+            "vocabulary_analysis": self._analyze_vocabulary_details(content, features),
+            "style_consistency": self._analyze_style_consistency(content, features)
+        }
+
+    def _generate_writing_recommendations(self, features: Dict[str, Any], style_type: str) -> List[str]:
+        """生成写作建议"""
+        recommendations = []
+
+        # 基于句式结构的建议
+        sentence_features = features.get("sentence_structure", {})
+        avg_length = sentence_features.get("average_length", 15)
+
+        if avg_length > 30:
+            recommendations.append("句子偏长，建议适当拆分为短句以提高可读性")
+        elif avg_length < 10:
+            recommendations.append("句子偏短，可以适当增加句子的完整性和表达力")
+
+        # 基于词汇选择的建议
+        vocab_features = features.get("vocabulary_choice", {})
+        modifier_usage = vocab_features.get("modifier_usage", 0)
+
+        if modifier_usage > 50:
+            recommendations.append("修饰词使用较多，建议精简表达，突出重点")
+        elif modifier_usage < 10:
+            recommendations.append("可以适当增加修饰词，丰富表达层次")
+
+        # 基于文风类型的建议
+        if style_type == "business_professional":
+            recommendations.append("保持专业性，注意用词准确性和逻辑清晰")
+        elif style_type == "academic_research":
+            recommendations.append("增强论证严密性，注意引用和数据支撑")
+        elif style_type == "concise_practical":
+            recommendations.append("继续保持简洁明了，突出实用性")
+
+        return recommendations
+
+    def _generate_style_comparison(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        """生成风格对比分析"""
+        return {
+            "formal_vs_informal": self._compare_formality(features),
+            "technical_vs_general": self._compare_technicality(features),
+            "objective_vs_subjective": self._compare_objectivity(features),
+            "concise_vs_elaborate": self._compare_conciseness(features)
+        }
+
     def _analyze_style_features(self, content: str) -> Dict[str, Any]:
         """分析文风特征"""
         if not content or not content.strip():
@@ -472,6 +1102,282 @@ class WritingStyleAnalyzer:
             "parallel_structure": round(parallel_count / total_chars * 1000, 2),
             "question_usage": round(question_count / total_chars * 1000, 2)
         }
+
+    def _analyze_readability(self, content: str, features: Dict[str, Any]) -> Dict[str, Any]:
+        """分析可读性"""
+        sentence_features = features.get("sentence_structure", {})
+        vocab_features = features.get("vocabulary_choice", {})
+
+        # 计算可读性分数 (简化版)
+        avg_sentence_length = sentence_features.get("average_length", 15)
+        technical_density = vocab_features.get("technical_density", 0)
+
+        readability_score = max(0, min(100, 100 - (avg_sentence_length - 15) * 2 - technical_density))
+
+        if readability_score >= 80:
+            level = "很容易阅读"
+        elif readability_score >= 60:
+            level = "较容易阅读"
+        elif readability_score >= 40:
+            level = "中等难度"
+        elif readability_score >= 20:
+            level = "较难阅读"
+        else:
+            level = "很难阅读"
+
+        return {
+            "readability_score": round(readability_score, 1),
+            "readability_level": level,
+            "factors": {
+                "sentence_complexity": "高" if avg_sentence_length > 25 else "中" if avg_sentence_length > 15 else "低",
+                "vocabulary_difficulty": "高" if technical_density > 20 else "中" if technical_density > 10 else "低"
+            }
+        }
+
+    def _analyze_tone_details(self, content: str, features: Dict[str, Any]) -> Dict[str, Any]:
+        """分析语调详情"""
+        emotional_features = features.get("emotional_tone", {})
+
+        # 分析语调倾向
+        positive_words = ["好", "优秀", "成功", "提升", "改善", "创新", "发展", "进步"]
+        negative_words = ["问题", "困难", "挑战", "不足", "缺陷", "失败", "下降", "减少"]
+        neutral_words = ["分析", "研究", "探讨", "考虑", "建议", "方案", "计划", "实施"]
+
+        positive_count = sum(content.count(word) for word in positive_words)
+        negative_count = sum(content.count(word) for word in negative_words)
+        neutral_count = sum(content.count(word) for word in neutral_words)
+
+        total_tone_words = positive_count + negative_count + neutral_count
+
+        if total_tone_words > 0:
+            tone_distribution = {
+                "positive_ratio": round(positive_count / total_tone_words * 100, 1),
+                "negative_ratio": round(negative_count / total_tone_words * 100, 1),
+                "neutral_ratio": round(neutral_count / total_tone_words * 100, 1)
+            }
+        else:
+            tone_distribution = {"positive_ratio": 33.3, "negative_ratio": 33.3, "neutral_ratio": 33.3}
+
+        return {
+            "tone_distribution": tone_distribution,
+            "dominant_tone": max(tone_distribution.items(), key=lambda x: x[1])[0].replace("_ratio", ""),
+            "emotional_intensity": emotional_features.get("intensity_score", 0),
+            "tone_consistency": "高" if max(tone_distribution.values()) > 60 else "中" if max(tone_distribution.values()) > 40 else "低"
+        }
+
+    def _analyze_structure_details(self, content: str, features: Dict[str, Any]) -> Dict[str, Any]:
+        """分析结构详情"""
+        org_features = features.get("text_organization", {})
+
+        return {
+            "paragraph_structure": {
+                "paragraph_count": org_features.get("paragraph_count", 0),
+                "average_length": org_features.get("average_paragraph_length", 0),
+                "length_consistency": "高" if org_features.get("average_paragraph_length", 0) > 100 else "中"
+            },
+            "logical_flow": {
+                "connector_usage": org_features.get("connector_density", 0),
+                "enumeration_usage": org_features.get("enumeration_usage", 0),
+                "summary_usage": org_features.get("summary_usage", 0)
+            },
+            "organization_score": min(100, (org_features.get("connector_density", 0) * 2 +
+                                           org_features.get("enumeration_usage", 0) * 5 +
+                                           org_features.get("summary_usage", 0) * 10))
+        }
+
+    def _analyze_vocabulary_details(self, content: str, features: Dict[str, Any]) -> Dict[str, Any]:
+        """分析词汇详情"""
+        vocab_features = features.get("vocabulary_choice", {})
+
+        return {
+            "vocabulary_richness": {
+                "unique_words": len(set(re.findall(r'[\u4e00-\u9fff]+', content))),
+                "total_words": len(re.findall(r'[\u4e00-\u9fff]+', content)),
+                "diversity_ratio": round(len(set(re.findall(r'[\u4e00-\u9fff]+', content))) /
+                                       max(len(re.findall(r'[\u4e00-\u9fff]+', content)), 1) * 100, 1)
+            },
+            "word_complexity": {
+                "technical_density": vocab_features.get("technical_density", 0),
+                "formality_score": vocab_features.get("formality_score", 0),
+                "modifier_usage": vocab_features.get("modifier_usage", 0)
+            },
+            "action_orientation": {
+                "action_verb_ratio": vocab_features.get("action_verb_ratio", 0),
+                "passive_voice_usage": self._count_passive_voice(content)
+            }
+        }
+
+    def _analyze_style_consistency(self, content: str, features: Dict[str, Any]) -> Dict[str, Any]:
+        """分析风格一致性"""
+        # 分段分析风格一致性
+        paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+
+        if len(paragraphs) < 2:
+            return {"consistency_score": 100, "variation_level": "无法评估"}
+
+        # 简化的一致性分析
+        consistency_factors = []
+
+        # 句长一致性
+        sentence_lengths = []
+        for para in paragraphs:
+            sentences = re.split(r'[。！？.!?]', para)
+            avg_len = sum(len(s) for s in sentences if s.strip()) / max(len([s for s in sentences if s.strip()]), 1)
+            sentence_lengths.append(avg_len)
+
+        if sentence_lengths:
+            length_variance = max(sentence_lengths) - min(sentence_lengths)
+            consistency_factors.append(max(0, 100 - length_variance * 2))
+
+        consistency_score = sum(consistency_factors) / max(len(consistency_factors), 1)
+
+        return {
+            "consistency_score": round(consistency_score, 1),
+            "variation_level": "低" if consistency_score > 80 else "中" if consistency_score > 60 else "高",
+            "factors_analyzed": ["句长一致性", "词汇使用", "语调变化"]
+        }
+
+    def _count_passive_voice(self, content: str) -> float:
+        """统计被动语态使用频率"""
+        passive_patterns = [r'被[\u4e00-\u9fff]+', r'受到[\u4e00-\u9fff]+', r'得到[\u4e00-\u9fff]+']
+        passive_count = sum(len(re.findall(pattern, content)) for pattern in passive_patterns)
+        total_chars = len(content)
+        return round(passive_count / total_chars * 1000, 2) if total_chars > 0 else 0
+
+    def _compare_formality(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        """对比正式性"""
+        vocab_features = features.get("vocabulary_choice", {})
+        habit_features = features.get("language_habits", {})
+
+        formality_score = vocab_features.get("formality_score", 0)
+        formal_structure = habit_features.get("formal_structure_usage", 0)
+        colloquial_level = habit_features.get("colloquial_level", 0)
+
+        overall_formality = (formality_score + formal_structure - colloquial_level) / 3
+
+        return {
+            "formality_level": "高" if overall_formality > 20 else "中" if overall_formality > 10 else "低",
+            "formal_score": round(overall_formality, 1),
+            "indicators": {
+                "formal_vocabulary": formality_score,
+                "formal_structures": formal_structure,
+                "colloquial_elements": colloquial_level
+            }
+        }
+
+    def _compare_technicality(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        """对比技术性"""
+        vocab_features = features.get("vocabulary_choice", {})
+        professional_features = features.get("professionalism", {})
+
+        technical_density = vocab_features.get("technical_density", 0)
+        professional_score = professional_features.get("professional_score", 0)
+
+        return {
+            "technicality_level": "高" if technical_density > 20 else "中" if technical_density > 10 else "低",
+            "technical_score": round(technical_density, 1),
+            "professional_score": round(professional_score, 1),
+            "balance": "技术性强" if technical_density > professional_score else "通用性强"
+        }
+
+    def _compare_objectivity(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        """对比客观性"""
+        emotional_features = features.get("emotional_tone", {})
+        expression_features = features.get("expression_style", {})
+
+        emotional_intensity = emotional_features.get("intensity_score", 0)
+        assertive_score = expression_features.get("assertive_score", 0)
+
+        objectivity_score = max(0, 100 - emotional_intensity * 10 - assertive_score)
+
+        return {
+            "objectivity_level": "高" if objectivity_score > 70 else "中" if objectivity_score > 40 else "低",
+            "objectivity_score": round(objectivity_score, 1),
+            "subjectivity_indicators": {
+                "emotional_intensity": emotional_intensity,
+                "assertive_tone": assertive_score
+            }
+        }
+
+    def _compare_conciseness(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        """对比简洁性"""
+        sentence_features = features.get("sentence_structure", {})
+        vocab_features = features.get("vocabulary_choice", {})
+
+        avg_length = sentence_features.get("average_length", 15)
+        modifier_usage = vocab_features.get("modifier_usage", 0)
+
+        conciseness_score = max(0, 100 - (avg_length - 15) * 2 - modifier_usage)
+
+        return {
+            "conciseness_level": "高" if conciseness_score > 70 else "中" if conciseness_score > 40 else "低",
+            "conciseness_score": round(conciseness_score, 1),
+            "verbosity_indicators": {
+                "sentence_length": avg_length,
+                "modifier_density": modifier_usage
+            }
+        }
+
+    def _generate_enhanced_style_prompt(self, features: Dict[str, Any], style_type: str, detailed_analysis: Dict[str, Any]) -> str:
+        """生成增强的文风提示词"""
+        prompt_parts = []
+
+        # 基础风格描述
+        style_info = self.style_types.get(style_type, {})
+        style_name = style_info.get("name", "通用风格")
+        characteristics = style_info.get("characteristics", [])
+
+        prompt_parts.append(f"请采用{style_name}进行写作，具体特征包括：{', '.join(characteristics)}。")
+
+        # 句式要求
+        sentence_features = features.get("sentence_structure", {})
+        avg_length = sentence_features.get("average_length", 15)
+
+        if avg_length > 25:
+            prompt_parts.append("使用较长的复合句，注重表达的完整性和逻辑性。")
+        elif avg_length < 15:
+            prompt_parts.append("使用简洁明了的短句，突出重点，便于理解。")
+        else:
+            prompt_parts.append("句式长短适中，兼顾表达完整性和可读性。")
+
+        # 词汇要求
+        vocab_features = features.get("vocabulary_choice", {})
+        formality_score = vocab_features.get("formality_score", 0)
+        technical_density = vocab_features.get("technical_density", 0)
+
+        if formality_score > 20:
+            prompt_parts.append("使用正式、规范的词汇，避免口语化表达。")
+        elif formality_score < 10:
+            prompt_parts.append("可以使用相对轻松、自然的表达方式。")
+
+        if technical_density > 15:
+            prompt_parts.append("适当使用专业术语，体现专业性。")
+
+        # 语调要求
+        tone_analysis = detailed_analysis.get("tone_analysis", {})
+        dominant_tone = tone_analysis.get("dominant_tone", "neutral")
+
+        if dominant_tone == "positive":
+            prompt_parts.append("保持积极正面的语调，突出优势和成果。")
+        elif dominant_tone == "negative":
+            prompt_parts.append("客观分析问题，提出建设性意见。")
+        else:
+            prompt_parts.append("保持客观中性的语调，注重事实陈述。")
+
+        # 结构要求
+        org_features = features.get("text_organization", {})
+        connector_density = org_features.get("connector_density", 0)
+
+        if connector_density > 10:
+            prompt_parts.append("注重逻辑连接，使用适当的过渡词和连接词。")
+
+        # 可读性要求
+        readability = detailed_analysis.get("readability_analysis", {})
+        readability_level = readability.get("readability_level", "中等难度")
+
+        prompt_parts.append(f"确保文本{readability_level}，适合目标读者群体。")
+
+        return " ".join(prompt_parts)
     
     def _identify_style_type(self, content: str, features: Dict[str, Any]) -> Tuple[str, float]:
         """识别文风类型"""
