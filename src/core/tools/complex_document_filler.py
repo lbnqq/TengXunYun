@@ -568,9 +568,84 @@ class ComplexDocumentFiller:
     
     def _fill_table(self, content: str, table: Dict[str, Any], table_data: Dict[str, Any]) -> str:
         """填充表格"""
-        # 这里需要更复杂的表格填充逻辑
-        # 暂时返回原内容
-        return content
+        try:
+            lines = content.split('\n')
+            table_start = table.get("start_line", 0) - 1
+            table_end = table_start
+            
+            # 找到表格的结束位置
+            for i in range(table_start, len(lines)):
+                if i == table_start:
+                    continue
+                line = lines[i].strip()
+                # 检查是否是表格行（包含分隔符）
+                if '|' in line or '\t' in line or self._is_table_row(line):
+                    table_end = i
+                else:
+                    break
+            
+            # 获取表格数据
+            table_rows = table.get("rows", [])
+            if not table_rows:
+                return content
+            
+            # 创建新的表格内容
+            new_table_lines = []
+            
+            # 添加表头
+            if table_start < len(lines):
+                new_table_lines.append(lines[table_start])
+            
+            # 填充表格行
+            for row in table_rows:
+                row_number = row.get("row_number", 1)
+                row_data = row.get("data", [])
+                
+                # 检查是否有对应的填充数据
+                row_key = f"row_{row_number}"
+                if row_key in table_data:
+                    fill_data = table_data[row_key]
+                    # 填充行数据
+                    filled_row = self._fill_table_row(row_data, fill_data, table.get("columns", []))
+                    new_table_lines.append(filled_row)
+                else:
+                    # 保持原行
+                    if row.get("line_number", 0) - 1 < len(lines):
+                        new_table_lines.append(lines[row.get("line_number", 0) - 1])
+            
+            # 替换原表格内容
+            new_lines = lines[:table_start] + new_table_lines + lines[table_end + 1:]
+            return '\n'.join(new_lines)
+            
+        except Exception as e:
+            print(f"表格填充失败: {str(e)}")
+            return content
+    
+    def _fill_table_row(self, row_data: List[str], fill_data: Dict[str, str], columns: List[str]) -> str:
+        """填充表格行"""
+        try:
+            # 创建新的行数据
+            new_row_data = row_data.copy()
+            
+            # 根据列名匹配填充数据
+            for i, column in enumerate(columns):
+                if i < len(new_row_data) and column in fill_data:
+                    new_row_data[i] = fill_data[column]
+            
+            # 重建行字符串
+            if '|' in row_data[0] if row_data else False:
+                # Markdown表格格式
+                return '|' + '|'.join(new_row_data) + '|'
+            elif '\t' in row_data[0] if row_data else False:
+                # Tab分隔格式
+                return '\t'.join(new_row_data)
+            else:
+                # 空格分隔格式
+                return '  '.join(new_row_data)
+                
+        except Exception as e:
+            print(f"表格行填充失败: {str(e)}")
+            return '  '.join(row_data)
     
     def _generate_html_output(self, content: str, analysis_result: Dict[str, Any]) -> str:
         """生成HTML格式输出"""

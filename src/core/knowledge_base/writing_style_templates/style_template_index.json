@@ -53,6 +53,51 @@
       "confidence_score": 0.7,
       "created_time": "2025-06-25T12:00:38.064529",
       "description": "文风模板：曾-任务书.docx"
+    },
+    {
+      "template_id": "ba44e1c1aaf8",
+      "name": "正式公文",
+      "style_type": "business_professional",
+      "style_name": "商务专业风格",
+      "confidence_score": 0.79,
+      "created_time": "2025-06-25T14:04:17.293322",
+      "description": "文风模板：正式公文"
+    },
+    {
+      "template_id": "75779e775f1c",
+      "name": "商务报告",
+      "style_type": "concise_practical",
+      "style_name": "简洁实用风格",
+      "confidence_score": 0.749248,
+      "created_time": "2025-06-25T14:04:17.301320",
+      "description": "文风模板：商务报告"
+    },
+    {
+      "template_id": "1630d76878fb",
+      "name": "学术论文",
+      "style_type": "business_professional",
+      "style_name": "商务专业风格",
+      "confidence_score": 0.8,
+      "created_time": "2025-06-25T14:04:17.306489",
+      "description": "文风模板：学术论文"
+    },
+    {
+      "template_id": "e17a4fb7c505",
+      "name": "生活化描述",
+      "style_type": "narrative_descriptive",
+      "style_name": "叙述描述风格",
+      "confidence_score": 0.8,
+      "created_time": "2025-06-25T14:04:17.313495",
+      "description": "文风模板：生活化描述"
+    },
+    {
+      "template_id": "796daeb3cba9",
+      "name": "公司通知范文",
+      "style_type": "concise_practical",
+      "style_name": "简洁实用风格",
+      "confidence_score": 0.606304,
+      "created_time": "2025-06-25T14:04:17.374940",
+      "description": "文风模板：公司通知范文"
     }
   ]
 }

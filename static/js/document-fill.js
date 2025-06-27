@@ -22,6 +22,11 @@ class DocumentFillManager {
         console.log('fillFileInput:', fillFileInput);
         console.log('fillUploadArea:', fillUploadArea);
 
+        fillUploadArea = document.getElementById('fill-upload-area');
+        if (fillUploadArea) {
+             fillUploadArea.className = 'upload-area rounded-lg p-8 text-center cursor-pointer border-2 border-dashed border-gray-300';
+           }
+
         if (fillFileInput && fillUploadArea) {
             fillUploadArea.addEventListener('click', () => {
                 console.log('Upload area clicked');
@@ -152,45 +157,44 @@ class DocumentFillManager {
     }
 
     async startDocumentAnalysis() {
-        if (!this.currentFile) {
-            this.showError('请先上传文档');
+    if (!this.currentFile) {
+        this.showError('请先上传文档');
+        return;
+    }
+
+    this.showLoading('正在分析文档结构...');
+
+    try {
+        // 读取文件内容
+        const content = await this.readFileContent(this.currentFile);
+
+        const response = await fetch('/api/document-fill/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                document_content: content,
+                document_name: this.currentFile.name
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+            this.showError(result.error);
             return;
         }
 
-        this.showLoading('正在分析文档结构...');
+        this.currentSession = result;
+        this.showSupplementaryMaterialsSection();
+        this.hideLoading();
 
-        try {
-            const formData = new FormData();
-            formData.append('document_content', await this.readFileContent(this.currentFile));
-            formData.append('document_name', this.currentFile.name);
-
-            const response = await fetch('/api/document-fill/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    document_content: await this.readFileContent(this.currentFile),
-                    document_name: this.currentFile.name
-                })
-            });
-
-            const result = await response.json();
-            
-            if (result.error) {
-                this.showError(result.error);
-                return;
-            }
-
-            this.currentSession = result;
-            this.showSupplementaryMaterialsSection();
-            this.hideLoading();
-
-        } catch (error) {
-            this.showError('文档分析失败: ' + error.message);
-            this.hideLoading();
-        }
-    }
+    } catch (error) {
+        this.showError('文档分析失败: ' + error.message);
+        this.hideLoading();
+         }
+   }
 
     async readFileContent(file) {
         return new Promise((resolve, reject) => {
@@ -314,7 +318,7 @@ class DocumentFillManager {
                     </div>
                     <div class="text-right">
                         <p class="text-sm text-blue-600">${(template.confidence_score * 100).toFixed(1)}%</p>
-                        <p class="text-xs text-gray-500">${template.created_time.split('T')[0]}</p>
+                        <p class="text-xs text-gray-500">${template.created_time ? template.created_time.split('T')[0] : ''}</p>
                     </div>
                 </div>
             `;
@@ -352,6 +356,9 @@ class DocumentFillManager {
             }
         }
 
+        // 显示AI思考提示
+        this.showAIThinkingMessage('🤖 AI助手正在准备对话...');
+
         // 显示对话区域
         const section = document.getElementById('conversation-section');
         if (section) {
@@ -361,9 +368,105 @@ class DocumentFillManager {
 
         // 显示初始消息
         if (this.currentSession && this.currentSession.response) {
+            this.hideAIThinkingMessage();
             this.addMessageToHistory('assistant', this.currentSession.response);
             this.updateProgress(this.currentSession.current_question || 1, this.currentSession.total_questions || 1);
         }
+    }
+
+    // 显示AI思考提示
+    showAIThinkingMessage(message = '🧠 文思泉涌中...') {
+        let aiThinkingContainer = document.getElementById('ai-thinking-container');
+        if (!aiThinkingContainer) {
+            aiThinkingContainer = document.createElement('div');
+            aiThinkingContainer.id = 'ai-thinking-container';
+            aiThinkingContainer.className = 'ai-thinking-overlay';
+            document.body.appendChild(aiThinkingContainer);
+        }
+
+        const thinkingMessages = [
+            "🧠 文思泉涌中，正在为您精心撰写...",
+            "✨ 灵感迸发中，让AI为您妙笔生花...",
+            "🎨 创意流淌中，正在雕琢完美内容...",
+            "🌟 智慧汇聚中，为您呈现专业佳作...",
+            "💫 才思敏捷中，正在谱写精彩篇章...",
+            "🎯 匠心独运中，为您打造精品内容...",
+            "🌈 妙笔生花中，正在创作专业文档...",
+            "🚀 思维飞扬中，为您呈现完美答卷..."
+        ];
+
+        const randomMessage = thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
+
+        aiThinkingContainer.innerHTML = `
+            <div class="ai-thinking-content">
+                <div class="ai-thinking-icon">
+                    <div class="thinking-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+                <div class="ai-thinking-text">
+                    <h3>🤖 AI智能写作助手</h3>
+                    <p>${randomMessage}</p>
+                    <div class="ai-thinking-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span class="progress-text">正在生成中...</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        aiThinkingContainer.style.display = 'flex';
+        this.startProgressAnimation();
+        this.startMessageRotation(aiThinkingContainer, thinkingMessages);
+    }
+
+    // 隐藏AI思考提示
+    hideAIThinkingMessage() {
+        const aiThinkingContainer = document.getElementById('ai-thinking-container');
+        if (aiThinkingContainer) {
+            aiThinkingContainer.style.display = 'none';
+        }
+    }
+
+    // 启动进度条动画
+    startProgressAnimation() {
+        const progressFill = document.querySelector('.progress-fill');
+        if (progressFill) {
+            progressFill.style.width = '0%';
+            progressFill.style.transition = 'width 0.5s ease-in-out';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15 + 5;
+                if (progress >= 90) {
+                    progress = 90;
+                    clearInterval(interval);
+                }
+                progressFill.style.width = progress + '%';
+            }, 800);
+        }
+    }
+
+    // 启动消息轮换
+    startMessageRotation(container, messages) {
+        let currentIndex = 0;
+        const messageElement = container.querySelector('.ai-thinking-text p');
+        
+        const interval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % messages.length;
+            messageElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                messageElement.textContent = messages[currentIndex];
+                messageElement.style.opacity = '1';
+            }, 300);
+        }, 3000);
+        
+        container.dataset.messageInterval = interval;
     }
 
     addMessageToHistory(sender, message) {
@@ -401,15 +504,19 @@ class DocumentFillManager {
 
     async sendUserMessage() {
         const userInput = document.getElementById('user-input');
-        if (!userInput || !userInput.value.trim()) return;
-
         const message = userInput.value.trim();
-        userInput.value = '';
-
-        // 添加用户消息到历史
+        
+        if (!message) return;
+        
+        // 添加用户消息到历史记录
         this.addMessageToHistory('user', message);
-
-        // 发送到服务器
+        
+        // 清空输入框
+        userInput.value = '';
+        
+        // 显示AI思考提示
+        this.showAIThinkingMessage('🤖 AI正在思考您的回复...');
+        
         try {
             const response = await fetch('/api/document-fill/respond', {
                 method: 'POST',
@@ -420,30 +527,34 @@ class DocumentFillManager {
                     user_input: message
                 })
             });
-
+            
             const result = await response.json();
             
+            // 隐藏AI思考提示
+            this.hideAIThinkingMessage();
+            
             if (result.error) {
-                this.addMessageToHistory('assistant', '抱歉，处理您的回复时出现错误：' + result.error);
+                this.addMessageToHistory('assistant', `❌ 错误: ${result.error}`);
                 return;
             }
-
-            // 添加AI回复
+            
+            // 添加AI回复到历史记录
             this.addMessageToHistory('assistant', result.response);
-
+            
             // 更新进度
             if (result.current_question && result.total_questions) {
                 this.updateProgress(result.current_question, result.total_questions);
             }
-
-            // 检查是否完成
-            if (result.stage === 'completed' || result.stage === 'filling') {
+            
+            // 如果填充完成，显示结果
+            if (result.stage === 'completed') {
                 this.showFillResult(result);
             }
-
+            
         } catch (error) {
-            this.addMessageToHistory('assistant', '网络错误，请稍后重试。');
+            this.hideAIThinkingMessage();
             console.error('发送消息失败:', error);
+            this.addMessageToHistory('assistant', '❌ 网络错误，请重试');
         }
     }
 

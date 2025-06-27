@@ -132,35 +132,28 @@ class TestMultiLLMClient:
     @patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api')
     def test_primary_api_success(self, mock_xingcheng):
         """Test successful call to primary API."""
-        mock_xingcheng.return_value = ("Success response", {"status": "ok"})
-        
+        mock_xingcheng.return_value = ("Success response", {"role": "assistant", "content": "Success response"})
         client = MultiLLMClient()
         messages = [{"role": "user", "content": "Test message"}]
         result = client.chat_completion(messages, model="auto")
-        
         assert result["choices"][0]["message"]["content"] == "Success response"
     
     @patch('src.llm_clients.multi_llm.MultiLLMClient.call_multi_cloud')
     def test_api_failover_mechanism(self, mock_multi_cloud):
         """Test API failover when primary API fails."""
-        # Simulate primary API failure, backup success
-        mock_multi_cloud.return_value = ("Backup API response", {"status": "ok"})
-        
+        mock_multi_cloud.return_value = ("Backup API response", {"role": "assistant", "content": "Backup API response"})
         client = MultiLLMClient()
         messages = [{"role": "user", "content": "Test message"}]
         result = client.chat_completion(messages, model="auto")
-        
         assert result["choices"][0]["message"]["content"] == "Backup API response"
     
     @patch('src.llm_clients.multi_llm.MultiLLMClient.call_multi_cloud')
     def test_all_apis_fail(self, mock_multi_cloud):
         """Test behavior when all APIs fail."""
-        mock_multi_cloud.return_value = ("[API Error: All cloud APIs failed]", None)
-        
+        mock_multi_cloud.return_value = ("[API Error: All cloud APIs failed]", {"role": "assistant", "content": "API Error: All cloud APIs failed"})
         client = MultiLLMClient()
         messages = [{"role": "user", "content": "Test message"}]
         result = client.chat_completion(messages, model="auto")
-        
         assert "API Error" in result["choices"][0]["message"]["content"]
 
 class TestLLMPerformance:

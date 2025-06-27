@@ -1,0 +1,25 @@
+project_dir: "."
+data_dir: "data"
+models_dir: "models/hf_cache"
+
+ocr_engine:
+  name: "paddleocr"
+  use_gpu: false
+  lang: "ch"
+  ocr_model_dir: "models/paddleocr"  # 本地 PaddleOCR 模型目录，需包含 det/ rec/ cls/
+
+layout_analyzer:
+  # 使用针对表格检测微调的模型
+  hf_model_id: "uer/layoutlmv3-base-finetuned-table-detection-v2"
+  model_type: "hf"
+  label_map:
+    0: "Table"
+    1: "Title"
+    2: "Text"
+    3: "List"
+    4: "Figure"
+  detection_threshold: 0.3
+  cache_dir: "${models_dir}/hf_cache_download"
+
+table_parser:
+  strategy: "ocr_based_rule"

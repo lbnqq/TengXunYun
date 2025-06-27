@@ -346,3 +346,13 @@ class FormatAlignmentCoordinator:
                 }
             ]
         }
+    
+    def align_documents_format(self, source_doc: str, target_doc: str) -> dict:
+        """
+        直接对齐两个已上传文档的格式，兼容测试用例
+        """
+        intent_analysis = {
+            "intent": "format_alignment",
+            "entities": {"documents": {"source": source_doc, "target": target_doc}}
+        }
+        return self._handle_format_alignment(intent_analysis, "")

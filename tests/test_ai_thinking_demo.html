@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI思考提示演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="../static/css/enhanced-ui.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-white mb-4">🤖 AI智能写作助手</h1>
+            <p class="text-xl text-white opacity-90">体验文思泉涌的智能写作过程</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- 功能演示区域 -->
+            <div class="bg-white rounded-lg p-8 shadow-xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">功能演示</h2>
+                
+                <div class="space-y-4">
+                    <button onclick="testAIThinking()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
+                        🧠 体验AI思考过程
+                    </button>
+                    
+                    <button onclick="testDocumentFill()" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105">
+                        📝 智能文档填充
+                    </button>
+                    
+                    <button onclick="testAISuggestions()" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 px-6 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105">
+                        💡 AI填写建议
+                    </button>
+                    
+                    <button onclick="testErrorHandling()" class="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-4 px-6 rounded-lg font-semibold hover:from-red-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
+                        ⚠️ 错误处理演示
+                    </button>
+                </div>
+            </div>
+
+            <!-- 功能说明区域 -->
+            <div class="bg-white rounded-lg p-8 shadow-xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">功能特性</h2>
+                
+                <div class="space-y-6">
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">🎨 美观的界面设计</h3>
+                        <p class="text-gray-600">渐变背景、动画效果、响应式设计，提供优秀的用户体验</p>
+                    </div>
+                    
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">🔄 动态消息轮换</h3>
+                        <p class="text-gray-600">多种文思泉涌提示语，每3秒自动轮换，增加趣味性</p>
+                    </div>
+                    
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">📊 智能进度显示</h3>
+                        <p class="text-gray-600">模拟真实进度，让用户了解AI处理状态</p>
+                    </div>
+                    
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <h3 class="font-semibold text-gray-800 mb-2">⚡ 流畅的动画效果</h3>
+                        <p class="text-gray-600">淡入淡出、缩放、弹跳等动画，提升视觉体验</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术实现说明 -->
+        <div class="mt-12 bg-white rounded-lg p-8 shadow-xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">技术实现</h2>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">🎯</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">角色定位</h3>
+                    <p class="text-gray-600 text-sm">根据文档类型自动识别用户角色，生成符合身份的内容</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">🔍</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">质量检测</h3>
+                    <p class="text-gray-600 text-sm">自动检测AIGC痕迹，评估内容质量，提供优化建议</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">✨</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">智能优化</h3>
+                    <p class="text-gray-600 text-sm">自动优化生成内容，去除AI痕迹，提升自然度</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 测试AI思考过程
+        function testAIThinking() {
+            showAIThinkingMessage();
+            
+            setTimeout(() => {
+                hideAIThinkingMessage();
+                showMessage('🎉 AI思考完成！体验了文思泉涌的智能写作过程', 'success');
+            }, 5000);
+        }
+        
+        // 测试文档填充
+        function testDocumentFill() {
+            showAIThinkingMessage('📝 正在智能填充文档...');
+            
+            setTimeout(() => {
+                hideAIThinkingMessage();
+                showMessage('✅ 文档填充完成！AI已为您生成专业内容', 'success');
+            }, 4000);
+        }
+        
+        // 测试AI建议
+        function testAISuggestions() {
+            showAIThinkingMessage('💡 正在生成AI填写建议...');
+            
+            setTimeout(() => {
+                hideAIThinkingMessage();
+                showMessage('💡 AI建议已生成！包含专业填写指导和优化建议', 'success');
+            }, 3500);
+        }
+        
+        // 测试错误处理
+        function testErrorHandling() {
+            showAIThinkingMessage('⚠️ 模拟错误处理...');
+            
+            setTimeout(() => {
+                const container = document.getElementById('ai-thinking-container');
+                if (container) {
+                    container.querySelector('.ai-thinking-content').classList.add('ai-thinking-error');
+                }
+                
+                setTimeout(() => {
+                    hideAIThinkingMessage();
+                    showMessage('❌ 模拟错误：网络连接超时，请重试', 'error');
+                }, 2000);
+            }, 2000);
+        }
+        
+        // 显示AI思考提示
+        function showAIThinkingMessage(message = '🧠 文思泉涌中...') {
+            let aiThinkingContainer = document.getElementById('ai-thinking-container');
+            if (!aiThinkingContainer) {
+                aiThinkingContainer = document.createElement('div');
+                aiThinkingContainer.id = 'ai-thinking-container';
+                aiThinkingContainer.className = 'ai-thinking-overlay';
+                document.body.appendChild(aiThinkingContainer);
+            }
+            
+            const thinkingMessages = [
+                "🧠 文思泉涌中，正在为您精心撰写...",
+                "✨ 灵感迸发中，让AI为您妙笔生花...",
+                "🎨 创意流淌中，正在雕琢完美内容...",
+                "🌟 智慧汇聚中，为您呈现专业佳作...",
+                "💫 才思敏捷中，正在谱写精彩篇章...",
+                "🎯 匠心独运中，为您打造精品内容...",
+                "🌈 妙笔生花中，正在创作专业文档...",
+                "🚀 思维飞扬中，为您呈现完美答卷..."
+            ];
+            
+            const randomMessage = thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
+            
+            aiThinkingContainer.innerHTML = `
+                <div class="ai-thinking-content">
+                    <div class="ai-thinking-icon">
+                        <div class="thinking-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="ai-thinking-text">
+                        <h3>🤖 AI智能写作助手</h3>
+                        <p>${randomMessage}</p>
+                        <div class="ai-thinking-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill"></div>
+                            </div>
+                            <span class="progress-text">正在生成中...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            aiThinkingContainer.style.display = 'flex';
+            startProgressAnimation();
+            startMessageRotation(aiThinkingContainer, thinkingMessages);
+        }
+        
+        // 隐藏AI思考提示
+        function hideAIThinkingMessage() {
+            const aiThinkingContainer = document.getElementById('ai-thinking-container');
+            if (aiThinkingContainer) {
+                aiThinkingContainer.style.display = 'none';
+            }
+        }
+        
+        // 启动进度条动画
+        function startProgressAnimation() {
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.width = '0%';
+                progressFill.style.transition = 'width 0.5s ease-in-out';
+                
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15 + 5;
+                    if (progress >= 90) {
+                        progress = 90;
+                        clearInterval(interval);
+                    }
+                    progressFill.style.width = progress + '%';
+                }, 800);
+            }
+        }
+        
+        // 启动消息轮换
+        function startMessageRotation(container, messages) {
+            let currentIndex = 0;
+            const messageElement = container.querySelector('.ai-thinking-text p');
+            
+            const interval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % messages.length;
+                messageElement.style.opacity = '0';
+                
+                setTimeout(() => {
+                    messageElement.textContent = messages[currentIndex];
+                    messageElement.style.opacity = '1';
+                }, 300);
+            }, 3000);
+            
+            container.dataset.messageInterval = interval;
+        }
+        
+        // 显示消息提示
+        function showMessage(message, type = 'info') {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            messageContainer.textContent = message;
+            
+            document.body.appendChild(messageContainer);
+            
+            setTimeout(() => {
+                messageContainer.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

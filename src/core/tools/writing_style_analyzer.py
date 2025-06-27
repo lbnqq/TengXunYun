@@ -2056,3 +2056,203 @@ class WritingStyleAnalyzer:
             suggestions = [f"生成改进建议时出错: {str(e)}"]
 
         return suggestions
+
+    def export_styled_document(self, session_id: str) -> Dict[str, Any]:
+        """
+        导出应用了文风变化的文档
+        
+        Args:
+            session_id: 会话ID
+            
+        Returns:
+            导出结果
+        """
+        try:
+            # 从会话存储中获取文风调整结果
+            session_file = os.path.join(self.semantic_behavior_dir, "profiles", f"{session_id}.json")
+            if not os.path.exists(session_file):
+                return {"error": "会话不存在或已过期"}
+            
+            with open(session_file, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+            
+            # 获取原始内容和调整后的内容
+            original_content = session_data.get("original_content", "")
+            suggested_changes = session_data.get("suggested_changes", [])
+            
+            if not original_content:
+                return {"error": "文档内容为空"}
+            
+            # 应用所有已接受的调整
+            styled_content = original_content
+            for change in suggested_changes:
+                if change.get("status") == "accepted":
+                    original_text = change.get("original_text", "")
+                    suggested_text = change.get("suggested_text", "")
+                    if original_text and suggested_text:
+                        styled_content = styled_content.replace(original_text, suggested_text, 1)
+            
+            # 生成Word文档
+            try:
+                from docx import Document
+                from docx.shared import Inches
+                from docx.enum.text import WD_ALIGN_PARAGRAPH
+                
+                doc = Document()
+                
+                # 设置页面边距
+                sections = doc.sections
+                for section in sections:
+                    section.top_margin = Inches(1)
+                    section.bottom_margin = Inches(1)
+                    section.left_margin = Inches(1.25)
+                    section.right_margin = Inches(1.25)
+                
+                # 添加标题
+                title = doc.add_heading('文风调整后文档', 0)
+                title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                # 添加内容
+                paragraphs = styled_content.split('\n')
+                for para_text in paragraphs:
+                    if para_text.strip():
+                        para = doc.add_paragraph(para_text.strip())
+                        # 设置段落格式
+                        para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                
+                # 保存到临时文件
+                import tempfile
+                temp_dir = tempfile.gettempdir()
+                output_path = os.path.join(temp_dir, f"styled_document_{session_id}.docx")
+                doc.save(output_path)
+                
+                # 读取文件内容
+                with open(output_path, 'rb') as f:
+                    docx_content = f.read()
+                
+                # 清理临时文件
+                try:
+                    os.remove(output_path)
+                except:
+                    pass
+                
+                return {
+                    "success": True,
+                    "docx_content": docx_content,
+                    "filename": f"styled_document_{session_id}.docx",
+                    "content_length": len(styled_content),
+                    "changes_applied": len([c for c in suggested_changes if c.get("status") == "accepted"])
+                }
+                
+            except ImportError:
+                # 如果没有python-docx，生成HTML格式
+                html_content = self._generate_html_document(styled_content, session_data)
+                return {
+                    "success": True,
+                    "html_content": html_content,
+                    "filename": f"styled_document_{session_id}.html",
+                    "content_length": len(styled_content),
+                    "changes_applied": len([c for c in suggested_changes if c.get("status") == "accepted"])
+                }
+            
+        except Exception as e:
+            return {"error": f"导出文风调整文档失败: {str(e)}"}
+    
+    def _generate_html_document(self, content: str, session_data: Dict[str, Any]) -> str:
+        """生成HTML格式的文档"""
+        html_template = f"""
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>文风调整后文档</title>
+            <style>
+                body {{
+                    font-family: 'SimSun', 'Microsoft YaHei', serif;
+                    line-height: 1.8;
+                    margin: 40px;
+                    color: #333;
+                    background-color: #fff;
+                }}
+                .document-container {{
+                    max-width: 800px;
+                    margin: 0 auto;
+                    background-color: #fff;
+                    padding: 40px;
+                    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                    border-radius: 8px;
+                }}
+                .document-title {{
+                    text-align: center;
+                    font-size: 24px;
+                    font-weight: bold;
+                    margin-bottom: 30px;
+                    color: #2c3e50;
+                    border-bottom: 2px solid #3498db;
+                    padding-bottom: 15px;
+                }}
+                .document-content {{
+                    white-space: pre-wrap;
+                    font-size: 16px;
+                    text-align: justify;
+                }}
+                .change-highlight {{
+                    background-color: #e8f5e8;
+                    padding: 2px 4px;
+                    border-radius: 3px;
+                    border-left: 3px solid #27ae60;
+                }}
+                .document-info {{
+                    margin-top: 30px;
+                    padding: 15px;
+                    background-color: #f8f9fa;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    color: #666;
+                }}
+                .download-btn {{
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background-color: #3498db;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: bold;
+                }}
+                .download-btn:hover {{
+                    background-color: #2980b9;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="document-container">
+                <div class="document-title">文风调整后文档</div>
+                <div class="document-content">{content}</div>
+                <div class="document-info">
+                    <p><strong>文档信息：</strong></p>
+                    <p>• 调整时间：{session_data.get('timestamp', '未知')}</p>
+                    <p>• 应用调整：{len([c for c in session_data.get('suggested_changes', []) if c.get('status') == 'accepted'])} 处</p>
+                    <p>• 文档长度：{len(content)} 字符</p>
+                </div>
+                <a href="#" class="download-btn" onclick="downloadDocument()">下载文档</a>
+            </div>
+            
+            <script>
+                function downloadDocument() {{
+                    const content = document.querySelector('.document-container').innerHTML;
+                    const blob = new Blob([content], {{type: 'text/html'}});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'styled_document.html';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }}
+            </script>
+        </body>
+        </html>
+        """
+        
+        return html_template

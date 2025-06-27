@@ -96,10 +96,24 @@ class BatchProcessor:
         # 验证文件
         valid_files = []
         for file_path in files:
-            if os.path.exists(file_path) and os.path.isfile(file_path):
-                valid_files.append(file_path)
-            else:
-                logger.warning(f"File not found or invalid: {file_path}")
+            # 检查文件路径是否为None或空字符串
+            if file_path is None or file_path == "":
+                logger.warning(f"Invalid file path: {file_path} (None or empty)")
+                continue
+
+            # 检查文件路径是否为字符串类型
+            if not isinstance(file_path, (str, bytes, os.PathLike)):
+                logger.warning(f"Invalid file path type: {type(file_path)} - {file_path}")
+                continue
+
+            # 检查文件是否存在
+            try:
+                if os.path.exists(file_path) and os.path.isfile(file_path):
+                    valid_files.append(file_path)
+                else:
+                    logger.warning(f"File not found or invalid: {file_path}")
+            except (TypeError, OSError) as e:
+                logger.warning(f"Error checking file path {file_path}: {e}")
         
         if not valid_files:
             raise ValueError("No valid files provided for batch processing")

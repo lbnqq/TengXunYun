@@ -685,3 +685,282 @@ class DocumentFillCoordinator:
     def get_fill_result(self) -> Dict[str, Any]:
         """获取填充结果"""
         return self.session_state.get("fill_result", {})
+    
+    def auto_match_data(self, session_id: str, data_sources: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        自动匹配数据到文档字段
+        
+        Args:
+            session_id: 会话ID
+            data_sources: 数据源列表
+            
+        Returns:
+            匹配结果
+        """
+        try:
+            if not self.session_state.get("analysis_result"):
+                return {"error": "文档尚未分析，请先上传文档"}
+            
+            analysis_result = self.session_state["analysis_result"]
+            fill_fields = analysis_result.get("fill_fields", [])
+            
+            # 提取所有数据源的内容
+            all_data = {}
+            for source in data_sources:
+                source_type = source.get("type", "")
+                source_name = source.get("name", "")
+                source_content = source.get("content", "")
+                
+                if source_type == "text":
+                    # 解析文本数据
+                    text_data = self._parse_text_data(source_content)
+                    all_data.update(text_data)
+                elif source_type == "file":
+                    # 解析文件数据
+                    file_data = self._parse_file_data(source_content, source_name)
+                    all_data.update(file_data)
+                elif source_type == "user_input":
+                    # 用户输入数据
+                    all_data[source_name] = source_content
+            
+            # 执行字段匹配
+            matched_fields = {}
+            unmatched_fields = []
+            confidence_scores = {}
+            conflicts = []
+            
+            for field in fill_fields:
+                field_id = field["field_id"]
+                field_category = field["category"]
+                field_meaning = field.get("inferred_meaning", "")
+                
+                # 尝试匹配字段
+                match_result = self._match_field_to_data(field, all_data)
+                
+                if match_result["matched"]:
+                    if match_result["confidence"] > 0.7:  # 高置信度直接匹配
+                        matched_fields[field_id] = match_result["value"]
+                        confidence_scores[field_id] = match_result["confidence"]
+                    else:
+                        # 低置信度或有冲突
+                        conflicts.append({
+                            "field_id": field_id,
+                            "field_name": field_meaning or field_id,
+                            "options": [{
+                                "value": match_result["value"],
+                                "source": match_result["source"],
+                                "confidence": match_result["confidence"]
+                            }]
+                        })
+                else:
+                    unmatched_fields.append(field_id)
+            
+            return {
+                "success": True,
+                "matched_fields": matched_fields,
+                "unmatched_fields": unmatched_fields,
+                "confidence_scores": confidence_scores,
+                "conflicts": conflicts,
+                "total_fields": len(fill_fields),
+                "matched_count": len(matched_fields),
+                "unmatched_count": len(unmatched_fields),
+                "conflict_count": len(conflicts)
+            }
+            
+        except Exception as e:
+            return {"error": f"自动匹配数据失败: {str(e)}"}
+    
+    def resolve_conflicts(self, session_id: str, resolutions: Dict[str, str]) -> Dict[str, Any]:
+        """
+        解决自动匹配中的冲突
+        
+        Args:
+            session_id: 会话ID
+            resolutions: 冲突解决方案
+            
+        Returns:
+            解决结果
+        """
+        try:
+            resolved_fields = {}
+            
+            for field_id, selected_value in resolutions.items():
+                resolved_fields[field_id] = selected_value
+                
+                # 更新会话状态中的用户答案
+                self.session_state["user_answers"][field_id] = selected_value
+            
+            return {
+                "success": True,
+                "resolved_fields": resolved_fields,
+                "total_resolved": len(resolved_fields)
+            }
+            
+        except Exception as e:
+            return {"error": f"解决冲突失败: {str(e)}"}
+    
+    def _parse_text_data(self, text_content: str) -> Dict[str, str]:
+        """解析文本数据"""
+        data = {}
+        lines = text_content.strip().split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if '：' in line or ':' in line:
+                key, value = line.split('：' if '：' in line else ':', 1)
+                data[key.strip()] = value.strip()
+            elif line and len(line) < 50:  # 短行可能是字段值
+                # 尝试智能识别字段类型
+                if len(line) <= 10 and not any(char.isdigit() for char in line):
+                    data["姓名"] = line
+                elif line.isdigit() and len(line) <= 3:
+                    data["年龄"] = line
+                elif len(line) == 18 and line.isdigit():
+                    data["身份证号"] = line
+                elif '@' in line:
+                    data["邮箱"] = line
+                elif line.startswith('1') and len(line) == 11:
+                    data["电话"] = line
+        
+        return data
+    
+    def _parse_file_data(self, file_content: str, file_name: str) -> Dict[str, str]:
+        """解析文件数据"""
+        data = {}
+        
+        # 根据文件名推断数据类型
+        file_lower = file_name.lower()
+        
+        if any(keyword in file_lower for keyword in ['简历', '履历', 'cv']):
+            # 简历文件解析
+            data.update(self._parse_resume_data(file_content))
+        elif any(keyword in file_lower for keyword in ['合同', '协议']):
+            # 合同文件解析
+            data.update(self._parse_contract_data(file_content))
+        else:
+            # 通用文件解析
+            data.update(self._parse_text_data(file_content))
+        
+        return data
+    
+    def _parse_resume_data(self, content: str) -> Dict[str, str]:
+        """解析简历数据"""
+        data = {}
+        
+        # 简单的简历信息提取
+        lines = content.split('\n')
+        for line in lines:
+            line = line.strip()
+            if '姓名' in line and '：' in line:
+                data["姓名"] = line.split('：', 1)[1].strip()
+            elif '电话' in line and '：' in line:
+                data["电话"] = line.split('：', 1)[1].strip()
+            elif '邮箱' in line and '：' in line:
+                data["邮箱"] = line.split('：', 1)[1].strip()
+            elif '地址' in line and '：' in line:
+                data["地址"] = line.split('：', 1)[1].strip()
+        
+        return data
+    
+    def _parse_contract_data(self, content: str) -> Dict[str, str]:
+        """解析合同数据"""
+        data = {}
+        
+        # 简单的合同信息提取
+        lines = content.split('\n')
+        for line in lines:
+            line = line.strip()
+            if '甲方' in line and '：' in line:
+                data["甲方"] = line.split('：', 1)[1].strip()
+            elif '乙方' in line and '：' in line:
+                data["乙方"] = line.split('：', 1)[1].strip()
+            elif '金额' in line and '：' in line:
+                data["金额"] = line.split('：', 1)[1].strip()
+            elif '日期' in line and '：' in line:
+                data["日期"] = line.split('：', 1)[1].strip()
+        
+        return data
+    
+    def _match_field_to_data(self, field: Dict[str, Any], all_data: Dict[str, str]) -> Dict[str, Any]:
+        """匹配字段到数据"""
+        field_meaning = field.get("inferred_meaning", "")
+        field_category = field["category"]
+        field_type = field["field_type"]
+        
+        best_match = None
+        best_confidence = 0.0
+        best_source = ""
+        
+        # 基于字段含义匹配
+        if field_meaning:
+            for key, value in all_data.items():
+                confidence = self._calculate_field_confidence(field_meaning, key, value, field_category)
+                if confidence > best_confidence:
+                    best_match = value
+                    best_confidence = confidence
+                    best_source = key
+        
+        # 基于字段类型匹配
+        if not best_match or best_confidence < 0.5:
+            for key, value in all_data.items():
+                confidence = self._calculate_type_confidence(field_type, field_category, key, value)
+                if confidence > best_confidence:
+                    best_match = value
+                    best_confidence = confidence
+                    best_source = key
+        
+        return {
+            "matched": best_match is not None and best_confidence > 0.3,
+            "value": best_match or "",
+            "confidence": best_confidence,
+            "source": best_source
+        }
+    
+    def _calculate_field_confidence(self, field_meaning: str, data_key: str, data_value: str, field_category: str) -> float:
+        """计算字段匹配置信度"""
+        confidence = 0.0
+        
+        # 精确匹配
+        if field_meaning.lower() == data_key.lower():
+            confidence += 0.8
+        elif field_meaning in data_key or data_key in field_meaning:
+            confidence += 0.6
+        
+        # 类别匹配
+        if field_category == "个人信息" and any(keyword in data_key for keyword in ["姓名", "电话", "邮箱", "地址"]):
+            confidence += 0.3
+        elif field_category == "日期时间" and any(keyword in data_key for keyword in ["日期", "时间", "年", "月", "日"]):
+            confidence += 0.3
+        elif field_category == "金额数字" and any(keyword in data_key for keyword in ["金额", "数量", "价格", "费用"]):
+            confidence += 0.3
+        
+        # 值格式匹配
+        if field_category == "日期时间" and any(char in data_value for char in ["年", "月", "日", "-", "/"]):
+            confidence += 0.2
+        elif field_category == "金额数字" and any(char in data_value for char in ["元", "万", "千", ".", ","]):
+            confidence += 0.2
+        
+        return min(1.0, confidence)
+    
+    def _calculate_type_confidence(self, field_type: str, field_category: str, data_key: str, data_value: str) -> float:
+        """计算类型匹配置信度"""
+        confidence = 0.0
+        
+        # 基于字段类型匹配
+        if field_type == "personal_info":
+            if any(keyword in data_key for keyword in ["姓名", "电话", "邮箱", "地址", "身份证"]):
+                confidence += 0.5
+        elif field_type == "datetime_info":
+            if any(keyword in data_key for keyword in ["日期", "时间", "年", "月", "日"]):
+                confidence += 0.5
+        elif field_type == "amount_info":
+            if any(keyword in data_key for keyword in ["金额", "数量", "价格", "费用"]):
+                confidence += 0.5
+        
+        # 基于值格式匹配
+        if field_type == "datetime_info" and any(char in data_value for char in ["年", "月", "日", "-", "/"]):
+            confidence += 0.3
+        elif field_type == "amount_info" and any(char in data_value for char in ["元", "万", "千", ".", ","]):
+            confidence += 0.3
+        
+        return min(1.0, confidence)

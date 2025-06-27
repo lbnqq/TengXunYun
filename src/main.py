@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import necessary modules from our project
-from src.core.agent.agent_orchestrator import AgentOrchestrator
-from src.llm_clients.xingcheng_llm import XingchengLLMClient
+from core.agent.agent_orchestrator import AgentOrchestrator
+from llm_clients.xingcheng_llm import XingchengLLMClient
 
 # Load environment variables from .env file
 load_dotenv()

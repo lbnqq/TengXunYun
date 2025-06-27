@@ -1,0 +1,170 @@
+{
+  "document_name": "正式公文",
+  "analysis_time": "2025-06-25T14:04:17.293322",
+  "analysis_method": "basic",
+  "document_stats": {
+    "total_characters": 222,
+    "total_lines": 18,
+    "total_sentences": 3,
+    "total_paragraphs": 7,
+    "total_words": 19,
+    "average_sentence_length": 74.0,
+    "average_paragraph_length": 31.7,
+    "reading_time_minutes": 0.1
+  },
+  "style_features": {
+    "sentence_structure": {
+      "average_length": 49.3,
+      "long_short_ratio": 0.333,
+      "complex_ratio": 0.333,
+      "total_sentences": 3,
+      "long_sentences": 1,
+      "short_sentences": 2
+    },
+    "vocabulary_choice": {
+      "formality_score": 55.94,
+      "technical_density": 13.99,
+      "modifier_usage": 6.99,
+      "action_verb_ratio": 41.96
+    },
+    "expression_style": {
+      "passive_active_ratio": 0.0,
+      "person_usage": {
+        "first_person": 0,
+        "second_person": 0,
+        "third_person": 0
+      },
+      "tone_strength": 9.01,
+      "passive_count": 0,
+      "active_count": 1
+    },
+    "text_organization": {
+      "paragraph_count": 5,
+      "average_paragraph_length": 32.6,
+      "connector_density": 4.5,
+      "summary_usage": 0,
+      "enumeration_usage": 3
+    },
+    "language_habits": {
+      "colloquial_level": 0.0,
+      "formal_structure_usage": 9.01,
+      "de_structure_density": 13.51
+    },
+    "emotional_tone": {
+      "positive_ratio": 0,
+      "negative_ratio": 0,
+      "neutral_ratio": 1.0,
+      "intensity": 0
+    },
+    "professionalism": {
+      "domain_specificity": 0.0,
+      "authority_indicators": 18.02,
+      "precision_level": 4.5
+    },
+    "rhetorical_devices": {
+      "metaphor_usage": 0.0,
+      "parallel_structure": 4.5,
+      "question_usage": 0.0
+    }
+  },
+  "style_type": "business_professional",
+  "confidence_score": 0.79,
+  "style_prompt": "请采用商务专业风格进行写作，具体特征包括：简洁明了, 重点突出, 数据导向, 结果导向。 使用较长的复合句，注重表达的完整性和逻辑性。 使用正式、规范的词汇，避免口语化表达。 保持积极正面的语调，突出优势和成果。 确保文本很难阅读，适合目标读者群体。",
+  "template_id": "ba44e1c1aaf8",
+  "detailed_analysis": {
+    "readability_analysis": {
+      "readability_score": 17.4,
+      "readability_level": "很难阅读",
+      "factors": {
+        "sentence_complexity": "高",
+        "vocabulary_difficulty": "中"
+      }
+    },
+    "tone_analysis": {
+      "tone_distribution": {
+        "positive_ratio": 33.3,
+        "negative_ratio": 33.3,
+        "neutral_ratio": 33.3
+      },
+      "dominant_tone": "positive",
+      "emotional_intensity": 0,
+      "tone_consistency": "低"
+    },
+    "structure_analysis": {
+      "paragraph_structure": {
+        "paragraph_count": 5,
+        "average_length": 32.6,
+        "length_consistency": "中"
+      },
+      "logical_flow": {
+        "connector_usage": 4.5,
+        "enumeration_usage": 3,
+        "summary_usage": 0
+      },
+      "organization_score": 24.0
+    },
+    "vocabulary_analysis": {
+      "vocabulary_richness": {
+        "unique_words": 19,
+        "total_words": 19,
+        "diversity_ratio": 100.0
+      },
+      "word_complexity": {
+        "technical_density": 13.99,
+        "formality_score": 55.94,
+        "modifier_usage": 6.99
+      },
+      "action_orientation": {
+        "action_verb_ratio": 41.96,
+        "passive_voice_usage": 0.0
+      }
+    },
+    "style_consistency": {
+      "consistency_score": 0.0,
+      "variation_level": "高",
+      "factors_analyzed": [
+        "句长一致性",
+        "词汇使用",
+        "语调变化"
+      ]
+    }
+  },
+  "writing_recommendations": [
+    "句子偏长，建议适当拆分为短句以提高可读性",
+    "可以适当增加修饰词，丰富表达层次",
+    "保持专业性，注意用词准确性和逻辑清晰"
+  ],
+  "style_comparison": {
+    "formal_vs_informal": {
+      "formality_level": "高",
+      "formal_score": 21.7,
+      "indicators": {
+        "formal_vocabulary": 55.94,
+        "formal_structures": 9.01,
+        "colloquial_elements": 0.0
+      }
+    },
+    "technical_vs_general": {
+      "technicality_level": "中",
+      "technical_score": 14.0,
+      "professional_score": 0,
+      "balance": "技术性强"
+    },
+    "objective_vs_subjective": {
+      "objectivity_level": "高",
+      "objectivity_score": 100,
+      "subjectivity_indicators": {
+        "emotional_intensity": 0,
+        "assertive_tone": 0
+      }
+    },
+    "concise_vs_elaborate": {
+      "conciseness_level": "低",
+      "conciseness_score": 24.4,
+      "verbosity_indicators": {
+        "sentence_length": 49.3,
+        "modifier_density": 6.99
+      }
+    }
+  }
+}

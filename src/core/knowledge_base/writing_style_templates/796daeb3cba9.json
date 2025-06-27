@@ -1,0 +1,169 @@
+{
+  "document_name": "公司通知范文",
+  "analysis_time": "2025-06-25T14:04:17.374940",
+  "analysis_method": "basic",
+  "document_stats": {
+    "total_characters": 287,
+    "total_lines": 28,
+    "total_sentences": 7,
+    "total_paragraphs": 10,
+    "total_words": 33,
+    "average_sentence_length": 41.0,
+    "average_paragraph_length": 28.7,
+    "reading_time_minutes": 0.2
+  },
+  "style_features": {
+    "sentence_structure": {
+      "average_length": 29.3,
+      "long_short_ratio": 0.286,
+      "complex_ratio": 0.429,
+      "total_sentences": 7,
+      "long_sentences": 2,
+      "short_sentences": 3
+    },
+    "vocabulary_choice": {
+      "formality_score": 10.15,
+      "technical_density": 0.0,
+      "modifier_usage": 0.0,
+      "action_verb_ratio": 0.0
+    },
+    "expression_style": {
+      "passive_active_ratio": 0,
+      "person_usage": {
+        "first_person": 0,
+        "second_person": 0,
+        "third_person": 0
+      },
+      "tone_strength": 0.0,
+      "passive_count": 0,
+      "active_count": 0
+    },
+    "text_organization": {
+      "paragraph_count": 8,
+      "average_paragraph_length": 28.2,
+      "connector_density": 3.48,
+      "summary_usage": 0,
+      "enumeration_usage": 7
+    },
+    "language_habits": {
+      "colloquial_level": 0.0,
+      "formal_structure_usage": 13.94,
+      "de_structure_density": 3.48
+    },
+    "emotional_tone": {
+      "positive_ratio": 1.0,
+      "negative_ratio": 0.0,
+      "neutral_ratio": 0.0,
+      "intensity": 0.0
+    },
+    "professionalism": {
+      "domain_specificity": 0.0,
+      "authority_indicators": 3.48,
+      "precision_level": 10.45
+    },
+    "rhetorical_devices": {
+      "metaphor_usage": 0.0,
+      "parallel_structure": 0.0,
+      "question_usage": 0.0
+    }
+  },
+  "style_type": "concise_practical",
+  "confidence_score": 0.606304,
+  "style_prompt": "请采用简洁实用风格进行写作，具体特征包括：言简意赅, 直接有效, 操作性强, 易于理解。 使用较长的复合句，注重表达的完整性和逻辑性。 保持积极正面的语调，突出优势和成果。 确保文本较容易阅读，适合目标读者群体。",
+  "template_id": "796daeb3cba9",
+  "detailed_analysis": {
+    "readability_analysis": {
+      "readability_score": 71.4,
+      "readability_level": "较容易阅读",
+      "factors": {
+        "sentence_complexity": "高",
+        "vocabulary_difficulty": "低"
+      }
+    },
+    "tone_analysis": {
+      "tone_distribution": {
+        "positive_ratio": 50.0,
+        "negative_ratio": 0.0,
+        "neutral_ratio": 50.0
+      },
+      "dominant_tone": "positive",
+      "emotional_intensity": 0,
+      "tone_consistency": "中"
+    },
+    "structure_analysis": {
+      "paragraph_structure": {
+        "paragraph_count": 8,
+        "average_length": 28.2,
+        "length_consistency": "中"
+      },
+      "logical_flow": {
+        "connector_usage": 3.48,
+        "enumeration_usage": 7,
+        "summary_usage": 0
+      },
+      "organization_score": 41.96
+    },
+    "vocabulary_analysis": {
+      "vocabulary_richness": {
+        "unique_words": 28,
+        "total_words": 33,
+        "diversity_ratio": 84.8
+      },
+      "word_complexity": {
+        "technical_density": 0.0,
+        "formality_score": 10.15,
+        "modifier_usage": 0.0
+      },
+      "action_orientation": {
+        "action_verb_ratio": 0.0,
+        "passive_voice_usage": 0.0
+      }
+    },
+    "style_consistency": {
+      "consistency_score": 20.0,
+      "variation_level": "高",
+      "factors_analyzed": [
+        "句长一致性",
+        "词汇使用",
+        "语调变化"
+      ]
+    }
+  },
+  "writing_recommendations": [
+    "可以适当增加修饰词，丰富表达层次",
+    "继续保持简洁明了，突出实用性"
+  ],
+  "style_comparison": {
+    "formal_vs_informal": {
+      "formality_level": "低",
+      "formal_score": 8.0,
+      "indicators": {
+        "formal_vocabulary": 10.15,
+        "formal_structures": 13.94,
+        "colloquial_elements": 0.0
+      }
+    },
+    "technical_vs_general": {
+      "technicality_level": "低",
+      "technical_score": 0.0,
+      "professional_score": 0,
+      "balance": "通用性强"
+    },
+    "objective_vs_subjective": {
+      "objectivity_level": "高",
+      "objectivity_score": 100,
+      "subjectivity_indicators": {
+        "emotional_intensity": 0,
+        "assertive_tone": 0
+      }
+    },
+    "concise_vs_elaborate": {
+      "conciseness_level": "高",
+      "conciseness_score": 71.4,
+      "verbosity_indicators": {
+        "sentence_length": 29.3,
+        "modifier_density": 0.0
+      }
+    }
+  }
+}

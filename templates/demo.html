@@ -6,6 +6,7 @@
     <title>功能演示 - 办公文档智能代理</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="/static/css/enhanced-ui.css" rel="stylesheet">
     <style>
         .demo-card {
             transition: all 0.3s ease;
@@ -238,6 +239,107 @@
                     </div>
                 </div>
             </div>
+
+            <!-- AI思考提示测试区域 -->
+            <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6 text-white mb-6">
+                <h3 class="text-xl font-semibold mb-4">🤖 AI智能写作体验</h3>
+                <p class="mb-4">体验AI文思泉涌的智能写作过程，感受专业内容生成的神奇魅力。</p>
+                
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="testAIThinking()" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                        🧠 体验AI思考过程
+                    </button>
+                    <button onclick="testDocumentFill()" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                        📝 智能文档填充
+                    </button>
+                    <button onclick="testAISuggestions()" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                        💡 AI填写建议
+                    </button>
+                </div>
+            </div>
+
+            <!-- 功能特性展示 -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- 复杂文档填充 -->
+                <div class="demo-card bg-white rounded-lg shadow-lg p-6">
+                    <div class="feature-highlight text-white p-4 rounded-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">
+                            <i class="fas fa-edit mr-2"></i>复杂文档智能填充
+                        </h3>
+                        <p class="text-blue-100">智能识别待填写字段，多轮对话引导填写，生成完整文档</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">自动识别表单字段和表格</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">智能多轮对话引导</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">补充材料智能提取</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">保持原文档格式</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-800 mb-2">支持文档类型：</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">入职申请表</span>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">合同协议</span>
+                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">报告表格</span>
+                            <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">登记表单</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文风对齐功能 -->
+                <div class="demo-card bg-white rounded-lg shadow-lg p-6">
+                    <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">
+                            <i class="fas fa-pen-fancy mr-2"></i>文风对齐润色
+                        </h3>
+                        <p class="text-purple-100">分析写作风格，生成个人文风模板，确保内容风格一致</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">5维度文风分析</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">个人文风模板保存</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">去除AI生成痕迹</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">长短句自然结合</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-800 mb-2">分析维度：</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="bg-gray-100 p-2 rounded">句式结构</div>
+                            <div class="bg-gray-100 p-2 rounded">词汇选择</div>
+                            <div class="bg-gray-100 p-2 rounded">表达方式</div>
+                            <div class="bg-gray-100 p-2 rounded">文本组织</div>
+                            <div class="bg-gray-100 p-2 rounded">语言习惯</div>
+                            <div class="bg-gray-100 p-2 rounded">风格特征</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- 示例文档 -->
@@ -304,5 +406,151 @@
             <p class="text-gray-400">© 2024 办公文档智能代理. 让AI更懂您的文档需求.</p>
         </div>
     </footer>
+
+    <script>
+        // 测试AI思考过程
+        function testAIThinking() {
+            // 显示AI思考提示
+            showAIThinkingMessage();
+            
+            // 模拟AI处理时间
+            setTimeout(() => {
+                hideAIThinkingMessage();
+                showMessage('🎉 AI思考完成！体验了文思泉涌的智能写作过程', 'success');
+            }, 5000);
+        }
+        
+        // 测试文档填充
+        function testDocumentFill() {
+            showAIThinkingMessage('📝 正在智能填充文档...');
+            
+            setTimeout(() => {
+                hideAIThinkingMessage();
+                showMessage('✅ 文档填充完成！AI已为您生成专业内容', 'success');
+            }, 4000);
+        }
+        
+        // 测试AI建议
+        function testAISuggestions() {
+            showAIThinkingMessage('💡 正在生成AI填写建议...');
+            
+            setTimeout(() => {
+                hideAIThinkingMessage();
+                showMessage('💡 AI建议已生成！包含专业填写指导和优化建议', 'success');
+            }, 3500);
+        }
+        
+        // 显示AI思考提示
+        function showAIThinkingMessage(message = '🧠 文思泉涌中...') {
+            let aiThinkingContainer = document.getElementById('ai-thinking-container');
+            if (!aiThinkingContainer) {
+                aiThinkingContainer = document.createElement('div');
+                aiThinkingContainer.id = 'ai-thinking-container';
+                aiThinkingContainer.className = 'ai-thinking-overlay';
+                document.body.appendChild(aiThinkingContainer);
+            }
+            
+            const thinkingMessages = [
+                "🧠 文思泉涌中，正在为您精心撰写...",
+                "✨ 灵感迸发中，让AI为您妙笔生花...",
+                "🎨 创意流淌中，正在雕琢完美内容...",
+                "🌟 智慧汇聚中，为您呈现专业佳作...",
+                "💫 才思敏捷中，正在谱写精彩篇章...",
+                "🎯 匠心独运中，为您打造精品内容...",
+                "🌈 妙笔生花中，正在创作专业文档...",
+                "🚀 思维飞扬中，为您呈现完美答卷..."
+            ];
+            
+            const randomMessage = thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
+            
+            aiThinkingContainer.innerHTML = `
+                <div class="ai-thinking-content">
+                    <div class="ai-thinking-icon">
+                        <div class="thinking-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="ai-thinking-text">
+                        <h3>🤖 AI智能写作助手</h3>
+                        <p>${randomMessage}</p>
+                        <div class="ai-thinking-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill"></div>
+                            </div>
+                            <span class="progress-text">正在生成中...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            aiThinkingContainer.style.display = 'flex';
+            startProgressAnimation();
+            startMessageRotation(aiThinkingContainer, thinkingMessages);
+        }
+        
+        // 隐藏AI思考提示
+        function hideAIThinkingMessage() {
+            const aiThinkingContainer = document.getElementById('ai-thinking-container');
+            if (aiThinkingContainer) {
+                aiThinkingContainer.style.display = 'none';
+            }
+        }
+        
+        // 启动进度条动画
+        function startProgressAnimation() {
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.width = '0%';
+                progressFill.style.transition = 'width 0.5s ease-in-out';
+                
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15 + 5;
+                    if (progress >= 90) {
+                        progress = 90;
+                        clearInterval(interval);
+                    }
+                    progressFill.style.width = progress + '%';
+                }, 800);
+            }
+        }
+        
+        // 启动消息轮换
+        function startMessageRotation(container, messages) {
+            let currentIndex = 0;
+            const messageElement = container.querySelector('.ai-thinking-text p');
+            
+            const interval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % messages.length;
+                messageElement.style.opacity = '0';
+                
+                setTimeout(() => {
+                    messageElement.textContent = messages[currentIndex];
+                    messageElement.style.opacity = '1';
+                }, 300);
+            }, 3000);
+            
+            container.dataset.messageInterval = interval;
+        }
+        
+        // 显示消息提示
+        function showMessage(message, type = 'info') {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            messageContainer.textContent = message;
+            
+            document.body.appendChild(messageContainer);
+            
+            setTimeout(() => {
+                messageContainer.remove();
+            }, 3000);
+        }
+    </script>
 </body>
 </html>

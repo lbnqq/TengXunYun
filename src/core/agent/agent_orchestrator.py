@@ -2,8 +2,8 @@ import json
 import os
 from typing import Dict, Any, List
 
-from src.core.tools import DocumentParserTool, ContentFillerTool, StyleGeneratorTool, VirtualReviewerTool, MeetingReviewTool, DocumentOutputTool
-from src.core.guidance import ScenarioInferenceModule
+from ..tools import DocumentParserTool, ContentFillerTool, StyleGeneratorTool, VirtualReviewerTool, MeetingReviewTool, DocumentOutputTool
+from ..guidance import ScenarioInferenceModule
 
 class MockLLMClient:
     def generate(self, prompt: str) -> str:

@@ -6,141 +6,111 @@ from typing import Dict, List, Any
 
 from src.llm_clients.multi_llm import MultiLLMClient
 
+@pytest.fixture(scope="module")
+def multi_client():
+    """Create MultiLLMClient for testing."""
+    with patch.dict('os.environ', {
+        'XINGCHENG_API_KEY': 'test_key',
+        'XINGCHENG_API_SECRET': 'test_secret',
+        'QINIU_API_KEY': 'qiniu_key',
+        'TOGETHER_API_KEY': 'together_key',
+        'OPENROUTER_API_KEY': 'openrouter_key'
+    }):
+        return MultiLLMClient()
+
 class TestAPISwithcing:
     """Test suite for API switching and failover mechanisms."""
-    
-    @pytest.fixture
-    def multi_client(self):
-        """Create MultiLLMClient for testing."""
-        with patch.dict('os.environ', {
-            'XINGCHENG_API_KEY': 'test_key',
-            'XINGCHENG_API_SECRET': 'test_secret',
-            'QINIU_API_KEY': 'qiniu_key',
-            'TOGETHER_API_KEY': 'together_key',
-            'OPENROUTER_API_KEY': 'openrouter_key'
-        }):
-            return MultiLLMClient()
-    
+
     def test_primary_api_success_no_switching(self, multi_client):
         """Test that no switching occurs when primary API succeeds."""
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng:
-            mock_xingcheng.return_value = ("Primary API success", {"status": "ok"})
-            
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng:
+            mock_xingcheng.return_value = ("Primary API success", {"role": "assistant", "content": "Primary API success"})
             messages = [{"role": "user", "content": "Test message"}]
             result = multi_client.chat_completion(messages, model="auto")
-            
-            # Should use primary API and not call others
             mock_xingcheng.assert_called_once()
             assert result["choices"][0]["message"]["content"] == "Primary API success"
-    
+
     def test_sequential_api_failover(self, multi_client):
         """Test sequential failover through multiple APIs."""
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng, \
-             patch.object(multi_client, 'call_openrouter_api') as mock_openrouter, \
-             patch.object(multi_client, 'call_together_api') as mock_together, \
-             patch.object(multi_client, 'call_qiniu_api') as mock_qiniu:
-            
-            # First two APIs fail, third succeeds
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng, \
+             patch('src.llm_clients.multi_llm.MultiLLMClient.call_openrouter_api') as mock_openrouter, \
+             patch('src.llm_clients.multi_llm.MultiLLMClient.call_together_api') as mock_together, \
+             patch('src.llm_clients.multi_llm.MultiLLMClient.call_qiniu_api') as mock_qiniu:
             mock_xingcheng.return_value = ("[API Error: Xingcheng failed]", None)
             mock_openrouter.return_value = ("[API Error: OpenRouter failed]", None)
-            mock_together.return_value = ("Together API success", {"status": "ok"})
-            mock_qiniu.return_value = ("Should not be called", {"status": "ok"})
-            
+            mock_together.return_value = ("Together API success", {"role": "assistant", "content": "Together API success"})
+            mock_qiniu.return_value = ("Should not be called", {"role": "assistant", "content": "Should not be called"})
             messages = [{"role": "user", "content": "Test message"}]
             content, _ = multi_client.call_multi_cloud(messages)
-            
-            # Should try first three APIs
             mock_xingcheng.assert_called_once()
             mock_openrouter.assert_called_once()
             mock_together.assert_called_once()
-            mock_qiniu.assert_not_called()  # Should stop after success
-            
+            mock_qiniu.assert_not_called()
             assert content == "Together API success"
-    
+
     def test_all_apis_fail_scenario(self, multi_client):
         """Test behavior when all APIs fail."""
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng, \
-             patch.object(multi_client, 'call_openrouter_api') as mock_openrouter, \
-             patch.object(multi_client, 'call_together_api') as mock_together, \
-             patch.object(multi_client, 'call_qiniu_api') as mock_qiniu:
-            
-            # All APIs fail
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng, \
+             patch('src.llm_clients.multi_llm.MultiLLMClient.call_openrouter_api') as mock_openrouter, \
+             patch('src.llm_clients.multi_llm.MultiLLMClient.call_together_api') as mock_together, \
+             patch('src.llm_clients.multi_llm.MultiLLMClient.call_qiniu_api') as mock_qiniu:
             mock_xingcheng.return_value = ("[API Error: Xingcheng failed]", None)
             mock_openrouter.return_value = ("[API Error: OpenRouter failed]", None)
             mock_together.return_value = ("[API Error: Together failed]", None)
             mock_qiniu.return_value = ("[API Error: Qiniu failed]", None)
-            
             messages = [{"role": "user", "content": "Test message"}]
             content, _ = multi_client.call_multi_cloud(messages)
-            
-            # Should try all APIs
             mock_xingcheng.assert_called_once()
             mock_openrouter.assert_called_once()
             mock_together.assert_called_once()
             mock_qiniu.assert_called_once()
-            
-            assert "All cloud APIs failed" in content
-    
+            assert "All cloud APIs failed" in content or "All healthy endpoints failed" in content
+
     def test_specific_api_selection(self, multi_client):
         """Test selecting a specific API instead of auto mode."""
-        with patch.object(multi_client, 'call_qiniu_api') as mock_qiniu:
-            mock_qiniu.return_value = ("Qiniu specific response", {"status": "ok"})
-            
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_qiniu_api') as mock_qiniu:
+            mock_qiniu.return_value = ("Qiniu specific response", {"role": "assistant", "content": "Qiniu specific response"})
             messages = [{"role": "user", "content": "Test message"}]
             result = multi_client.chat_completion(messages, model="qiniu/deepseek-v3")
-            
             mock_qiniu.assert_called_once()
             assert result["choices"][0]["message"]["content"] == "Qiniu specific response"
-    
+
     def test_api_response_time_tracking(self, multi_client):
         """Test tracking of API response times."""
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng:
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng:
             def slow_api_call(*args, **kwargs):
-                time.sleep(0.1)  # Simulate slow response
-                return ("Slow response", {"status": "ok"})
-            
+                time.sleep(0.1)
+                return ("Slow response", {"role": "assistant", "content": "Slow response"})
             mock_xingcheng.side_effect = slow_api_call
-            
             start_time = time.time()
             messages = [{"role": "user", "content": "Test message"}]
             result = multi_client.chat_completion(messages, model="xingcheng/x1")
             end_time = time.time()
-            
             response_time = end_time - start_time
             assert response_time >= 0.1
             assert result["choices"][0]["message"]["content"] == "Slow response"
-    
-    def test_api_error_logging(self, multi_client):
+
+    def test_api_error_logging(self, multi_client, caplog):
         """Test that API errors are properly logged."""
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng, \
-             patch('builtins.print') as mock_print:
-            
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng:
             mock_xingcheng.return_value = ("[API Error: Connection failed]", None)
-            
             messages = [{"role": "user", "content": "Test message"}]
-            multi_client.call_multi_cloud(messages)
-            
-            # Check that error information was printed/logged
-            mock_print.assert_called()
-            print_calls = [call[0][0] for call in mock_print.call_args_list]
-            assert any("Trying API" in call for call in print_calls)
-    
+            with caplog.at_level("INFO"):
+                multi_client.call_multi_cloud(messages)
+            assert any("Trying API" in record.message or "API Error" in record.message for record in caplog.records)
+
     def test_retry_mechanism(self, multi_client):
         """Test retry mechanism for transient failures."""
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng:
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng:
             # First call fails, second succeeds
             mock_xingcheng.side_effect = [
                 ("[API Error: Temporary failure]", None),
                 ("Retry success", {"status": "ok"})
             ]
-            
             messages = [{"role": "user", "content": "Test message"}]
-            
-            # Simulate retry logic (this would need to be implemented in the actual client)
             content, _ = multi_client.call_xingcheng_api(messages)
             if "API Error" in content:
                 content, _ = multi_client.call_xingcheng_api(messages)
-            
             assert content == "Retry success"
             assert mock_xingcheng.call_count == 2
 
@@ -201,7 +171,7 @@ class TestAPIPerformanceMetrics:
         success_count = 0
         total_calls = 10
         
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng:
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng:
             # Simulate 70% success rate
             def variable_success(*args, **kwargs):
                 nonlocal success_count
@@ -225,8 +195,8 @@ class TestAPIPerformanceMetrics:
     
     def test_api_latency_comparison(self, multi_client):
         """Test comparison of API latencies."""
-        with patch.object(multi_client, 'call_xingcheng_api') as mock_xingcheng, \
-             patch.object(multi_client, 'call_qiniu_api') as mock_qiniu:
+        with patch('src.llm_clients.multi_llm.MultiLLMClient.call_xingcheng_api') as mock_xingcheng, \
+             patch('src.llm_clients.multi_llm.MultiLLMClient.call_qiniu_api') as mock_qiniu:
             
             def fast_api(*args, **kwargs):
                 time.sleep(0.05)

@@ -9,37 +9,76 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+import base64
+import tempfile
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.agent.agent_orchestrator import AgentOrchestrator
-from src.llm_clients.xingcheng_llm import XingchengLLMClient
-from src.llm_clients.multi_llm import MultiLLMClient
-from src.core.tools.format_alignment_coordinator import FormatAlignmentCoordinator
-from src.core.tools.document_fill_coordinator import DocumentFillCoordinator
-from src.core.tools.writing_style_analyzer import WritingStyleAnalyzer
+# 尝试导入可选依赖
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("⚠️ pandas未安装，某些功能可能受限")
 
-# 导入数据库相关模块
-from src.core.database import (
-    DatabaseManager,
-    AppSettingsRepository,
-    DocumentRepository,
-    TemplateRepository,
-    PerformanceRepository,
-    BatchProcessingRepository,
-    DocumentRecord,
-    DocumentType,
-    IntentType,
-    ProcessingStatus,
-    get_database_manager
-)
+# 尝试导入项目模块
+try:
+    from src.core.agent.agent_orchestrator import AgentOrchestrator
+    from src.llm_clients.xingcheng_llm import XingchengLLMClient
+    from src.llm_clients.multi_llm import MultiLLMClient
+    from src.core.tools.format_alignment_coordinator import FormatAlignmentCoordinator
+    from src.core.tools.document_fill_coordinator import DocumentFillCoordinator
+    from src.core.tools.writing_style_analyzer import WritingStyleAnalyzer
+    ADVANCED_FEATURES_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ 高级功能模块导入失败: {e}")
+    ADVANCED_FEATURES_AVAILABLE = False
 
-# 导入性能监控模块
-from src.core.monitoring import get_performance_monitor, PerformanceTimer
+# 尝试导入数据库模块
+try:
+    from src.core.database import (
+        DatabaseManager,
+        AppSettingsRepository,
+        DocumentRepository,
+        TemplateRepository,
+        PerformanceRepository,
+        BatchProcessingRepository,
+        DocumentRecord,
+        DocumentType,
+        IntentType,
+        ProcessingStatus,
+        get_database_manager
+    )
+    DATABASE_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ 数据库模块导入失败: {e}")
+    DATABASE_AVAILABLE = False
 
-# 导入批量处理模块
-from src.core.tools.batch_processor import get_batch_processor
+# 尝试导入性能监控模块
+try:
+    from src.core.monitoring import get_performance_monitor, PerformanceTimer
+    MONITORING_AVAILABLE = True
+except ImportError:
+    print("⚠️ 性能监控模块导入失败")
+    MONITORING_AVAILABLE = False
+    # 创建简单的性能计时器替代
+    class PerformanceTimer:
+        def __init__(self, name):
+            self.name = name
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+
+# 尝试导入批量处理模块
+try:
+    from src.core.tools.batch_processor import get_batch_processor
+    BATCH_PROCESSING_AVAILABLE = True
+except ImportError:
+    print("⚠️ 批量处理模块导入失败")
+    BATCH_PROCESSING_AVAILABLE = False
 
 # 加载环境变量
 load_dotenv()
@@ -50,57 +89,6 @@ project_root = os.path.dirname(current_dir)
 
 # 创建Flask应用，指定模板和静态文件路径
 app = Flask(__name__,
-           template_folder=os.path.join(project_root, 'templates'),
-           static_folder=os.path.join(project_root, 'static'))
-CORS(app)
-
-# Configuration
-app.config['UPLOAD_FOLDER'] = os.path.join(project_root, 'uploads')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'docx'}
-
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-# 性能监控中间件
-@app.before_request
-def before_request():
-    """请求前的性能监控"""
-    request.start_time = time.time()
-
-@app.after_request
-def after_request(response):
-    """请求后的性能监控"""
-    if hasattr(request, 'start_time'):
-        duration = (time.time() - request.start_time) * 1000  # 转换为毫秒
-
-        # 只记录API请求的性能
-        if request.path.startswith('/api/'):
-            # 记录性能指标
-            record_performance(
-                f"api_request_{request.endpoint or 'unknown'}",
-                duration,
-                200 <= response.status_code < 400,
-                None if 200 <= response.status_code < 400 else f"HTTP {response.status_code}",
-                {
-                    'method': request.method,
-                    'path': request.path,
-                    'status_code': response.status_code,
-                    'content_length': response.content_length or 0
-                }
-            )
-
-    return response
-
-# Load environment variables
-load_dotenv()
-
-# 获取当前文件所在目录
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_dir)
-
-# 创建Flask应用，指定模板和静态文件路径
-app = Flask(__name__, 
            template_folder=os.path.join(project_root, 'templates'),
            static_folder=os.path.join(project_root, 'static'))
 CORS(app)
@@ -126,6 +114,11 @@ settings_repo = None
 document_repo = None
 template_repo = None
 
+# 在全局变量初始化部分添加
+enhanced_document_filler = None
+patent_analyzer = None
+image_processor = None
+
 def init_database():
     """初始化数据库连接"""
     global db_manager, settings_repo, document_repo, template_repo
@@ -143,6 +136,40 @@ def init_database():
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def handle_batch_upload():
+    """处理批量上传，只保存文件不进行处理"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': '没有文件'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': '没有选择文件'}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': '不支持的文件格式'}), 400
+
+        # Generate unique filename
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+
+        # Save file
+        file.save(filepath)
+
+        print(f"📁 Batch upload file saved: {filepath}")
+
+        return jsonify({
+            'success': True,
+            'file_path': filepath,
+            'filename': filename,
+            'uploaded_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"❌ Batch upload error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def initialize_agent(api_type="xingcheng", model_name=None):
     """Initialize the document agent with specified LLM client."""
@@ -911,14 +938,34 @@ def upload_file():
         print("=" * 80)
         print("🚀 UPLOAD REQUEST RECEIVED")
         print("=" * 80)
+        print(f"⏰ Timestamp: {datetime.now().isoformat()}")
+        print(f"🌐 Remote address: {request.remote_addr}")
+        print(f"🔗 User agent: {request.headers.get('User-Agent', 'Unknown')}")
 
-        try:
-            # Debug request information
-            print(f"📋 Request method: {request.method}")
-            print(f"📋 Request content type: {request.content_type}")
-            print(f"📋 Request files: {list(request.files.keys())}")
-            print(f"📋 Request form data: {dict(request.form)}")
-            print(f"📋 Request headers: {dict(request.headers)}")
+        # 检查是否是批量处理上传（不进行处理，只保存文件）
+        batch_upload = request.form.get('batch_upload', 'false').lower() == 'true'
+        print(f"📦 Batch upload mode: {batch_upload}")
+
+        if batch_upload:
+            print("🔄 Redirecting to batch upload handler")
+            return handle_batch_upload()
+
+        # Debug request information
+        print(f"📋 Request method: {request.method}")
+        print(f"📋 Request content type: {request.content_type}")
+        print(f"📋 Request files: {list(request.files.keys())}")
+        print(f"📋 Request form data: {dict(request.form)}")
+        print(f"📋 Request headers (selected):")
+        for header in ['Content-Type', 'Content-Length', 'Accept', 'Origin', 'Referer']:
+            value = request.headers.get(header)
+            if value:
+                print(f"     {header}: {value}")
+
+        # 检查上传文件夹配置
+        upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+        print(f"📁 Upload folder configured: {upload_folder}")
+        print(f"📁 Upload folder exists: {os.path.exists(upload_folder)}")
+        print(f"📁 Upload folder writable: {os.access(upload_folder, os.W_OK) if os.path.exists(upload_folder) else 'N/A'}")
 
         if 'file' not in request.files:
             print("❌ ERROR: No file provided in request")
@@ -938,6 +985,10 @@ def upload_file():
         file_size = file.tell()
         file.seek(0)  # Reset to beginning
         print(f"   - File size: {file_size} bytes")
+
+        if file_size > app.config['MAX_CONTENT_LENGTH']:
+            print(f"❌ ERROR: File size exceeds limit: {file_size} bytes")
+            return jsonify({'error': 'File too large'}), 413
 
         if not allowed_file(file.filename):
             print(f"❌ ERROR: File type not allowed: {file.filename}")
@@ -962,16 +1013,34 @@ def upload_file():
         
         # Save file
         print(f"💾 Saving file to: {filepath}")
-        file.save(filepath)
-        print(f"✅ File saved successfully")
+        print(f"💾 Directory exists: {os.path.exists(os.path.dirname(filepath))}")
+        print(f"💾 Directory writable: {os.access(os.path.dirname(filepath), os.W_OK)}")
+
+        try:
+            file.save(filepath)
+            print(f"✅ File saved successfully")
+        except Exception as save_error:
+            print(f"❌ ERROR: File save failed with exception: {save_error}")
+            print(f"❌ Exception type: {type(save_error).__name__}")
+            print(f"❌ Exception args: {save_error.args}")
+            return jsonify({'error': f'File save failed: {str(save_error)}'}), 500
 
         # Verify file exists and is readable
         if os.path.exists(filepath):
             file_size_on_disk = os.path.getsize(filepath)
             print(f"✅ File verified on disk: {file_size_on_disk} bytes")
+            print(f"✅ File readable: {os.access(filepath, os.R_OK)}")
+
+            # 验证文件内容完整性
+            if file_size_on_disk != file_size:
+                print(f"⚠️ WARNING: File size mismatch! Original: {file_size}, On disk: {file_size_on_disk}")
+            else:
+                print(f"✅ File size verification passed")
         else:
             print(f"❌ ERROR: File not found on disk after save!")
-            return jsonify({'error': 'File save failed'}), 500
+            print(f"❌ Attempted path: {filepath}")
+            print(f"❌ Directory listing: {os.listdir(os.path.dirname(filepath)) if os.path.exists(os.path.dirname(filepath)) else 'Directory not found'}")
+            return jsonify({'error': 'File save failed - file not found on disk'}), 500
 
         # 计算文件哈希值
         import hashlib
@@ -1074,11 +1143,19 @@ def upload_file():
 
             # Clean up uploaded file
             print(f"🧹 Cleaning up file: {filepath}")
-            os.remove(filepath)
-            print(f"✅ File cleaned up successfully")
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                print(f"✅ File cleaned up successfully")
+            else:
+                print(f"⚠️ File not found for cleanup: {filepath}")
 
             # Prepare response
             response_data = {
+                'file_id': unique_filename,
+                'analysis': {
+                    'document_type': result.get('scenario_analysis', {}).get('document_type', '通用文档'),
+                    'key_entities': result.get('key_entities', [])
+                },
                 'success': True,
                 'result': result,
                 'filename': filename,
@@ -1130,6 +1207,8 @@ def upload_file():
                 print(f"🧹 Cleaning up file after error: {filepath}")
                 os.remove(filepath)
                 print(f"✅ File cleaned up after error")
+            else:
+                print(f"⚠️ File not found for cleanup after error: {filepath}")
             
             # 如果是网络错误，尝试使用模拟模式
             if "timeout" in str(e).lower() or "connection" in str(e).lower() or "network" in str(e).lower():
@@ -1231,18 +1310,40 @@ def format_alignment():
         global format_coordinator
 
         try:
-            # 初始化格式协调器
             if format_coordinator is None:
                 format_coordinator = FormatAlignmentCoordinator()
 
-            # 获取请求数据
             data = request.get_json()
-            user_input = data.get('user_input', '')
-            uploaded_files = data.get('uploaded_files', {})
+            # 新增：支持 data_sources 结构
+            data_sources = data.get('data_sources')
+            if data_sources:
+                # 自动提取主要内容
+                user_input = ''
+                uploaded_files = {}
+                image_files = {}
+                for item in data_sources:
+                    if item.get('type') == 'text' and not user_input:
+                        user_input = item.get('content', '')
+                    if item.get('type') == 'file':
+                        mime = item.get('mime', '')
+                        if mime.startswith('image/') and item.get('content'):
+                            # 处理 base64 图片
+                            header, b64data = item['content'].split(',', 1) if ',' in item['content'] else ('', item['content'])
+                            binary = base64.b64decode(b64data)
+                            tmp_dir = tempfile.gettempdir()
+                            img_path = os.path.join(tmp_dir, item.get('name','uploaded_image'))
+                            with open(img_path, 'wb') as f:
+                                f.write(binary)
+                            image_files[item.get('name','file')] = img_path
+                        else:
+                            uploaded_files[item.get('name','file')] = item.get('content','')
+                # 可将 image_files 合并到 uploaded_files 或单独处理
+                uploaded_files.update(image_files)
+            else:
+                user_input = data.get('user_input', '')
+                uploaded_files = data.get('uploaded_files', {})
 
-            # 处理用户请求
             result = format_coordinator.process_user_request(user_input, uploaded_files)
-
             return jsonify(result)
 
         except Exception as e:
@@ -1290,6 +1391,47 @@ def get_format_template(template_id):
     except Exception as e:
         return jsonify({'error': f'获取模板失败: {str(e)}'}), 500
 
+@app.route('/api/format-templates', methods=['POST'])
+def save_format_template():
+    """保存格式模板"""
+    global format_coordinator
+
+    try:
+        if format_coordinator is None:
+            format_coordinator = FormatAlignmentCoordinator()
+            print("Format coordinator initialized")
+
+        data = request.get_json()
+        if not data:
+            print("Error: No JSON data received in request")
+            return jsonify({'error': '请求中没有提供数据'}), 400
+
+        template_name = data.get('template_name', '')
+        template_data = data.get('template_data', {})
+
+        if not template_name or not template_data:
+            print(f"Error: Missing template name or data. Name: {template_name}, Data: {bool(template_data)}")
+            return jsonify({'error': '缺少模板名称或数据'}), 400
+
+        print(f"Saving format template with name: {template_name}")
+        result = format_coordinator.format_extractor.save_format_template(template_name, template_data)
+
+        if 'error' in result:
+            print(f"Error in save_format_template result: {result['error']}")
+            return jsonify(result), 500
+
+        print(f"Format template saved successfully with ID: {result.get('template_id', 'N/A')}")
+        return jsonify({
+            'success': True,
+            'template_id': result.get('template_id', ''),
+            'message': '格式模板保存成功'
+        })
+
+    except Exception as e:
+        print(f"Error saving format template: {str(e)}")
+        print(f"Stack trace: {traceback.format_exc()}")
+        return jsonify({'error': f'保存模板失败: {str(e)}'}), 500
+
 @app.route('/api/format-templates/<template_id>/apply', methods=['POST'])
 def apply_format_template(template_id):
     """应用格式模板到文档"""
@@ -1319,18 +1461,35 @@ def apply_format_template(template_id):
 
 @app.route('/api/format-alignment/preview/<session_id>')
 def preview_formatted_document(session_id):
-    """在浏览器中预览格式化文档"""
+    """预览格式对齐后的文档"""
     try:
-        # 这里应该从会话中获取HTML内容
-        # 为了演示，我们创建一个基本的HTML页面
-        html_content = request.args.get('html_content', '')
-
-        if not html_content:
+        # 获取格式对齐结果
+        result = format_aligner.get_format_result(session_id)
+        if not result:
             return "No content to preview", 404
-
-        # 直接返回HTML内容，浏览器会渲染它
+        
+        # 生成SVG图片并插入文档
+        if image_processor:
+            # 为文档生成AI SVG
+            svg_result = image_processor.generate_ai_svg_for_document(
+                document_type="general",
+                content_description="格式对齐预览文档",
+                svg_size=(400, 300)
+            )
+            
+            if svg_result.get("success"):
+                # 插入SVG到文档（预览模式）
+                document_content = result.get("formatted_content", "")
+                target_position = {"line_number": 1, "document_type": "general"}
+                updated_content = image_processor.insert_svg_to_document(
+                    document_content, svg_result, target_position, mode="preview"
+                )
+                result["formatted_content"] = updated_content
+                result["svg_info"] = svg_result
+        
+        html_content = result.get("formatted_content", "")
         return html_content
-
+        
     except Exception as e:
         return f"Preview error: {str(e)}", 500
 
@@ -1619,6 +1778,617 @@ def set_writing_style_template():
     except Exception as e:
         return jsonify({'error': f'设置文风模板失败: {str(e)}'}), 500
 
+# 风格对齐相关API端点
+@app.route('/api/style-alignment/preview', methods=['POST'])
+def preview_style_changes():
+    """预览文风变化"""
+    global style_analyzer
+
+    try:
+        if style_analyzer is None:
+            style_analyzer = WritingStyleAnalyzer()
+            print("Style analyzer initialized")
+
+        data = request.get_json()
+        if not data:
+            print("Error: No JSON data received in request for style preview")
+            return jsonify({'error': '请求中没有提供数据'}), 400
+
+        # 新增：支持 data_sources 结构
+        data_sources = data.get('data_sources')
+        if data_sources:
+            document_content = ''
+            document_name = ''
+            style_template_id = ''
+            image_files = {}
+            for item in data_sources:
+                if item.get('type') == 'text' and not document_content:
+                    document_content = item.get('content', '')
+                    document_name = item.get('name', '')
+                if item.get('type') == 'style_template_id':
+                    style_template_id = item.get('content', '')
+                if item.get('type') == 'file':
+                    mime = item.get('mime', '')
+                    if mime.startswith('image/') and item.get('content'):
+                        header, b64data = item['content'].split(',', 1) if ',' in item['content'] else ('', item['content'])
+                        binary = base64.b64decode(b64data)
+                        tmp_dir = tempfile.gettempdir()
+                        img_path = os.path.join(tmp_dir, item.get('name','uploaded_image'))
+                        with open(img_path, 'wb') as f:
+                            f.write(binary)
+                        image_files[item.get('name','file')] = img_path
+            # 可将 image_files 路径传递给后续分析逻辑
+        else:
+            document_content = data.get('document_content', '')
+            document_name = data.get('document_name', '')
+            style_template_id = data.get('style_template_id', '')
+
+        if not document_content or not style_template_id:
+            print(f"Error: Missing document content or style template ID. Content: {bool(document_content)}, Template ID: {style_template_id}")
+            return jsonify({'error': '缺少文档内容或文风模板ID'}), 400
+
+        print(f"Analyzing writing style for document: {document_name}")
+        # 分析文档并应用文风模板以生成预览
+        analysis_result = style_analyzer.analyze_writing_style(document_content, document_name)
+        if "error" in analysis_result:
+            print(f"Error in writing style analysis: {analysis_result['error']}")
+            return jsonify(analysis_result), 500
+
+        print(f"Generating style preview with template ID: {style_template_id}")
+        # 修正：兼容 generate_style_preview 方法
+        if hasattr(style_analyzer, 'generate_style_preview'):
+            preview_data = style_analyzer.generate_style_preview(analysis_result, style_template_id)
+        else:
+            return jsonify({'error': '后端未实现 generate_style_preview 方法'}), 500
+        if "error" in preview_data:
+            print(f"Error in style preview generation: {preview_data['error']}")
+            return jsonify(preview_data), 500
+
+        print("Style preview generated successfully")
+        return jsonify({
+            'success': True,
+            'preview_data': preview_data,
+            'session_id': preview_data.get('session_id', str(uuid.uuid4()))
+        })
+
+    except Exception as e:
+        print(f"Error previewing style changes: {str(e)}")
+        print(f"Stack trace: {traceback.format_exc()}")
+        return jsonify({'error': f'预览文风变化失败: {str(e)}'}), 500
+
+@app.route('/api/style-alignment/changes/<session_id>/<change_id>', methods=['PATCH'])
+def handle_individual_change(session_id, change_id):
+    """接受或拒绝单个文风变化"""
+    global style_analyzer
+
+    try:
+        if style_analyzer is None:
+            return jsonify({'error': '文风分析器未初始化'}), 400
+
+        data = request.get_json()
+        action = data.get('action', '')
+
+        if action not in ['accept', 'reject']:
+            return jsonify({'error': '无效的操作，必须是accept或reject'}), 400
+
+        result = style_analyzer.handle_style_change(session_id, change_id, action)
+        if "error" in result:
+            return jsonify(result), 404
+
+        return jsonify({
+            'success': True,
+            'change_id': change_id,
+            'action': action,
+            'updated_preview': result.get('updated_preview', {})
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'处理文风变化失败: {str(e)}'}), 500
+
+@app.route('/api/style-alignment/changes/<session_id>/batch', methods=['PATCH'])
+def handle_batch_changes(session_id):
+    """批量接受或拒绝所有文风变化"""
+    global style_analyzer
+
+    try:
+        if style_analyzer is None:
+            return jsonify({'error': '文风分析器未初始化'}), 400
+
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求中没有提供数据'}), 400
+
+        action = data.get('action', '')
+
+        if action not in ['accept_all', 'reject_all']:
+            return jsonify({'error': '无效的操作，必须是accept_all或reject_all'}), 400
+
+        if session_id == 'null':
+            return jsonify({'error': '无效的会话ID'}), 400
+
+        result = style_analyzer.handle_batch_style_changes(session_id, action)
+        if "error" in result:
+            return jsonify(result), 404
+
+        return jsonify({
+            'success': True,
+            'action': action,
+            'change_count': result.get('change_count', 0)
+        })
+
+    except Exception as e:
+        print(f"Error handling batch style changes: {e}")
+        return jsonify({'error': f'批量处理文风变化失败: {str(e)}'}), 500
+
+@app.route('/api/style-alignment/export/<session_id>', methods=['GET'])
+def export_styled_document(session_id):
+    """导出应用了文风变化的文档"""
+    global style_analyzer
+
+    try:
+        if style_analyzer is None:
+            return jsonify({'error': '文风分析器未初始化'}), 400
+
+        # 调用真正的导出功能
+        result = style_analyzer.export_styled_document(session_id)
+        if "error" in result:
+            return jsonify(result), 404
+
+        from flask import make_response
+        
+        # 生成SVG图片并插入导出文档
+        if image_processor:
+            svg_result = image_processor.generate_ai_svg_for_document(
+                document_type="style_export",
+                content_description="文风调整导出文档",
+                svg_size=(400, 300)
+            )
+            
+            if svg_result.get("success"):
+                # 插入SVG到导出内容（下载模式）
+                if "html_content" in result:
+                    target_position = {"line_number": 1, "document_type": "style_export"}
+                    updated_content = image_processor.insert_svg_to_document(
+                        result["html_content"], svg_result, target_position, mode="download"
+                    )
+                    result["html_content"] = updated_content
+                    result["svg_info"] = svg_result
+        
+        # 根据返回类型设置响应
+        if "docx_content" in result:
+            # Word文档
+            response = make_response(result['docx_content'])
+            response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            response.headers['Content-Disposition'] = f'attachment; filename={result.get("filename", "styled_document.docx")}'
+            return response
+        elif "html_content" in result:
+            # HTML文档
+            response = make_response(result['html_content'])
+            response.headers['Content-Type'] = 'text/html'
+            response.headers['Content-Disposition'] = f'attachment; filename={result.get("filename", "styled_document.html")}'
+            return response
+        else:
+            return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': f'导出失败: {str(e)}'}), 500
+
+# 智能填报自动匹配数据相关API端点
+@app.route('/api/document-fill/auto-match', methods=['POST'])
+def auto_match_data():
+    """自动匹配数据到文档字段"""
+    global fill_coordinator
+
+    try:
+        if fill_coordinator is None:
+            return jsonify({'error': '文档填充会话未初始化'}), 400
+
+        data = request.get_json()
+        session_id = data.get('session_id', '')
+        data_sources = data.get('data_sources', [])
+
+        if not session_id:
+            return jsonify({'error': '缺少会话ID'}), 400
+
+        result = fill_coordinator.auto_match_data(session_id, data_sources)
+        if "error" in result:
+            return jsonify(result), 500
+
+        return jsonify({
+            'success': True,
+            'matched_fields': result.get('matched_fields', {}),
+            'unmatched_fields': result.get('unmatched_fields', []),
+            'confidence_scores': result.get('confidence_scores', {}),
+            'conflicts': result.get('conflicts', [])
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'自动匹配数据失败: {str(e)}'}), 500
+
+@app.route('/api/document-fill/auto-match/conflicts/<session_id>', methods=['PATCH'])
+def resolve_conflicts(session_id):
+    """解决自动匹配中的冲突"""
+    global fill_coordinator
+
+    try:
+        if fill_coordinator is None:
+            return jsonify({'error': '文档填充会话未初始化'}), 400
+
+        data = request.get_json()
+        resolutions = data.get('resolutions', {})
+
+        if not resolutions:
+            return jsonify({'error': '缺少冲突解决方案'}), 400
+
+        result = fill_coordinator.resolve_conflicts(session_id, resolutions)
+        if "error" in result:
+            return jsonify(result), 500
+
+        return jsonify({
+            'success': True,
+            'resolved_fields': result.get('resolved_fields', {})
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'解决冲突失败: {str(e)}'}), 500
+
+# 文档审阅相关API端点
+@app.route('/api/document-review/start', methods=['POST'])
+def start_document_review():
+    """开始文档审阅过程"""
+    global orchestrator_instance
+
+    try:
+        if orchestrator_instance is None:
+            orchestrator_instance = initialize_agent(api_type="xingcheng")
+
+        data = request.get_json()
+        # 新增：支持 data_sources 结构
+        data_sources = data.get('data_sources')
+        if data_sources:
+            document_content = ''
+            document_name = ''
+            review_focus = 'auto'
+            image_files = {}
+            for item in data_sources:
+                if item.get('type') == 'text' and not document_content:
+                    document_content = item.get('content', '')
+                    document_name = item.get('name', '')
+                if item.get('type') == 'review_focus':
+                    review_focus = item.get('content', 'auto')
+                if item.get('type') == 'file':
+                    mime = item.get('mime', '')
+                    if mime.startswith('image/') and item.get('content'):
+                        header, b64data = item['content'].split(',', 1) if ',' in item['content'] else ('', item['content'])
+                        binary = base64.b64decode(b64data)
+                        tmp_dir = tempfile.gettempdir()
+                        img_path = os.path.join(tmp_dir, item.get('name','uploaded_image'))
+                        with open(img_path, 'wb') as f:
+                            f.write(binary)
+                        image_files[item.get('name','file')] = img_path
+            # 可将 image_files 路径传递给后续分析逻辑
+        else:
+            document_content = data.get('document_content', '')
+            document_name = data.get('document_name', '')
+            review_focus = data.get('review_focus', 'auto')
+
+        if not document_content:
+            return jsonify({'error': '缺少文档内容'}), 400
+
+        session_id = str(uuid.uuid4())
+        result = orchestrator_instance.start_document_review(document_content, document_name, review_focus, session_id)
+        if "error" in result:
+            return jsonify(result), 500
+
+        return jsonify({
+            'success': True,
+            'review_session_id': session_id,
+            'status': 'in_progress'
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'启动文档审阅失败: {str(e)}'}), 500
+
+@app.route('/api/document-review/suggestions/<review_session_id>', methods=['GET'])
+def get_review_suggestions(review_session_id):
+    """获取文档审阅建议"""
+    global orchestrator_instance
+
+    try:
+        if orchestrator_instance is None:
+            return jsonify({'error': '审阅服务未初始化'}), 400
+
+        suggestions = orchestrator_instance.get_review_suggestions(review_session_id)
+        if "error" in suggestions:
+            return jsonify(suggestions), 404
+
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'获取审阅建议失败: {str(e)}'}), 500
+
+@app.route('/api/document-review/suggestions/<review_session_id>/<suggestion_id>', methods=['PATCH'])
+def handle_review_suggestion(review_session_id, suggestion_id):
+    """接受或拒绝特定审阅建议"""
+    global orchestrator_instance
+
+    try:
+        if orchestrator_instance is None:
+            return jsonify({'error': '审阅服务未初始化'}), 400
+
+        data = request.get_json()
+        action = data.get('action', '')
+
+        if action not in ['accept', 'reject']:
+            return jsonify({'error': '无效的操作，必须是accept或reject'}), 400
+
+        result = orchestrator_instance.handle_review_suggestion(review_session_id, suggestion_id, action)
+        if "error" in result:
+            return jsonify(result), 404
+
+        return jsonify({
+            'success': True,
+            'suggestion_id': suggestion_id,
+            'action': action
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'处理审阅建议失败: {str(e)}'}), 500
+
+@app.route('/api/document-review/suggestions/<review_session_id>/batch', methods=['PATCH'])
+def handle_batch_review_suggestions(review_session_id):
+    """批量接受或拒绝所有审阅建议"""
+    global orchestrator_instance
+
+    try:
+        if orchestrator_instance is None:
+            return jsonify({'error': '审阅服务未初始化'}), 400
+
+        data = request.get_json()
+        action = data.get('action', '')
+
+        if action not in ['accept_all', 'reject_all']:
+            return jsonify({'error': '无效的操作，必须是accept_all或reject_all'}), 400
+
+        result = orchestrator_instance.handle_batch_review_suggestions(review_session_id, action)
+        if "error" in result:
+            return jsonify(result), 404
+
+        return jsonify({
+            'success': True,
+            'action': action,
+            'suggestion_count': result.get('suggestion_count', 0)
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'批量处理审阅建议失败: {str(e)}'}), 500
+
+@app.route('/api/document-review/export/<review_session_id>', methods=['GET'])
+def export_reviewed_document(review_session_id):
+    """导出评审后的文档"""
+    global orchestrator_instance
+    
+    try:
+        if orchestrator_instance is None:
+            return jsonify({'error': '文档评审器未初始化'}), 400
+        
+        result = orchestrator_instance.export_reviewed_document(review_session_id)
+        if "error" in result:
+            return jsonify(result), 404
+        
+        # 生成SVG图片并插入评审文档
+        if image_processor:
+            svg_result = image_processor.generate_ai_svg_for_document(
+                document_type="review_export",
+                content_description="文档评审结果",
+                svg_size=(450, 350)
+            )
+            
+            if svg_result.get("success"):
+                # 插入SVG到评审文档（下载模式）
+                if "html_content" in result:
+                    target_position = {"line_number": 1, "document_type": "review_export"}
+                    updated_content = image_processor.insert_svg_to_document(
+                        result["html_content"], svg_result, target_position, mode="download"
+                    )
+                    result["html_content"] = updated_content
+                    result["svg_info"] = svg_result
+        
+        from flask import make_response
+        response = make_response(result['docx_content'])
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        response.headers['Content-Disposition'] = 'attachment; filename=reviewed_document.docx'
+        return response
+        
+    except Exception as e:
+        return jsonify({'error': f'导出评审文档失败: {str(e)}'}), 500
+
+# 模板管理相关API端点
+@app.route('/api/templates/<template_type>/<template_id>/rename', methods=['PATCH'])
+def rename_template(template_type, template_id):
+    """重命名模板"""
+    global template_repo
+
+    try:
+        if template_repo is None:
+            return jsonify({'error': '模板存储库未初始化'}), 400
+
+        if template_type not in ['format', 'style']:
+            return jsonify({'error': '无效的模板类型，必须是format或style'}), 400
+
+        data = request.get_json()
+        new_name = data.get('new_name', '')
+
+        if not new_name:
+            return jsonify({'error': '缺少新名称'}), 400
+
+        result = template_repo.rename_template(template_type, template_id, new_name)
+        if "error" in result:
+            return jsonify(result), 404
+
+        return jsonify({
+            'success': True,
+            'template_id': template_id,
+            'new_name': new_name
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'重命名模板失败: {str(e)}'}), 500
+
+@app.route('/api/templates/<template_type>/<template_id>/confirm-delete', methods=['GET'])
+def confirm_delete_template(template_type, template_id):
+    """确认删除模板"""
+    global template_repo
+
+    try:
+        if template_repo is None:
+            return jsonify({'error': '模板存储库未初始化'}), 400
+
+        if template_type not in ['format', 'style']:
+            return jsonify({'error': '无效的模板类型，必须是format或style'}), 400
+
+        # 生成一个确认令牌
+        confirmation_token = str(uuid.uuid4())
+        # 这里可以存储令牌与模板ID的关联，设置过期时间等
+
+        return jsonify({
+            'success': True,
+            'confirmation_message': '您确定要删除此模板吗？此操作无法撤销。',
+            'confirmation_token': confirmation_token
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'确认删除模板失败: {str(e)}'}), 500
+
+@app.route('/api/templates/<template_type>/<template_id>', methods=['DELETE'])
+def delete_template(template_type, template_id):
+    """删除模板"""
+    global template_repo
+
+    try:
+        if template_repo is None:
+            return jsonify({'error': '模板存储库未初始化'}), 400
+
+        if template_type not in ['format', 'style']:
+            return jsonify({'error': '无效的模板类型，必须是format或style'}), 400
+
+        data = request.get_json() or {}
+        confirmation_token = data.get('confirmation_token', '')
+
+        if not confirmation_token:
+            return jsonify({'error': '缺少确认令牌'}), 400
+
+        # 这里应该验证确认令牌
+        # 为了简化，我们假设令牌有效
+
+        result = template_repo.delete_template(template_type, template_id)
+        if "error" in result:
+            return jsonify(result), 404
+
+        return jsonify({
+            'success': True,
+            'template_id': template_id
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'删除模板失败: {str(e)}'}), 500
+
+# 历史记录重新应用相关API端点
+@app.route('/api/documents/history/<record_id>/reapply', methods=['POST'])
+def reapply_operation(record_id):
+    """重新应用历史操作"""
+    global document_repo, orchestrator_instance
+
+    try:
+        if document_repo is None:
+            return jsonify({'error': '文档存储库未初始化'}), 400
+
+        if orchestrator_instance is None:
+            orchestrator_instance = initialize_agent(api_type="xingcheng")
+
+        record = document_repo.get_document_record(record_id)
+        if not record:
+            return jsonify({'error': '历史记录未找到'}), 404
+
+        if not os.path.exists(record.file_path):
+            return jsonify({
+                'success': False,
+                'status': 'file_missing',
+                'message': '原始文件不再可用。请重新上传文件以继续。'
+            }), 400
+
+        # 创建新记录
+        new_record = DocumentRecord(
+            original_filename=record.original_filename,
+            file_path=record.file_path,
+            file_size=record.file_size,
+            file_hash=record.file_hash,
+            document_type=record.document_type,
+            intent_type=record.intent_type,
+            processing_status=ProcessingStatus.PROCESSING,
+            confidence_score=0.0
+        )
+        new_record_id = document_repo.create_document_record(new_record)
+
+        # 重新应用操作
+        result = orchestrator_instance.process_document(record.file_path, new_record_id)
+        if "error" in result:
+            document_repo.update_processing_status(new_record_id, ProcessingStatus.FAILED, error_message=str(result.get('error')))
+            return jsonify(result), 500
+
+        document_repo.update_processing_status(new_record_id, ProcessingStatus.COMPLETED)
+        return jsonify({
+            'success': True,
+            'new_record_id': new_record_id,
+            'status': 'completed'
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'重新应用操作失败: {str(e)}'}), 500
+
+@app.route('/api/documents/history/<record_id>/upload', methods=['POST'])
+def upload_for_reapply(record_id):
+    """为重新应用上传文件"""
+    global document_repo
+
+    try:
+        if document_repo is None:
+            return jsonify({'error': '文档存储库未初始化'}), 400
+
+        if 'file' not in request.files:
+            return jsonify({'error': '没有文件'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({'error': '不支持的文件格式'}), 400
+
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(filepath)
+
+        # 更新记录中的文件路径
+        record = document_repo.get_document_record(record_id)
+        if not record:
+            return jsonify({'error': '历史记录未找到'}), 404
+
+        document_repo.update_file_path(record_id, filepath)
+
+        return jsonify({
+            'success': True,
+            'file_path': filepath,
+            'message': '文件上传成功。您现在可以重新应用操作。'
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'文件上传失败: {str(e)}'}), 500
+
 # 数据库相关API端点
 @app.route('/api/database/stats', methods=['GET'])
 def get_database_stats():
@@ -1643,23 +2413,45 @@ def get_document_history():
     """获取文档处理历史"""
     try:
         if document_repo is None:
-            return jsonify({'error': '数据库未初始化'}), 500
+            print("Error: document_repo is None, database not initialized")
+            return jsonify({
+                'success': False,
+                'history': [],
+                'count': 0,
+                'message': '数据库未初始化，返回空历史记录'
+            }), 200
 
         limit = request.args.get('limit', 50, type=int)
         status = request.args.get('status', None)
+        print(f"Fetching document history with limit={limit}, status={status}")
 
         records = document_repo.get_processing_history(limit=limit, status=status)
+        print(f"Retrieved {len(records)} records from database")
 
         # 转换为字典格式
-        history = [record.to_dict() for record in records]
+        history = []
+        for record in records:
+            try:
+                history.append(record.to_dict())
+            except Exception as e:
+                print(f"Error converting record to dict: {e}")
+                continue
 
+        print(f"Successfully converted {len(history)} records to dictionary format")
         return jsonify({
             'success': True,
             'history': history,
             'count': len(history)
         })
     except Exception as e:
-        return jsonify({'error': f'获取文档历史失败: {str(e)}'}), 500
+        print(f"Error in get_document_history: {e}")
+        print(f"Stack trace: {traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'history': [],
+            'count': 0,
+            'message': f'获取文档历史失败: {str(e)}'
+        }), 200
 
 @app.route('/api/templates/personal', methods=['GET'])
 def get_personal_templates():
@@ -1722,41 +2514,43 @@ def update_app_settings():
     except Exception as e:
         return jsonify({'error': f'更新应用设置失败: {str(e)}'}), 500
 
-if __name__ == '__main__':
-    print("Starting Office Document Agent Web Server...")
-    print(f"Project root: {project_root}")
-    print(f"Template folder: {app.template_folder}")
-    print(f"Static folder: {app.static_folder}")
+@app.route('/api/table-fill', methods=['POST'])
+def api_table_fill():
+    """
+    智能表格批量填充API
+    请求参数:
+      - tables: List[dict]，每个dict包含'columns'和'data'（二维数组）
+      - fill_data: list of dict，每个 dict 对应一行数据，key 为表头
+    返回:
+      - 填充后的表格内容（json）
+    """
+    try:
+        data = request.get_json()
+        tables = data.get('tables', [])
+        fill_data = data.get('fill_data', [])
 
-    # 初始化数据库
-    print("Initializing database...")
-    if init_database():
-        print("✅ Database initialized successfully")
-    else:
-        print("❌ Database initialization failed")
-        print("Warning: Some features may not work properly")
+        # 反序列化 DataFrame
+        pd_tables = []
+        for t in tables:
+            # t: {'columns': [...], 'data': [[...], ...]}
+            df = pd.DataFrame(t['data'], columns=t['columns'])
+            pd_tables.append(df)
 
-    print("Web interface will be available at: http://localhost:5000")
-    print("API endpoints:")
-    print("  - GET  /api/health     - Health check")
-    print("  - GET  /api/config     - Configuration info")
-    print("  - GET  /api/models     - Available models")
-    print("  - POST /api/upload     - Upload and process document")
-    
-    # 检查API配置
-    api_keys = {
-        'XINGCHENG_API_KEY': os.getenv("XINGCHENG_API_KEY"),
-        'QINIU_API_KEY': os.getenv("QINIU_API_KEY"),
-        'TOGETHER_API_KEY': os.getenv("TOGETHER_API_KEY"),
-        'OPENROUTER_API_KEY': os.getenv("OPENROUTER_API_KEY")
-    }
-    
-    configured_apis = [name for name, key in api_keys.items() if key]
-    if configured_apis:
-        print(f"Configured APIs: {', '.join(configured_apis)}")
-    else:
-        print("Warning: No API keys found in .env file")
-        print("The system will use mock mode for testing")
+        processor = DocumentProcessor()
+        filled_tables = processor.fill_tables(pd_tables, fill_data)
+
+        # 返回json格式
+        result = []
+        for df in filled_tables:
+            result.append({
+                'columns': list(df.columns),
+                'data': df.values.tolist()
+            })
+
+        return jsonify({'success': True, 'filled_tables': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== 仪表板相关API端点 ====================
 
@@ -1998,10 +2792,24 @@ def create_batch_job():
         files = data.get('files', [])
         processing_config = data.get('processing_config', {})
 
-        if not name or not files:
+        if not name:
             return jsonify({
                 'success': False,
-                'error': '作业名称和文件列表不能为空'
+                'error': '作业名称不能为空'
+            }), 400
+
+        if not files or not isinstance(files, list):
+            return jsonify({
+                'success': False,
+                'error': '文件列表不能为空且必须是数组'
+            }), 400
+
+        # 过滤掉无效的文件路径
+        valid_files = [f for f in files if f is not None and isinstance(f, str) and f.strip()]
+        if not valid_files:
+            return jsonify({
+                'success': False,
+                'error': '没有提供有效的文件路径'
             }), 400
 
         # 获取批量处理器
@@ -2013,7 +2821,7 @@ def create_batch_job():
             batch_processor._processors_registered = True
 
         # 创建作业
-        job_id = batch_processor.create_batch_job(name, files, processing_config)
+        job_id = batch_processor.create_batch_job(name, valid_files, processing_config)
 
         return jsonify({
             'success': True,
@@ -2192,6 +3000,230 @@ def register_batch_processors(batch_processor):
     batch_processor.register_processor('format_cleanup', format_cleanup_processor)
     batch_processor.register_processor('content_generation', content_generation_processor)
     batch_processor.register_processor('style_transfer', style_transfer_processor)
+
+# 替换全局异常处理为：仅在 debug 模式下返回 traceback
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    if app.debug:
+        tb = traceback.format_exc()
+        return jsonify({'error': str(e), 'traceback': tb}), 500
+    else:
+        return jsonify({'error': str(e)}), 500
+
+# 在现有API端点后添加新的智能文档填充端点
+
+@app.route('/api/enhanced-document/analyze', methods=['POST'])
+def enhanced_document_analysis():
+    """增强的文档分析API"""
+    global enhanced_document_filler
+    
+    try:
+        if enhanced_document_filler is None:
+            return jsonify({'error': '增强文档填充器未初始化'}), 400
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        document_content = data.get('document_content', '')
+        document_name = data.get('document_name', '')
+        
+        if not document_content:
+            return jsonify({'error': '文档内容为空'}), 400
+        
+        # 执行增强的文档分析
+        analysis_result = enhanced_document_filler.analyze_document_structure(
+            document_content, document_name
+        )
+        
+        if "error" in analysis_result:
+            return jsonify(analysis_result), 400
+        
+        return jsonify(analysis_result)
+        
+    except Exception as e:
+        return jsonify({'error': f'文档分析失败: {str(e)}'}), 500
+
+@app.route('/api/enhanced-document/fill', methods=['POST'])
+def enhanced_document_fill():
+    """增强的文档填充API"""
+    global enhanced_document_filler
+    
+    try:
+        if enhanced_document_filler is None:
+            return jsonify({'error': '增强文档填充器未初始化'}), 400
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        analysis_result = data.get('analysis_result', {})
+        user_data = data.get('user_data', {})
+        image_files = data.get('image_files', [])
+        
+        if not analysis_result:
+            return jsonify({'error': '分析结果为空'}), 400
+        
+        # 执行智能文档填充
+        fill_result = enhanced_document_filler.intelligent_fill_document(
+            analysis_result, user_data, image_files
+        )
+        
+        if "error" in fill_result:
+            return jsonify(fill_result), 400
+        
+        return jsonify(fill_result)
+        
+    except Exception as e:
+        return jsonify({'error': f'文档填充失败: {str(e)}'}), 500
+
+@app.route('/api/patent-document/analyze', methods=['POST'])
+def patent_document_analysis():
+    """专利文档分析API"""
+    global patent_analyzer
+    
+    try:
+        if patent_analyzer is None:
+            return jsonify({'error': '专利分析器未初始化'}), 400
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        document_content = data.get('document_content', '')
+        document_name = data.get('document_name', '')
+        
+        if not document_content:
+            return jsonify({'error': '文档内容为空'}), 400
+        
+        # 执行专利文档分析
+        analysis_result = patent_analyzer.analyze_patent_document(
+            document_content, document_name
+        )
+        
+        if "error" in analysis_result:
+            return jsonify(analysis_result), 400
+        
+        # 生成AI填写建议
+        ai_suggestions = patent_analyzer.generate_ai_fill_suggestions(analysis_result)
+        analysis_result["ai_suggestions"] = ai_suggestions
+        
+        return jsonify(analysis_result)
+        
+    except Exception as e:
+        return jsonify({'error': f'专利文档分析失败: {str(e)}'}), 500
+
+@app.route('/api/image/process', methods=['POST'])
+def process_image():
+    """图片处理API"""
+    global image_processor
+    
+    try:
+        if image_processor is None:
+            return jsonify({'error': '图片处理器未初始化'}), 400
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        image_data = data.get('image_data', '')
+        image_name = data.get('image_name', '')
+        target_position = data.get('target_position', {})
+        
+        if not image_data:
+            return jsonify({'error': '图片数据为空'}), 400
+        
+        # 处理图片
+        result = image_processor.process_uploaded_image(
+            image_data, image_name, target_position
+        )
+        
+        if "error" in result:
+            return jsonify(result), 400
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': f'图片处理失败: {str(e)}'}), 500
+
+@app.route('/api/image/batch-process', methods=['POST'])
+def batch_process_images():
+    """批量图片处理API"""
+    global image_processor
+    
+    try:
+        if image_processor is None:
+            return jsonify({'error': '图片处理器未初始化'}), 400
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        image_list = data.get('image_list', [])
+        document_content = data.get('document_content', '')
+        
+        if not image_list:
+            return jsonify({'error': '图片列表为空'}), 400
+        
+        # 批量处理图片
+        result = image_processor.batch_process_images(image_list, document_content)
+        
+        if "error" in result:
+            return jsonify(result), 400
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': f'批量图片处理失败: {str(e)}'}), 500
+
+@app.route('/api/image/statistics', methods=['GET'])
+def get_image_statistics():
+    """获取图片统计信息API"""
+    global image_processor
+    
+    try:
+        if image_processor is None:
+            return jsonify({'error': '图片处理器未初始化'}), 400
+        
+        statistics = image_processor.get_image_statistics()
+        
+        if "error" in statistics:
+            return jsonify(statistics), 400
+        
+        return jsonify(statistics)
+        
+    except Exception as e:
+        return jsonify({'error': f'获取统计信息失败: {str(e)}'}), 500
+
+@app.route('/api/ai-fill-suggestions', methods=['POST'])
+def get_ai_fill_suggestions():
+    """获取AI填写建议API"""
+    global patent_analyzer
+    
+    try:
+        if patent_analyzer is None:
+            return jsonify({'error': '专利分析器未初始化'}), 400
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        analysis_result = data.get('analysis_result', {})
+        
+        if not analysis_result:
+            return jsonify({'error': '分析结果为空'}), 400
+        
+        # 生成AI填写建议
+        suggestions = patent_analyzer.generate_ai_fill_suggestions(analysis_result)
+        
+        if "error" in suggestions:
+            return jsonify(suggestions), 400
+        
+        return jsonify(suggestions)
+        
+    except Exception as e:
+        return jsonify({'error': f'生成AI建议失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

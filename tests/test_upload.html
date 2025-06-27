@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件上传测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .upload-area { 
+            border: 2px dashed #ccc; 
+            padding: 20px; 
+            text-align: center; 
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        .upload-area:hover { border-color: #007bff; }
+        .result { 
+            margin: 20px 0; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            background: #f9f9f9; 
+        }
+        .error { background: #ffe6e6; border-color: #ff0000; }
+        .success { background: #e6ffe6; border-color: #00ff00; }
+    </style>
+</head>
+<body>
+    <h1>文件上传测试页面</h1>
+    
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <p>点击这里选择文件上传</p>
+        <p>支持 TXT、PDF、DOCX 格式</p>
+    </div>
+    
+    <input type="file" id="fileInput" style="display: none;" accept=".txt,.pdf,.docx">
+    
+    <button id="uploadBtn" disabled>开始上传</button>
+    <button id="clearBtn">清除</button>
+    
+    <div id="fileInfo" style="display: none;">
+        <h3>选中的文件:</h3>
+        <p id="fileName"></p>
+        <p id="fileSize"></p>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        let selectedFile = null;
+        
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const result = document.getElementById('result');
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                fileName.textContent = `文件名: ${file.name}`;
+                fileSize.textContent = `大小: ${(file.size / 1024).toFixed(2)} KB`;
+                fileInfo.style.display = 'block';
+                uploadBtn.disabled = false;
+                
+                showResult(`文件已选择: ${file.name}`, 'info');
+            }
+        });
+        
+        uploadBtn.addEventListener('click', async function() {
+            if (!selectedFile) {
+                showResult('请先选择文件', 'error');
+                return;
+            }
+            
+            uploadBtn.disabled = true;
+            showResult('正在上传...', 'info');
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('api_type', 'mock');
+                formData.append('model_name', 'mock-model');
+                
+                console.log('发送请求到 /api/upload');
+                console.log('文件:', selectedFile.name, selectedFile.size, 'bytes');
+                
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('响应状态:', response.status);
+                console.log('响应头:', response.headers);
+                
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                if (response.ok) {
+                    if (data.success) {
+                        showResult(`上传成功！文档类型: ${data.result.document_type || '未知'}`, 'success');
+                        showResult(`分析结果: ${JSON.stringify(data.result.analysis, null, 2)}`, 'info');
+                    } else {
+                        showResult(`上传失败: ${data.error || '未知错误'}`, 'error');
+                    }
+                } else {
+                    showResult(`HTTP错误 ${response.status}: ${data.error || '未知错误'}`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('上传错误:', error);
+                showResult(`网络错误: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+        
+        clearBtn.addEventListener('click', function() {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadBtn.disabled = true;
+            result.innerHTML = '';
+        });
+        
+        function showResult(message, type) {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            result.appendChild(div);
+            result.scrollTop = result.scrollHeight;
+        }
+        
+        // 页面加载时测试API连接
+        window.addEventListener('load', async function() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                showResult(`API连接正常: ${data.status}`, 'success');
+            } catch (error) {
+                showResult(`API连接失败: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

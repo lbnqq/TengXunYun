@@ -193,25 +193,26 @@ class BatchProcessor {
     
     async uploadFiles() {
         const uploadedFiles = [];
-        
+
         for (const file of this.selectedFiles) {
             const formData = new FormData();
             formData.append('file', file);
-            
+            formData.append('batch_upload', 'true'); // 标记为批量上传
+
             const response = await fetch('/api/upload', {
                 method: 'POST',
                 body: formData
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 uploadedFiles.push(result.file_path);
             } else {
                 throw new Error(`上传文件 ${file.name} 失败: ${result.error}`);
             }
         }
-        
+
         return uploadedFiles;
     }
     

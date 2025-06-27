@@ -1,0 +1,166 @@
+{
+  "document_name": "生活化描述",
+  "analysis_time": "2025-06-25T14:04:17.313495",
+  "analysis_method": "basic",
+  "document_stats": {
+    "total_characters": 212,
+    "total_lines": 13,
+    "total_sentences": 10,
+    "total_paragraphs": 6,
+    "total_words": 19,
+    "average_sentence_length": 21.2,
+    "average_paragraph_length": 35.3,
+    "reading_time_minutes": 0.1
+  },
+  "style_features": {
+    "sentence_structure": {
+      "average_length": 19.0,
+      "long_short_ratio": 0.1,
+      "complex_ratio": 0.6,
+      "total_sentences": 10,
+      "long_sentences": 1,
+      "short_sentences": 3
+    },
+    "vocabulary_choice": {
+      "formality_score": 0.0,
+      "technical_density": 5.0,
+      "modifier_usage": 50.0,
+      "action_verb_ratio": 0.0
+    },
+    "expression_style": {
+      "passive_active_ratio": 1.0,
+      "person_usage": {
+        "first_person": 7,
+        "second_person": 0,
+        "third_person": 0
+      },
+      "tone_strength": 0.0,
+      "passive_count": 1,
+      "active_count": 0
+    },
+    "text_organization": {
+      "paragraph_count": 6,
+      "average_paragraph_length": 33.3,
+      "connector_density": 9.43,
+      "summary_usage": 0,
+      "enumeration_usage": 0
+    },
+    "language_habits": {
+      "colloquial_level": 33.02,
+      "formal_structure_usage": 0.0,
+      "de_structure_density": 51.89
+    },
+    "emotional_tone": {
+      "positive_ratio": 1.0,
+      "negative_ratio": 0.0,
+      "neutral_ratio": 0.0,
+      "intensity": 51.89
+    },
+    "professionalism": {
+      "domain_specificity": 4.72,
+      "authority_indicators": 0.0,
+      "precision_level": 0.0
+    },
+    "rhetorical_devices": {
+      "metaphor_usage": 0.0,
+      "parallel_structure": 9.43,
+      "question_usage": 0.0
+    }
+  },
+  "style_type": "narrative_descriptive",
+  "confidence_score": 0.8,
+  "style_prompt": "请采用叙述描述风格进行写作，具体特征包括：生动形象, 细节丰富, 情感真实, 故事性强。 句式长短适中，兼顾表达完整性和可读性。 可以使用相对轻松、自然的表达方式。 保持积极正面的语调，突出优势和成果。 确保文本很容易阅读，适合目标读者群体。",
+  "template_id": "e17a4fb7c505",
+  "detailed_analysis": {
+    "readability_analysis": {
+      "readability_score": 87.0,
+      "readability_level": "很容易阅读",
+      "factors": {
+        "sentence_complexity": "中",
+        "vocabulary_difficulty": "低"
+      }
+    },
+    "tone_analysis": {
+      "tone_distribution": {
+        "positive_ratio": 50.0,
+        "negative_ratio": 0.0,
+        "neutral_ratio": 50.0
+      },
+      "dominant_tone": "positive",
+      "emotional_intensity": 0,
+      "tone_consistency": "中"
+    },
+    "structure_analysis": {
+      "paragraph_structure": {
+        "paragraph_count": 6,
+        "average_length": 33.3,
+        "length_consistency": "中"
+      },
+      "logical_flow": {
+        "connector_usage": 9.43,
+        "enumeration_usage": 0,
+        "summary_usage": 0
+      },
+      "organization_score": 18.86
+    },
+    "vocabulary_analysis": {
+      "vocabulary_richness": {
+        "unique_words": 19,
+        "total_words": 19,
+        "diversity_ratio": 100.0
+      },
+      "word_complexity": {
+        "technical_density": 5.0,
+        "formality_score": 0.0,
+        "modifier_usage": 50.0
+      },
+      "action_orientation": {
+        "action_verb_ratio": 0.0,
+        "passive_voice_usage": 4.72
+      }
+    },
+    "style_consistency": {
+      "consistency_score": 48.0,
+      "variation_level": "高",
+      "factors_analyzed": [
+        "句长一致性",
+        "词汇使用",
+        "语调变化"
+      ]
+    }
+  },
+  "writing_recommendations": [],
+  "style_comparison": {
+    "formal_vs_informal": {
+      "formality_level": "低",
+      "formal_score": -11.0,
+      "indicators": {
+        "formal_vocabulary": 0.0,
+        "formal_structures": 0.0,
+        "colloquial_elements": 33.02
+      }
+    },
+    "technical_vs_general": {
+      "technicality_level": "低",
+      "technical_score": 5.0,
+      "professional_score": 0,
+      "balance": "技术性强"
+    },
+    "objective_vs_subjective": {
+      "objectivity_level": "高",
+      "objectivity_score": 100,
+      "subjectivity_indicators": {
+        "emotional_intensity": 0,
+        "assertive_tone": 0
+      }
+    },
+    "concise_vs_elaborate": {
+      "conciseness_level": "中",
+      "conciseness_score": 42.0,
+      "verbosity_indicators": {
+        "sentence_length": 19.0,
+        "modifier_density": 50.0
+      }
+    }
+  }
+}

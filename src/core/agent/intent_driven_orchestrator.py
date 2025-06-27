@@ -13,9 +13,9 @@ import os
 from typing import Dict, Any, List, Tuple
 from datetime import datetime
 
-from src.core.tools import DocumentParserTool, ComplexDocumentFiller, DocumentFormatExtractor
-from src.core.tools import ContentFillerTool, StyleGeneratorTool, VirtualReviewerTool
-from src.core.guidance import ScenarioInferenceModule
+from ..tools import DocumentParserTool, ComplexDocumentFiller, DocumentFormatExtractor
+from ..tools import ContentFillerTool, StyleGeneratorTool, VirtualReviewerTool
+from ..guidance import ScenarioInferenceModule
 
 
 class DocumentRoleAnalyzer:

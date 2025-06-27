@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试功能测试页面</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 调试消息样式 */
+        .debug-message {
+            margin-bottom: 4px;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-size: 10px;
+            line-height: 1.2;
+        }
+        .debug-message .debug-time {
+            color: #888;
+            margin-right: 8px;
+        }
+        .debug-message .debug-level {
+            margin-right: 8px;
+            font-weight: bold;
+        }
+        .debug-message.debug-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+        .debug-message.debug-warn {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+        .debug-message.debug-info {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        .debug-message.debug-debug {
+            background-color: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+        .debug-data {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 4px;
+            margin-top: 2px;
+            border-radius: 2px;
+            font-size: 9px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f7fafc;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">调试功能测试页面</h1>
+        
+        <!-- 文件上传测试区域 -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">文件上传测试</h2>
+            
+            <div id="upload-area" class="upload-area p-8 text-center rounded-lg cursor-pointer">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">点击或拖拽文件到此处上传</p>
+                <p class="text-sm text-gray-500 mt-2">支持 TXT、PDF、DOCX 格式</p>
+            </div>
+            
+            <input type="file" id="file-input" class="hidden" accept=".txt,.pdf,.docx">
+            
+            <div id="file-info" class="hidden mt-4 p-4 bg-gray-50 rounded">
+                <h3 class="font-semibold">已选择文件:</h3>
+                <p id="file-name" class="text-gray-700"></p>
+                <p id="file-size" class="text-sm text-gray-500"></p>
+            </div>
+            
+            <div class="mt-4 flex space-x-4">
+                <button id="process-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50" disabled>
+                    开始处理
+                </button>
+                <button id="clear-file-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded">
+                    清除文件
+                </button>
+                <button id="test-error-btn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded">
+                    测试错误
+                </button>
+            </div>
+        </div>
+        
+        <!-- 调试面板 -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">调试信息面板</h2>
+                <button id="clear-debug-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm">
+                    清空日志
+                </button>
+            </div>
+            
+            <div id="debug-messages" class="bg-black text-green-400 p-4 rounded font-mono text-xs max-h-96 overflow-y-auto">
+                <div class="text-gray-500">等待调试信息...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 调试配置
+        const DEBUG_MODE = true;
+        const DEBUG_LEVELS = {
+            ERROR: 0,
+            WARN: 1,
+            INFO: 2,
+            DEBUG: 3
+        };
+        let currentDebugLevel = DEBUG_LEVELS.DEBUG;
+
+        // 调试日志函数
+        function debugLog(level, message, data = null) {
+            if (level <= currentDebugLevel) {
+                const timestamp = new Date().toISOString();
+                const levelNames = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
+                const levelName = levelNames[level];
+                
+                console.log(`[${timestamp}] [${levelName}] ${message}`);
+                if (data) {
+                    console.log('Data:', data);
+                }
+                
+                // 同时显示在页面调试面板中
+                if (DEBUG_MODE) {
+                    addDebugMessage(levelName, message, data);
+                }
+            }
+        }
+
+        // 在页面中添加调试信息
+        function addDebugMessage(level, message, data) {
+            const debugMessages = document.getElementById('debug-messages');
+            if (debugMessages) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `debug-message debug-${level.toLowerCase()}`;
+                messageDiv.innerHTML = `
+                    <span class="debug-time">${new Date().toLocaleTimeString()}</span>
+                    <span class="debug-level">[${level}]</span>
+                    <span class="debug-text">${message}</span>
+                    ${data ? `<pre class="debug-data">${JSON.stringify(data, null, 2)}</pre>` : ''}
+                `;
+                debugMessages.appendChild(messageDiv);
+                debugMessages.scrollTop = debugMessages.scrollHeight;
+            }
+        }
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog(DEBUG_LEVELS.INFO, '调试测试页面已加载');
+            
+            // 获取DOM元素
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
+            const fileName = document.getElementById('file-name');
+            const fileSize = document.getElementById('file-size');
+            const processBtn = document.getElementById('process-btn');
+            const clearFileBtn = document.getElementById('clear-file-btn');
+            const clearDebugBtn = document.getElementById('clear-debug-btn');
+            const testErrorBtn = document.getElementById('test-error-btn');
+            
+            // 检查元素
+            const elements = {
+                uploadArea: !!uploadArea,
+                fileInput: !!fileInput,
+                fileInfo: !!fileInfo,
+                processBtn: !!processBtn
+            };
+            
+            debugLog(DEBUG_LEVELS.INFO, 'DOM元素检查完成', elements);
+            
+            // 设置事件监听器
+            if (uploadArea && fileInput) {
+                uploadArea.addEventListener('click', (e) => {
+                    debugLog(DEBUG_LEVELS.INFO, '上传区域被点击', {
+                        target: e.target.tagName,
+                        targetId: e.target.id
+                    });
+                    e.preventDefault();
+                    fileInput.click();
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    debugLog(DEBUG_LEVELS.INFO, '文件选择事件触发', {
+                        filesLength: e.target.files.length
+                    });
+                    
+                    const file = e.target.files[0];
+                    if (file) {
+                        debugLog(DEBUG_LEVELS.INFO, '文件已选择', {
+                            fileName: file.name,
+                            fileSize: file.size,
+                            fileType: file.type
+                        });
+                        
+                        fileName.textContent = file.name;
+                        fileSize.textContent = `大小: ${(file.size / 1024).toFixed(2)} KB`;
+                        fileInfo.classList.remove('hidden');
+                        processBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // 清空调试日志
+            if (clearDebugBtn) {
+                clearDebugBtn.addEventListener('click', () => {
+                    const debugMessages = document.getElementById('debug-messages');
+                    if (debugMessages) {
+                        debugMessages.innerHTML = '<div class="text-gray-500">调试日志已清空</div>';
+                        debugLog(DEBUG_LEVELS.INFO, '调试日志已手动清空');
+                    }
+                });
+            }
+            
+            // 测试错误按钮
+            if (testErrorBtn) {
+                testErrorBtn.addEventListener('click', () => {
+                    debugLog(DEBUG_LEVELS.ERROR, '这是一个测试错误消息', {
+                        errorCode: 'TEST_ERROR',
+                        timestamp: new Date().toISOString()
+                    });
+                    debugLog(DEBUG_LEVELS.WARN, '这是一个测试警告消息');
+                    debugLog(DEBUG_LEVELS.DEBUG, '这是一个测试调试消息');
+                });
+            }
+            
+            debugLog(DEBUG_LEVELS.INFO, '测试页面初始化完成');
+        });
+    </script>
+</body>
+</html>

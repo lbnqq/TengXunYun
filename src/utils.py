@@ -8,7 +8,11 @@ import requests
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_config(config_path="config/config.yaml"):
-    """加载配置文件"""
+    """加载配置文件（以 office-doc-agent 为根目录）"""
+    # 保证 config_path 总是以 office-doc-agent 为根
+    if not os.path.isabs(config_path):
+        config_path = os.path.join(os.path.dirname(__file__), '..', config_path)
+        config_path = os.path.abspath(config_path)
     with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     # 替换环境变量引用
@@ -82,11 +86,15 @@ def get_paddleocr_kwargs(config: dict):
         "lang": ocr_cfg.get("lang", "ch"),
         "use_gpu": ocr_cfg.get("use_gpu", False)
     }
-    # 支持本地模型路径
+    # 支持本地模型路径（以 office-doc-agent 为根目录）
     if "ocr_model_dir" in ocr_cfg:
-        kwargs["det_model_dir"] = os.path.join(ocr_cfg["ocr_model_dir"], "det")
-        kwargs["rec_model_dir"] = os.path.join(ocr_cfg["ocr_model_dir"], "rec")
-        kwargs["cls_model_dir"] = os.path.join(ocr_cfg["ocr_model_dir"], "cls")
+        model_dir = ocr_cfg["ocr_model_dir"]
+        if not os.path.isabs(model_dir):
+            model_dir = os.path.join(os.path.dirname(__file__), '..', model_dir)
+            model_dir = os.path.abspath(model_dir)
+        kwargs["det_model_dir"] = os.path.join(model_dir, "det")
+        kwargs["rec_model_dir"] = os.path.join(model_dir, "rec")
+        kwargs["cls_model_dir"] = os.path.join(model_dir, "cls")
     return kwargs
 
 def download_paddleocr_models(ocr_model_dir: str, lang: str = "ch"):
@@ -94,6 +102,10 @@ def download_paddleocr_models(ocr_model_dir: str, lang: str = "ch"):
     自动下载 PaddleOCR det/rec/cls 模型到本地 ocr_model_dir。
     lang: "ch" 或 "en" 等。
     """
+    # 以 office-doc-agent 为根目录
+    if not os.path.isabs(ocr_model_dir):
+        ocr_model_dir = os.path.join(os.path.dirname(__file__), '..', ocr_model_dir)
+        ocr_model_dir = os.path.abspath(ocr_model_dir)
     os.makedirs(ocr_model_dir, exist_ok=True)
     base_url = f"https://paddleocr.bj.bcebos.com/PP-OCRv4/{lang}"
     models = {
@@ -123,6 +135,10 @@ def download_hf_model_files(hf_model_id: str, cache_dir: str):
     自动下载 HuggingFace模型到本地 cache_dir。
     依赖 transformers >=4.27.0
     """
+    # 以 office-doc-agent 为根目录
+    if not os.path.isabs(cache_dir):
+        cache_dir = os.path.join(os.path.dirname(__file__), '..', cache_dir)
+        cache_dir = os.path.abspath(cache_dir)
     try:
         from transformers import snapshot_download
         snapshot_download(repo_id=hf_model_id, cache_dir=cache_dir, local_files_only=False, resume_download=True)
@@ -138,7 +154,7 @@ def download_hf_model_files(hf_model_id: str, cache_dir: str):
 
 # PaddleOCR 本地模型使用说明：
 # 1. 访问 https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/models_list.md 下载所需模型。
-# 2. 将 det、rec、cls 目录分别放到 config.yaml 配置的 ocr_model_dir 下。
+# 2. 将 det、rec、cls 目录分别放到 config.yaml 配置的 ocr_model_dir 下（如 office-doc-agent/models/paddleocr）。
 # 3. 配置示例：
 # ocr_engine:
 #   name: "paddleocr"
@@ -148,6 +164,6 @@ def download_hf_model_files(hf_model_id: str, cache_dir: str):
 
 # LayoutParser/HF 本地模型使用说明：
 # 1. 访问 https://huggingface.co/<model_id> 下载全部文件。
-# 2. 放到 models/hf_cache/models--<org>--<model_name>/snapshots/<commit_hash>/ 目录下。
+# 2. 放到 office-doc-agent/models/hf_cache/models--<org>--<model_name>/snapshots/<commit_hash>/ 目录下。
 # 3. cache_dir 配置为 models/hf_cache。
 # 4. 代码会优先从本地加载，无需联网。
