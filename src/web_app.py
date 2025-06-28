@@ -4,7 +4,7 @@ import json
 import uuid
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -901,12 +901,17 @@ def mock_process_document(file_path):
 @app.route('/')
 def index():
     """Serve the main web interface."""
-    return render_template('index.html')
+    return render_template('enhanced-frontend-complete.html')
 
 @app.route('/demo')
 def demo():
     """Demo page"""
     return render_template('demo.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Performance monitoring dashboard"""
+    return render_template('dashboard.html')
 
 @app.route('/enhanced-frontend-complete')
 def enhanced_frontend_complete():
@@ -1694,7 +1699,15 @@ def add_supplementary_material():
 
 @app.route('/api/writing-style/analyze', methods=['POST'])
 def analyze_writing_style():
-    """分析文档写作风格（仅支持文件上传业务流）"""
+    """
+    分析文档写作风格。
+    支持multipart/form-data文件上传和application/json两种方式。
+    参数：
+        - file (file): 文件上传方式。
+        - document_content (str): JSON方式，文档内容。
+        - document_name (str): JSON方式，文档名称。
+    返回：分析结果或错误。
+    """
     import traceback
     from flask import request, jsonify
     with PerformanceTimer('writing_style_analyze') as timer:
@@ -1702,23 +1715,24 @@ def analyze_writing_style():
         try:
             if style_analyzer is None:
                 style_analyzer = WritingStyleAnalyzer()
-            # 只支持文件上传
-            if not (request.content_type and request.content_type.startswith('multipart/form-data')):
-                return jsonify({'success': False, 'error': '仅支持文件上传（multipart/form-data）'}), 400
-            file = request.files.get('file')  # 前端input的name应为'file'
-            if not file:
-                return jsonify({'success': False, 'error': '未上传文件'}), 400
-            try:
-                document_content = file.read().decode('utf-8', errors='ignore')
-            except Exception as e:
-                return jsonify({'success': False, 'error': f'文件解码失败: {str(e)}'}), 400
-            document_name = file.filename or ''
-            try:
-                result = style_analyzer.analyze_writing_style(document_content, document_name)
-            except Exception as inner_e:
-                tb = traceback.format_exc()
-                print(f"[ERROR] WritingStyleAnalyzer.analyze_writing_style异常: {inner_e}\n{tb}")
-                return jsonify({'success': False, 'error': f'文风分析内部异常: {str(inner_e)}', 'traceback': tb}), 500
+            if request.content_type and request.content_type.startswith('multipart/form-data'):
+                file = request.files.get('file')
+                if not file:
+                    return jsonify({'success': False, 'error': '未上传文件'}), 400
+                try:
+                    document_content = file.read().decode('utf-8', errors='ignore')
+                except Exception as e:
+                    return jsonify({'success': False, 'error': f'文件解码失败: {str(e)}'}), 400
+                document_name = file.filename or ''
+            elif request.is_json:
+                data = request.get_json()
+                document_content = data.get('document_content') or data.get('content')
+                document_name = data.get('document_name', '')
+                if not document_content or not isinstance(document_content, str) or not document_content.strip():
+                    return jsonify({'success': False, 'error': 'document_content不能为空'}), 400
+            else:
+                return jsonify({'success': False, 'error': '仅支持文件上传(multipart/form-data)或JSON'}), 400
+            result = style_analyzer.analyze_writing_style(document_content, document_name)
             if isinstance(result, dict) and 'error' in result:
                 return jsonify({'success': False, 'error': result['error']}), 400
             if isinstance(result, dict):
@@ -2272,69 +2286,357 @@ def get_processing_history():
 
 @app.route('/api/performance/export', methods=['POST'])
 def export_performance_data():
-    """
-    MVP: 导出性能数据
-    
-    当前实现范围：
-    - 只支持JSON格式导出
-    - 只导出最近10条数据
-    - 不支持CSV等复杂格式
-    - 不支持筛选功能
-    
-    后续扩展点：
-    - 支持CSV、Excel等格式
-    - 支持按时间范围筛选
-    - 支持按操作类型筛选
-    - 支持自定义字段选择
-    """
+    """导出性能数据"""
     try:
-        data = request.get_json() or {}
-        format_type = data.get('format', 'json')
+        data = request.get_json()
+        export_type = data.get('type', 'all')
         
-        # TODO: MVP仅占位，后续完善 - 当前只支持JSON格式
-        if format_type != 'json':
-            return jsonify({
-                'success': False,
-                'error': f'MVP: 当前只支持JSON格式导出，不支持{format_type}格式'
-            }), 400
-        
-        # 获取最近10条记录
-        from src.core.database.repositories import DocumentRepository
-        
-        doc_repo = DocumentRepository()
-        records = doc_repo.get_processing_history(limit=10)
-        
-        # 格式化记录
-        formatted_records = []
-        for record in records:
-            formatted_records.append({
-                'id': record.id,
-                'timestamp': record.created_at.isoformat() if record.created_at else None,
-                'operation': record.document_type or 'unknown',
-                'success': record.processing_status == 'completed',
-                'processing_time_ms': record.processing_time_ms or 0,
-                'filename': record.original_filename,
-                'file_size': record.file_size or 0,
-                'error_message': record.error_message
-            })
+        # 这里可以实现具体的导出逻辑
+        # 暂时返回模拟数据
+        export_data = {
+            'type': export_type,
+            'timestamp': datetime.now().isoformat(),
+            'data': {
+                'performance_metrics': {
+                    'total_requests': 100,
+                    'average_response_time': 0.5,
+                    'success_rate': 0.95
+                },
+                'operations': [
+                    {
+                        'id': 1,
+                        'type': 'format_alignment',
+                        'timestamp': datetime.now().isoformat(),
+                        'status': 'completed',
+                        'duration': 1.2
+                    }
+                ]
+            }
+        }
         
         return jsonify({
             'success': True,
-            'data': {
-                'records': formatted_records,
-                'total_records': len(formatted_records),
-                'export_time': datetime.now().isoformat(),
-                'format': 'json',
-                'note': 'MVP: 仅导出最近10条记录，后续支持更多格式和筛选'
-            }
+            'data': export_data
         })
         
     except Exception as e:
-        print(f"Error exporting performance data: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
 
+# 添加缺失的API端点
+@app.route('/api/documents/history', methods=['GET'])
+def get_documents_history():
+    """获取文档处理历史（数据库真实数据）"""
+    try:
+        from src.core.database.repositories import DocumentRepository
+        repo = DocumentRepository()
+        # 支持分页参数
+        limit = int(request.args.get('limit', 20))
+        status = request.args.get('status', None)
+        if status is not None:
+            records = repo.get_processing_history(limit=limit, status=status)
+        else:
+            records = repo.get_processing_history(limit=limit)
+        docs = []
+        for r in records:
+            docs.append({
+                'id': r.id,
+                'filename': r.original_filename,
+                'type': r.document_type,
+                'timestamp': r.created_at.isoformat() if r.created_at else '',
+                'status': r.processing_status,
+                'result_url': f"/api/format-alignment/preview/{r.id}",
+                'confidence': r.confidence_score,
+                'processing_time_ms': r.processing_time_ms,
+                'error_message': r.error_message,
+            })
+        return jsonify({
+            'success': True,
+            'data': {
+                'documents': docs,
+                'total': len(docs),
+                'page': 1,
+                'per_page': limit
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/performance/stats', methods=['GET'])
+def get_performance_stats():
+    """获取性能统计信息（数据库真实数据）"""
+    try:
+        from src.core.database.repositories import PerformanceRepository
+        from datetime import timedelta
+        repo = PerformanceRepository()
+        # 支持时间窗口参数
+        hours = int(request.args.get('hours', 24))
+        stats = repo.get_performance_stats(time_window=timedelta(hours=hours))
+        return jsonify({'success': True, 'data': stats})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/performance/operations', methods=['GET'])
+def get_performance_operations():
+    """获取操作性能数据（数据库真实数据）"""
+    try:
+        from src.core.database.repositories import PerformanceRepository
+        from datetime import timedelta
+        repo = PerformanceRepository()
+        hours = int(request.args.get('hours', 24))
+        breakdown = repo.get_operation_breakdown(time_window=timedelta(hours=hours))
+        return jsonify({'success': True, 'data': {'operations': breakdown}})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/style-alignment/preview', methods=['POST'])
+def preview_style_alignment():
+    """
+    预览文风对齐结果。
+    支持多种参数格式：
+        - content/reference_content/reference_name
+        - document_content/document_name/style_template_id
+    返回：风格对齐预览结果。
+    """
+    try:
+        from src.core.tools.comprehensive_style_processor import ComprehensiveStyleProcessor
+        from src.llm_clients.xingcheng_llm import XingchengLLMClient
+        data = request.get_json()
+        # 兼容多种参数名
+        content = data.get('content') or data.get('document_content')
+        reference_content = data.get('reference_content', '')
+        reference_name = data.get('reference_name', data.get('document_name', '目标风格'))
+        style_template_id = data.get('style_template_id', '')
+        if not content:
+            return jsonify({'success': False, 'error': '缺少内容参数'}), 400
+        # 初始化LLM client
+        XINGCHENG_API_KEY = os.getenv("XINGCHENG_API_KEY")
+        XINGCHENG_API_SECRET = os.getenv("XINGCHENG_API_SECRET")
+        LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "x1")
+        llm_client = None
+        if XINGCHENG_API_KEY and XINGCHENG_API_SECRET:
+            llm_client = XingchengLLMClient(
+                api_key=XINGCHENG_API_KEY,
+                api_secret=XINGCHENG_API_SECRET,
+                model_name=LLM_MODEL_NAME
+            )
+        processor = ComprehensiveStyleProcessor(llm_client=llm_client)
+        # 1. 风格对齐
+        if reference_content:
+            align_result = processor.align_text_style(
+                source_text=reference_content,
+                target_text=reference_content,
+                content_to_align=content,
+                source_name=reference_name,
+                target_name=reference_name
+            )
+        elif style_template_id:
+            # 可根据模板ID加载风格特征
+            align_result = processor.align_text_style(
+                source_text='',
+                target_text='',
+                content_to_align=content,
+                source_name=reference_name,
+                target_name=reference_name,
+                style_template_id=style_template_id
+            )
+        else:
+            align_result = {
+                'alignment_id': None,
+                'original_content': content,
+                'aligned_content': content,
+                'alignment_result': {},
+                'quality_assessment': {},
+                'success': True,
+                'note': '未提供参考风格，仅返回原文及风格分析'
+            }
+        aligned_content = align_result.get('aligned_content', content)
+        style_analysis = processor.extract_comprehensive_style_features(aligned_content, document_name=reference_name)
+        return jsonify({
+            'success': True,
+            'original_content': content,
+            'aligned_content': aligned_content,
+            'alignment_result': align_result,
+            'aligned_style_analysis': style_analysis
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+# 全局评审会话存储
+review_sessions = {}
+
+@app.route('/api/document-review/start', methods=['POST'])
+def document_review_start():
+    """
+    启动文档评审流程。
+    功能：多角色AI文档评审，支持参数校验。
+    参数：
+        - document_content (str): 必填，文档内容。
+        - document_name (str): 必填，文档名称。
+        - review_focus (str): 可选，评审重点（auto/academic/business/technical/legal）。
+    返回：
+        - success (bool)
+        - review_session_id (str)
+        - status (str)
+        - error (str, 可选)
+    示例：
+        POST /api/document-review/start
+        {
+            "document_content": "...",
+            "document_name": "test.txt",
+            "review_focus": "auto"
+        }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': '请求体必须为JSON'}), 400
+        content = data.get('document_content', '')
+        name = data.get('document_name', '')
+        review_focus = data.get('review_focus', 'auto')
+        if not content or not isinstance(content, str) or not content.strip():
+            return jsonify({'success': False, 'error': 'document_content不能为空'}), 400
+        if not name or not isinstance(name, str):
+            return jsonify({'success': False, 'error': 'document_name不能为空'}), 400
+        # 评审重点校验
+        valid_focuses = ["auto", "academic", "business", "technical", "legal"]
+        if review_focus not in valid_focuses:
+            review_focus = "auto"
+        # 调用多角色评审逻辑
+        from src.core.tools.virtual_reviewer import EnhancedVirtualReviewerTool
+        # 需传递llm_client和knowledge_base参数，若无则用None
+        reviewer_tool = EnhancedVirtualReviewerTool(llm_client=None, knowledge_base={})
+        # 这里可根据业务需要选择多角色，暂用单角色editor
+        result = reviewer_tool.multi_reviewer_session(document_content=content, reviewer_roles=["editor"], review_focus=review_focus)
+        if not result.get("success"):
+            return jsonify({'success': False, 'error': result.get('error', '评审失败')}), 500
+        session_id = f"review_{uuid.uuid4().hex}"
+        review_sessions[session_id] = result["session_results"]
+        return jsonify({
+            'success': True,
+            'review_session_id': session_id,
+            'status': 'started'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'文档评审启动失败: {str(e)}'}), 500
+
+@app.route('/api/document-review/suggestions/<review_session_id>', methods=['GET'])
+def get_review_suggestions(review_session_id):
+    """
+    获取文档评审建议。
+    参数：review_session_id (str)
+    返回：success, suggestions (list)
+    """
+    try:
+        if review_session_id not in review_sessions:
+            return jsonify({'success': False, 'error': '无效的评审会话ID'}), 404
+        session = review_sessions[review_session_id]
+        suggestions = []
+        for reviewer in session.get('reviewer_results', []):
+            comments = reviewer.get('review_comments', {}).get('comments', [])
+            for c in comments:
+                suggestions.append({
+                    'id': str(uuid.uuid4()),
+                    'type': c.get('category', 'general'),
+                    'content': c.get('comment', ''),
+                    'priority': c.get('severity', 'medium')
+                })
+        return jsonify({'success': True, 'suggestions': suggestions})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'获取评审建议失败: {str(e)}'}), 500
+
+def fill_tables(tables, fill_data):
+    """
+    智能表格填充逻辑，按列名匹配填充。
+    :param tables: List[pd.DataFrame]
+    :param fill_data: List[Dict[str, Any]]
+    :return: List[pd.DataFrame]
+    """
+    import pandas as pd
+    filled_tables = []
+    for df in tables:
+        if not isinstance(df, pd.DataFrame) or df.empty:
+            filled_tables.append(df)
+            continue
+        df_copy = df.copy()
+        table_columns = set(df_copy.columns)
+        matching_fill_data = []
+        for row in fill_data:
+            row_columns = set(row.keys())
+            if table_columns.intersection(row_columns):
+                matching_fill_data.append(row)
+        for i, row in enumerate(matching_fill_data):
+            if i < len(df_copy):
+                for col in df_copy.columns:
+                    if col in row and row[col] is not None:
+                        df_copy.at[i, col] = row[col]
+        filled_tables.append(df_copy)
+    return filled_tables
+
+@app.route('/api/table-fill', methods=['POST'])
+def api_table_fill():
+    """
+    智能表格批量填充API。
+    参数：
+        - tables (list): 必填，表格定义，含columns和data。
+        - fill_data (list): 必填，填充数据。
+    返回：
+        - success (bool)
+        - filled_tables (list)
+        - error (str, 可选)
+    """
+    try:
+        if not request.is_json:
+            return jsonify({'success': False, 'error': '请求必须为JSON格式'}), 400
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': '无效的JSON数据'}), 400
+        if 'tables' not in data:
+            return jsonify({'success': False, 'error': '缺少必需字段: tables'}), 400
+        if 'fill_data' not in data:
+            return jsonify({'success': False, 'error': '缺少必需字段: fill_data'}), 400
+        tables = data['tables']
+        fill_data = data['fill_data']
+        if not isinstance(tables, list):
+            return jsonify({'success': False, 'error': 'tables必须是数组'}), 400
+        if not isinstance(fill_data, list):
+            return jsonify({'success': False, 'error': 'fill_data必须是数组'}), 400
+        import pandas as pd
+        pd_tables = []
+        for i, t in enumerate(tables):
+            if not isinstance(t, dict):
+                return jsonify({'success': False, 'error': f'表格{i+1}必须是对象'}), 400
+            if 'columns' not in t or 'data' not in t:
+                return jsonify({'success': False, 'error': f'表格{i+1}缺少columns或data字段'}), 400
+            if not isinstance(t['columns'], list) or not isinstance(t['data'], list):
+                return jsonify({'success': False, 'error': f'表格{i+1}格式错误'}), 400
+            try:
+                columns = list(map(str, t['columns']))
+                df = pd.DataFrame(t['data'], columns=columns)
+                pd_tables.append(df)
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'表格{i+1}数据格式错误: {str(e)}'}), 400
+        for i, item in enumerate(fill_data):
+            if not isinstance(item, dict):
+                return jsonify({'success': False, 'error': f'填充数据{i+1}必须是对象'}), 400
+        # 直接调用本地 fill_tables
+        filled_tables = fill_tables(pd_tables, fill_data)
+        result = []
+        for df in filled_tables:
+            result.append({
+                'columns': list(df.columns),
+                'data': df.values.tolist()
+            })
+        return jsonify({'success': True, 'filled_tables': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'表格填充失败: {str(e)}'}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

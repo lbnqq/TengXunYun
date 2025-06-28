@@ -1,0 +1,84 @@
+2025-06-28 21:35:20,904 - INFO - [21:35:20] [RUNNING] 设置测试环境
+2025-06-28 21:35:20,905 - INFO - [21:35:20] [INFO] 检查Python版本
+2025-06-28 21:35:20,905 - INFO - [21:35:20] [SUCCESS] Python版本: 3.12.0
+2025-06-28 21:35:20,905 - INFO - [21:35:20] [RUNNING] 设置虚拟环境
+2025-06-28 21:35:20,906 - INFO - [21:35:20] [INFO] 虚拟环境已存在
+2025-06-28 21:35:20,906 - INFO - [21:35:20] [RUNNING] 安装项目依赖
+2025-06-28 21:35:20,906 - INFO - [21:35:20] [INFO] 安装基础依赖...
+2025-06-28 21:35:33,471 - INFO - [21:35:33] [ERROR] 依赖安装失败: ERROR: Cannot install -r D:\DAIP\contest\office-doc-agent\requirements.txt (line 123), -r D:\DAIP\contest\office-doc-agent\requirements.txt (line 124), -r D:\DAIP\contest\office-doc-agent\requirements.txt (line 125) and pytest==8.0.0 because these package versions have conflicting dependencies.
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+
+[notice] A new release of pip is available: 23.2.1 -> 25.1.1
+[notice] To update, run: python.exe -m pip install --upgrade pip
+
+2025-06-28 21:35:33,473 - INFO - [21:35:33] [INFO] 清理测试环境
+2025-06-28 21:37:30,719 - INFO - [21:37:30] [RUNNING] 设置测试环境
+2025-06-28 21:37:30,719 - INFO - [21:37:30] [INFO] 检查Python版本
+2025-06-28 21:37:30,719 - INFO - [21:37:30] [SUCCESS] Python版本: 3.12.0
+2025-06-28 21:37:30,719 - INFO - [21:37:30] [RUNNING] 设置虚拟环境
+2025-06-28 21:37:30,720 - INFO - [21:37:30] [INFO] 虚拟环境已存在
+2025-06-28 21:37:30,720 - INFO - [21:37:30] [RUNNING] 安装项目依赖
+2025-06-28 21:37:30,720 - INFO - [21:37:30] [INFO] 安装基础依赖...
+2025-06-28 21:37:37,729 - INFO - [21:37:37] [ERROR] 依赖安装失败: ERROR: Cannot install -r D:\DAIP\contest\office-doc-agent\requirements.txt (line 123), -r D:\DAIP\contest\office-doc-agent\requirements.txt (line 124), -r D:\DAIP\contest\office-doc-agent\requirements.txt (line 125) and pytest==8.0.0 because these package versions have conflicting dependencies.
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+
+[notice] A new release of pip is available: 23.2.1 -> 25.1.1
+[notice] To update, run: python.exe -m pip install --upgrade pip
+
+2025-06-28 21:37:37,729 - INFO - [21:37:37] [INFO] 清理测试环境
+2025-06-28 22:48:11,265 - INFO - [22:48:11] [RUNNING] 设置测试环境
+2025-06-28 22:48:11,265 - INFO - [22:48:11] [INFO] 检查Python版本
+2025-06-28 22:48:11,265 - INFO - [22:48:11] [SUCCESS] Python版本: 3.12.0
+2025-06-28 22:48:11,266 - INFO - [22:48:11] [RUNNING] 设置虚拟环境
+2025-06-28 22:48:11,266 - INFO - [22:48:11] [INFO] 虚拟环境已存在
+2025-06-28 22:48:11,266 - INFO - [22:48:11] [RUNNING] 安装项目依赖
+2025-06-28 22:48:11,266 - INFO - [22:48:11] [INFO] 安装基础依赖...
+2025-06-28 22:48:13,304 - INFO - [22:48:13] [INFO] 安装Selenium...
+2025-06-28 22:48:14,594 - INFO - [22:48:14] [SUCCESS] 依赖安装成功
+2025-06-28 22:48:14,595 - INFO - [22:48:14] [INFO] 创建测试目录
+2025-06-28 22:48:14,596 - INFO - [22:48:14] [SUCCESS] 测试目录创建完成
+2025-06-28 22:48:14,596 - INFO - [22:48:14] [RUNNING] 启动后端服务
+2025-06-28 22:48:14,630 - INFO - [22:48:14] [INFO] 等待服务器启动...
+2025-06-28 22:48:14,709 - INFO - [22:48:14] [SUCCESS] 后端服务启动成功
+2025-06-28 22:48:14,709 - INFO - [22:48:14] [RUNNING] 开始CLI功能测试
+2025-06-28 22:48:14,709 - INFO - [22:48:14] [INFO] 运行CLI测试: health_check
+2025-06-28 22:48:14,785 - INFO - [22:48:14] [SUCCESS] CLI测试通过: health_check
+2025-06-28 22:48:14,787 - INFO - [22:48:14] [INFO] 运行CLI测试: file_upload
+2025-06-28 22:48:14,853 - INFO - [22:48:14] [SUCCESS] CLI测试通过: file_upload
+2025-06-28 22:48:14,853 - INFO - [22:48:14] [INFO] 运行CLI测试: format_alignment
+2025-06-28 22:48:14,879 - INFO - [22:48:14] [SUCCESS] CLI测试通过: format_alignment
+2025-06-28 22:48:14,880 - INFO - [22:48:14] [INFO] 运行CLI测试: style_analysis
+2025-06-28 22:48:14,910 - INFO - [22:48:14] [SUCCESS] CLI测试通过: style_analysis
+2025-06-28 22:48:14,911 - INFO - [22:48:14] [INFO] 运行CLI测试: document_fill
+2025-06-28 22:48:14,946 - INFO - [22:48:14] [SUCCESS] CLI测试通过: document_fill
+2025-06-28 22:48:14,946 - INFO - [22:48:14] [INFO] 运行CLI测试: document_review
+2025-06-28 22:48:14,959 - INFO - [22:48:14] [SUCCESS] CLI测试通过: document_review
+2025-06-28 22:48:14,959 - INFO - [22:48:14] [INFO] 运行CLI测试: api_endpoints
+2025-06-28 22:48:15,067 - INFO - [22:48:15] [SUCCESS] CLI测试通过: api_endpoints
+2025-06-28 22:48:15,068 - INFO - [22:48:15] [SUCCESS] CLI测试完成: 7/7
+2025-06-28 22:48:15,068 - INFO - [22:48:15] [RUNNING] 开始Web前端自动化测试
+2025-06-28 22:48:18,289 - INFO - [22:48:18] [SUCCESS] WebDriver初始化成功
+2025-06-28 22:48:18,290 - INFO - [22:48:18] [INFO] 运行Web测试: page_load
+2025-06-28 22:48:19,262 - INFO - [22:48:19] [SUCCESS] Web测试通过: page_load
+2025-06-28 22:48:19,262 - INFO - [22:48:19] [INFO] 运行Web测试: navigation
+2025-06-28 22:48:24,948 - INFO - [22:48:24] [SUCCESS] Web测试通过: navigation
+2025-06-28 22:48:24,949 - INFO - [22:48:24] [INFO] 运行Web测试: file_upload_ui
+2025-06-28 22:48:26,073 - INFO - [22:48:26] [SUCCESS] Web测试通过: file_upload_ui
+2025-06-28 22:48:26,073 - INFO - [22:48:26] [INFO] 运行Web测试: format_alignment_ui
+2025-06-28 22:48:26,148 - INFO - [22:48:26] [SUCCESS] Web测试通过: format_alignment_ui
+2025-06-28 22:48:26,150 - INFO - [22:48:26] [INFO] 运行Web测试: style_analysis_ui
+2025-06-28 22:48:27,305 - INFO - [22:48:27] [SUCCESS] Web测试通过: style_analysis_ui
+2025-06-28 22:48:27,305 - INFO - [22:48:27] [INFO] 运行Web测试: document_fill_ui
+2025-06-28 22:48:28,480 - INFO - [22:48:28] [SUCCESS] Web测试通过: document_fill_ui
+2025-06-28 22:48:28,481 - INFO - [22:48:28] [INFO] 运行Web测试: document_review_ui
+2025-06-28 22:48:29,589 - INFO - [22:48:29] [SUCCESS] Web测试通过: document_review_ui
+2025-06-28 22:48:29,590 - INFO - [22:48:29] [INFO] 运行Web测试: business_flow
+2025-06-28 22:48:34,037 - INFO - [22:48:34] [SUCCESS] Web测试通过: business_flow
+2025-06-28 22:48:34,037 - INFO - [22:48:34] [SUCCESS] Web测试完成: 8/8
+2025-06-28 22:48:36,243 - INFO - [22:48:36] [INFO] 生成测试报告
+2025-06-28 22:48:36,248 - INFO - [22:48:36] [SUCCESS] 测试报告已生成: D:\DAIP\contest\office-doc-agent\test_results\automated_e2e_report_20250628_224836.json
+2025-06-28 22:48:36,249 - INFO - [22:48:36] [SUCCESS] 测试摘要已生成: D:\DAIP\contest\office-doc-agent\test_results\automated_e2e_summary_20250628_224836.txt
+2025-06-28 22:48:36,251 - INFO - [22:48:36] [INFO] 清理测试环境
+2025-06-28 22:48:36,251 - INFO - [22:48:36] [SUCCESS] 服务器已停止
+2025-06-28 22:48:39,340 - INFO - [22:48:39] [SUCCESS] WebDriver已关闭
+2025-06-28 22:48:39,343 - INFO - [22:48:39] [SUCCESS] 临时文件已清理

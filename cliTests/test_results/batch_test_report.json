@@ -1,0 +1,67 @@
+{
+  "test_run": {
+    "start_time": "2025-06-28 22:50:31",
+    "end_time": "2025-06-28 22:50:33",
+    "duration": 2.1695821285247803,
+    "base_url": "http://localhost:5000",
+    "verbose": true
+  },
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 1,
+    "failed_tests": 4,
+    "success_rate": 20.0
+  },
+  "test_results": [
+    {
+      "name": "格式对齐测试",
+      "script": "D:\\DAIP\\contest\\office-doc-agent\\cliTests\\test_format_alignment.py",
+      "success": true,
+      "duration": 0.4714539051055908,
+      "return_code": 0,
+      "stdout": "[22:50:31] INFO: 开始格式对齐功能测试\n[22:50:31] INFO: 参考格式文档验证通过: test_data/format_alignment/source.txt\n[22:50:31] INFO: 待处理文档验证通过: test_data/format_alignment/target.txt\n[22:50:31] INFO: 步骤1: 检查API健康状态\n[22:50:31] INFO: 检查API健康状态...\n[22:50:31] INFO: API服务正常\n[22:50:31] INFO: 步骤2: 读取文件内容\n[22:50:31] INFO: 文件内容读取成功: test_data/format_alignment/source.txt (298字符)\n[22:50:31] INFO: 文件内容读取成功: test_data/format_alignment/target.txt (217字符)\n[22:50:31] INFO: 步骤3: 调用格式对齐API\n[22:50:31] INFO: 调用API: POST http://localhost:5000/api/format-alignment\n[22:50:31] INFO: 请求数据: {\n  \"source_content\": \"# 参考格式文档\\n\\n## 标题格式\\n这是标准的标题格式，使用Markdown语法。\\n\\n### 子标题\\n子标题使用三级标题格式。\\n\\n## 段落格式\\n这是标准的段落格式，包含适当的空行和缩进。\\n\\n### 列表格式\\n- 项目1\\n- 项目2\\n  - 子项目2.1\\n  - 子项目2.2\\n- 项目3\\n\\n## 代码格式\\n```python\\ndef example_function():\\n    return \\\"这是代码示例\\\"\\n```\\n\\n## 表格格式\\n| 列1 | 列2 | 列3 |\\n|-----|-----|-----|\\n| 数据1 | 数据2 | 数据3 |\\n| 数据4 | 数据5 | 数据6 |\\n\",\n  \"source_name\": \"source.txt\",\n  \"target_content\": \"# 待处理文档\\n\\n标题格式\\n这是不标准的标题格式，没有使用Markdown语法。\\n\\n子标题\\n子标题格式也不标准。\\n\\n段落格式\\n这是不标准的段落格式，缺少适当的空行和缩进。\\n\\n列表格式\\n* 项目1\\n* 项目2\\n* 子项目2.1\\n* 子项目2.2\\n* 项目3\\n\\n代码格式\\ndef example_function():\\n    return \\\"这是代码示例\\\"\\n\\n表格格式\\n列1 列2 列3\\n数据1 数据2 数据3\\n数据4 数据5 数据6\\n\",\n  \"target_name\": \"target.txt\"\n}\n[22:50:31] INFO: 响应状态码: 200\n[22:50:31] INFO: 格式对齐成功\n[22:50:31] INFO: 响应验证通过\n[22:50:31] INFO: 步骤4: 处理对齐结果\n[22:50:31] WARN: WARNING: 对齐结果为空\n[22:50:31] INFO: 步骤5: 生成测试报告\n[22:50:31] INFO: 对齐后文档保存成功: test_results/format_alignment_output.txt\n[22:50:31] INFO: 测试报告保存成功: test_results/format_alignment_output_report.json\n[22:50:31] INFO: 格式对齐功能测试完成\n\n============================================================\n测试摘要\n============================================================\n测试结果: 成功\n执行时间: 0.00秒\n执行步骤: 21\n错误数量: 0\n警告数量: 1\n\n警告详情:\n  1. 对齐结果为空\n============================================================\n",
+      "stderr": "",
+      "output_file": "test_results/format_alignment_output.txt"
+    },
+    {
+      "name": "文风统一测试",
+      "script": "D:\\DAIP\\contest\\office-doc-agent\\cliTests\\test_style_alignment.py",
+      "success": false,
+      "duration": 0.42537522315979004,
+      "return_code": 1,
+      "stdout": "[22:50:32] INFO: 开始文风统一功能测试\n[22:50:32] INFO: 参考风格文档验证通过: test_data/style_alignment/reference.txt\n[22:50:32] INFO: 待调整文档验证通过: test_data/style_alignment/target.txt\n[22:50:32] INFO: 步骤1: 检查API健康状态\n[22:50:32] INFO: 检查API健康状态...\n[22:50:32] INFO: API服务正常\n[22:50:32] INFO: 步骤2: 读取文件内容\n[22:50:32] INFO: 文件内容读取成功: test_data/style_alignment/reference.txt (143字符)\n[22:50:32] INFO: 文件内容读取成功: test_data/style_alignment/target.txt (96字符)\n[22:50:32] INFO: 步骤3: 分析参考文档风格\n[22:50:32] INFO: 调用API: POST http://localhost:5000/api/writing-style/analyze\n[22:50:32] INFO: 风格分析验证通过: test_data/style_alignment/reference.txt\n[22:50:32] INFO: 文件已加载到内存: reference.txt (393 bytes)\n[22:50:32] INFO: 响应状态码: 200\n[22:50:32] INFO: 风格分析成功\n[22:50:32] INFO: 步骤4: 预览风格变化\n[22:50:32] INFO: 调用API: POST http://localhost:5000/api/style-alignment/preview\n[22:50:32] INFO: 请求数据: {\n  \"document_content\": \"# 待调整文档\\n\\n## 内容分析\\n我觉得这个方案挺好的，应该可以解决问题。\\n\\n### 方法说明\\n我们用了问卷调查，然后用软件算了一下数据。\\n\\n### 总结\\n总的来说，这个方案不错，应该能用。\\n\",\n  \"document_name\": \"target.txt\",\n  \"style_template_id\": \"5c5855eeebb4\"\n}\n[22:50:32] INFO: 响应状态码: 400\n[22:50:32] ERROR: ERROR: 风格变化预览失败: HTTP 400\n[22:50:32] INFO: 错误详情: {\n  \"error\": \"缺少内容参数\",\n  \"success\": false\n}\n[22:50:32] ERROR: ERROR: 风格变化预览API调用失败\n[22:50:32] ERROR: ERROR: 业务流程执行失败: 风格变化预览API调用失败\n\n============================================================\n测试摘要\n============================================================\n测试结果: 失败\n执行时间: 0.00秒\n执行步骤: 23\n错误数量: 3\n警告数量: 0\n\n错误详情:\n  1. 风格变化预览失败: HTTP 400\n  2. 风格变化预览API调用失败\n  3. 业务流程执行失败: 风格变化预览API调用失败\n============================================================\n",
+      "stderr": "",
+      "output_file": "test_results/style_alignment_output.txt"
+    },
+    {
+      "name": "智能填报测试",
+      "script": "D:\\DAIP\\contest\\office-doc-agent\\cliTests\\test_document_fill.py",
+      "success": false,
+      "duration": 0.40845251083374023,
+      "return_code": 1,
+      "stdout": "[22:50:32] INFO: 开始智能填报功能测试\n[22:50:32] INFO: 文档模板验证通过: test_data/document_fill/template.txt\n[22:50:32] INFO: 数据源文件验证通过: test_data/document_fill/data.json\n[22:50:32] INFO: 步骤1: 检查API健康状态\n[22:50:32] INFO: 检查API健康状态...\n[22:50:32] INFO: API服务正常\n[22:50:32] INFO: 步骤2: 读取文件内容\n[22:50:32] INFO: 文件内容读取成功: test_data/document_fill/template.txt (303字符)\n[22:50:32] INFO: JSON数据读取成功: test_data/document_fill/data.json\n[22:50:32] INFO: 步骤3: 启动文档填报流程\n[22:50:32] INFO: 调用API: POST http://localhost:5000/api/document-fill/start\n[22:50:32] INFO: 请求数据: {\n  \"document_content\": \"# 项目申请书\\n\\n## 项目基本信息\\n- 项目名称：{project_name}\\n- 申请人：{applicant_name}\\n- 申请日期：{application_date}\\n- 项目类型：{project_type}\\n\\n## 项目描述\\n{project_description}\\n\\n## 技术方案\\n{technical_solution}\\n\\n## 预期成果\\n{expected_results}\\n\\n## 预算信息\\n- 总预算：{total_budget}元\\n- 设备费用：{equipment_cost}元\\n- 人员费用：{personnel_cost}元\\n- 其他费用：{other_cost}元\\n\",\n  \"document_name\": \"template.txt\"\n}\n[22:50:32] INFO: 响应状态码: 200\n[22:50:32] INFO: 启动文档填报成功\n[22:50:32] ERROR: ERROR: 启动文档填报失败: 启动文档填报失败\n[22:50:32] ERROR: ERROR: 业务流程执行失败: 启动文档填报失败\n\n============================================================\n测试摘要\n============================================================\n测试结果: 失败\n执行时间: 0.00秒\n执行步骤: 16\n错误数量: 2\n警告数量: 0\n\n错误详情:\n  1. 启动文档填报失败: 启动文档填报失败\n  2. 业务流程执行失败: 启动文档填报失败\n============================================================\n",
+      "stderr": "",
+      "output_file": "test_results/document_fill_output.txt"
+    },
+    {
+      "name": "文档评审测试",
+      "script": "D:\\DAIP\\contest\\office-doc-agent\\cliTests\\test_document_review.py",
+      "success": false,
+      "duration": 0.4111013412475586,
+      "return_code": 1,
+      "stdout": "[22:50:33] INFO: 开始文档评审功能测试\n[22:50:33] INFO: 待评审文档验证通过: test_data/document_review/document.txt\n[22:50:33] INFO: 评审重点: auto\n[22:50:33] INFO: 步骤1: 检查API健康状态\n[22:50:33] INFO: 检查API健康状态...\n[22:50:33] INFO: API服务正常\n[22:50:33] INFO: 步骤2: 读取文件内容\n[22:50:33] INFO: 文件内容读取成功: test_data/document_review/document.txt (293字符)\n[22:50:33] INFO: 步骤3: 启动文档评审\n[22:50:33] INFO: 调用API: POST http://localhost:5000/api/document-review/start\n[22:50:33] INFO: 请求数据: {\n  \"document_content\": \"# 技术方案文档\\n\\n## 项目概述\\n本项目旨在开发一个智能文档处理系统。\\n\\n## 技术架构\\n系统采用前后端分离架构，前端使用Vue.js，后端使用Python Flask。\\n\\n## 功能模块\\n1. 文档上传\\n2. 格式转换\\n3. 内容分析\\n4. 智能处理\\n\\n## 技术选型\\n- 前端框架：Vue.js\\n- 后端框架：Flask\\n- 数据库：MySQL\\n- AI模型：BERT\\n\\n## 项目计划\\n第一阶段：需求分析\\n第二阶段：系统设计\\n第三阶段：开发实现\\n第四阶段：测试部署\\n\\n## 风险评估\\n技术风险：AI模型训练可能遇到困难\\n时间风险：开发周期可能延长\\n成本风险：硬件投入可能超预算\\n\",\n  \"document_name\": \"document.txt\",\n  \"review_focus\": \"auto\"\n}\n[22:50:33] INFO: 响应状态码: 404\n[22:50:33] ERROR: ERROR: 启动文档评审失败: HTTP 404\n[22:50:33] INFO: 错误响应: <!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>\n\n[22:50:33] ERROR: ERROR: 启动文档评审API调用失败\n[22:50:33] ERROR: ERROR: 业务流程执行失败: 启动文档评审API调用失败\n\n============================================================\n测试摘要\n============================================================\n测试结果: 失败\n执行时间: 0.00秒\n执行步骤: 16\n错误数量: 3\n警告数量: 0\n\n错误详情:\n  1. 启动文档评审失败: HTTP 404\n  2. 启动文档评审API调用失败\n  3. 业务流程执行失败: 启动文档评审API调用失败\n============================================================\n",
+      "stderr": "",
+      "output_file": "test_results/document_review_output.txt"
+    },
+    {
+      "name": "表格填充测试",
+      "script": "D:\\DAIP\\contest\\office-doc-agent\\cliTests\\test_table_fill.py",
+      "success": false,
+      "duration": 0.44420313835144043,
+      "return_code": 1,
+      "stdout": "[22:50:33] INFO: 开始表格填充功能测试\n[22:50:33] INFO: 表格定义文件验证通过: test_data/table_fill/table.json\n[22:50:33] INFO: 填充数据文件验证通过: test_data/table_fill/data.json\n[22:50:33] INFO: 步骤1: 检查API健康状态\n[22:50:33] INFO: 检查API健康状态...\n[22:50:33] INFO: API服务正常\n[22:50:33] INFO: 步骤2: 读取文件内容\n[22:50:33] INFO: JSON数据读取成功: test_data/table_fill/table.json\n[22:50:33] INFO: JSON数据读取成功: test_data/table_fill/data.json\n[22:50:33] INFO: 步骤3: 验证数据结构\n[22:50:33] INFO: 表格结构验证通过: 2个表格\n[22:50:33] INFO: 填充数据验证通过: 5条数据\n[22:50:33] INFO: 步骤4: 调用表格填充API\n[22:50:33] INFO: 调用API: POST http://localhost:5000/api/table-fill\n[22:50:33] INFO: 请求数据: {\n  \"tables\": [\n    {\n      \"columns\": [\n        \"姓名\",\n        \"年龄\",\n        \"职位\",\n        \"部门\"\n      ],\n      \"data\": [\n        [\n          \"张三\",\n          \"\",\n          \"\",\n          \"\"\n        ],\n        [\n          \"李四\",\n          \"\",\n          \"\",\n          \"\"\n        ],\n        [\n          \"王五\",\n          \"\",\n          \"\",\n          \"\"\n        ]\n      ]\n    },\n    {\n      \"columns\": [\n        \"项目名称\",\n        \"负责人\",\n        \"开始日期\",\n        \"结束日期\",\n        \"状态\"\n      ],\n      \"data\": [\n        [\n          \"项目A\",\n          \"\",\n          \"\",\n          \"\",\n          \"\"\n        ],\n        [\n          \"项目B\",\n          \"\",\n          \"\",\n          \"\",\n          \"\"\n        ]\n      ]\n    }\n  ],\n  \"fill_data\": [\n    {\n      \"姓名\": \"张三\",\n      \"年龄\": \"25\",\n      \"职位\": \"工程师\",\n      \"部门\": \"技术部\"\n    },\n    {\n      \"姓名\": \"李四\",\n      \"年龄\": \"30\",\n      \"职位\": \"经理\",\n      \"部门\": \"管理部\"\n    },\n    {\n      \"姓名\": \"王五\",\n      \"年龄\": \"28\",\n      \"职位\": \"设计师\",\n      \"部门\": \"设计部\"\n    },\n    {\n      \"项目名称\": \"项目A\",\n      \"负责人\": \"张三\",\n      \"开始日期\": \"2024-01-01\",\n      \"结束日期\": \"2024-06-30\",\n      \"状态\": \"进行中\"\n    },\n    {\n      \"项目名称\": \"项目B\",\n      \"负责人\": \"李四\",\n      \"开始日期\": \"2024-02-01\",\n      \"结束日期\": \"2024-08-31\",\n      \"状态\": \"计划中\"\n    }\n  ]\n}\n[22:50:33] INFO: 响应状态码: 404\n[22:50:33] ERROR: ERROR: 表格填充失败: HTTP 404\n[22:50:33] INFO: 错误响应: <!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>\n\n[22:50:33] ERROR: ERROR: 表格填充API调用失败\n[22:50:33] ERROR: ERROR: 业务流程执行失败: 表格填充API调用失败\n\n============================================================\n测试摘要\n============================================================\n测试结果: 失败\n执行时间: 0.00秒\n执行步骤: 20\n错误数量: 3\n警告数量: 0\n\n错误详情:\n  1. 表格填充失败: HTTP 404\n  2. 表格填充API调用失败\n  3. 业务流程执行失败: 表格填充API调用失败\n============================================================\n",
+      "stderr": "",
+      "output_file": "test_results/table_fill_output.json"
+    }
+  ]
+}

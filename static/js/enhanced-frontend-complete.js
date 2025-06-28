@@ -643,6 +643,10 @@ class UIManager {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const sceneId = item.getAttribute('data-scene');
+                if (sceneId === 'dashboard') {
+                    window.open('/dashboard', '_blank');
+                    return;
+                }
                 this.switchScene(sceneId);
             });
         });

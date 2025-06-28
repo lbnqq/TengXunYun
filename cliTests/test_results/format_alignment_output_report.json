@@ -1,0 +1,24 @@
+{
+  "test_name": "格式对齐功能测试",
+  "source_file": "test_data/format_alignment/source.txt",
+  "target_file": "test_data/format_alignment/target.txt",
+  "alignment_success": true,
+  "aligned_content_length": 217,
+  "alignment_details": {},
+  "api_response": {
+    "capabilities": [
+      "文档格式对齐",
+      "格式模板保存和复用",
+      "HTML格式输出",
+      "Word文档下载"
+    ],
+    "examples": [
+      "让文档1与文档2格式对齐",
+      "保存文档2的格式为模板",
+      "查看所有格式模板",
+      "使用已保存的格式模板"
+    ],
+    "response": "我可以帮您进行文档格式对齐。请上传两个文档，然后说'让文档1与文档2格式对齐'",
+    "success": true
+  }
+}

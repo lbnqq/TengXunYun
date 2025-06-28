@@ -192,6 +192,42 @@ body {
     transform: translateY(-1px);
 }
 
+/* Dashboard链接特殊样式 */
+.dashboard-link {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+.dashboard-link::after {
+    content: '↗';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    font-size: 10px;
+    color: var(--white);
+    background: var(--info-color);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+}
+
+.dashboard-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--info-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-link:hover::after {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
 /* ==================== 场景区域 ==================== */
 .scene-section {
     margin-top: var(--spacing-xl);

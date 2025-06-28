@@ -82,8 +82,8 @@ def mock_process_document(file_path):
 
 @app.route('/')
 def index():
-    """主页"""
-    return render_template('index.html')
+    """Serve the main web interface."""
+    return render_template('enhanced-frontend-complete.html')
 
 @app.route('/debug_test.html')
 def debug_test():
