@@ -1,0 +1,70 @@
+{
+  "template_id": "e2e_test_style_1751102888",
+  "document_name": "E2E测试文风模板2_1751102888",
+  "analysis_time": "2025-06-28T17:28:08.396192",
+  "analysis_method": "basic",
+  "document_stats": {
+    "total_words": 150,
+    "total_sentences": 8,
+    "total_paragraphs": 4,
+    "average_sentence_length": 18.75
+  },
+  "style_features": {
+    "sentence_structure": {
+      "average_sentence_length": 18.75,
+      "sentence_complexity": "medium",
+      "passive_voice_ratio": 0.1
+    },
+    "vocabulary_choice": {
+      "formality_level": "formal",
+      "technical_terms": 0.2,
+      "modifier_usage": "moderate"
+    },
+    "expression_style": {
+      "tone": "professional",
+      "person_usage": "third_person",
+      "emotion_intensity": "low"
+    },
+    "text_organization": {
+      "paragraph_structure": "clear",
+      "logical_connections": "strong",
+      "transition_style": "explicit"
+    },
+    "language_habits": {
+      "oral_style": "low",
+      "written_standard": "high",
+      "regional_features": "none"
+    }
+  },
+  "style_type": "business_professional",
+  "confidence_score": 0.85,
+  "style_prompt": "这是一个端到端测试的文风提示词-格式2",
+  "detailed_analysis": {
+    "strengths": [
+      "逻辑清晰",
+      "表达专业",
+      "结构合理"
+    ],
+    "weaknesses": [
+      "可读性有待提升"
+    ],
+    "recommendations": [
+      "增加具体案例",
+      "优化段落长度"
+    ]
+  },
+  "writing_recommendations": [
+    "保持商务专业的写作风格",
+    "使用清晰的结构组织内容",
+    "避免过于复杂的句式"
+  ],
+  "style_comparison": {
+    "similar_styles": [
+      "formal_official"
+    ],
+    "different_styles": [
+      "narrative_descriptive"
+    ]
+  },
+  "version": "1.0.0"
+}

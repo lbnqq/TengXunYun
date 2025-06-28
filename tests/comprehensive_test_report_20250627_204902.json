@@ -1,0 +1,40 @@
+{
+  "test_run_info": {
+    "start_time": "2025-06-27T20:48:52.992115",
+    "end_time": "2025-06-27T20:49:02.119079",
+    "duration_seconds": 9.126964,
+    "overall_success": false
+  },
+  "environment": {
+    "python_version": "3.12.0 (tags/v3.12.0:0fb18b0, Oct  2 2023, 13:03:39) [MSC v.1935 64 bit (AMD64)]",
+    "platform": "win32",
+    "working_directory": "D:\\DAIP\\contest\\office-doc-agent\\tests"
+  },
+  "test_suites": {
+    "集成测试": {
+      "success": false,
+      "timestamp": "2025-06-27T20:48:53.275500",
+      "details": "返回码: 1, 输出长度: 81 字符, 错误: Traceback (most recent call last):\n  File \"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_comprehensive_integration.py\", line 463, in <module>\n    success = framework.run_all_tests()\n              ^^^^^^..."
+    },
+    "API测试": {
+      "success": false,
+      "timestamp": "2025-06-27T20:48:55.548263",
+      "details": "返回码: 1, 输出长度: 81 字符, 错误: Traceback (most recent call last):\n  File \"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_api_comprehensive.py\", line 409, in <module>\n    success = run_api_tests()\n              ^^^^^^^^^^^^^^^\n  File \"..."
+    },
+    "前端测试": {
+      "success": false,
+      "timestamp": "2025-06-27T20:48:57.842498",
+      "details": "返回码: 1, 输出长度: 81 字符, 错误: Traceback (most recent call last):\n  File \"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_frontend_integration.py\", line 629, in <module>\n    success = test.run_all_tests()\n              ^^^^^^^^^^^^^^^^..."
+    },
+    "端到端测试": {
+      "success": false,
+      "timestamp": "2025-06-27T20:49:00.117673",
+      "details": "返回码: 1, 输出长度: 81 字符, 错误: Traceback (most recent call last):\n  File \"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_end_to_end_scenarios.py\", line 469, in <module>\n    success = test.run_all_scenarios()\n              ^^^^^^^^^^^^..."
+    }
+  },
+  "summary": {
+    "total_suites": 4,
+    "passed_suites": 0,
+    "failed_suites": 4
+  }
+}

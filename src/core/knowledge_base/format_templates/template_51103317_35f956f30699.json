@@ -1,0 +1,51 @@
+{
+  "template_id": "template_51103317_35f956f30699",
+  "document_name": "测试文档",
+  "structure_analysis": {
+    "total_lines": 1,
+    "headings": [],
+    "paragraphs": [
+      {
+        "text": "这是一个测试文档，用于验证模板ID生成功能。",
+        "line_number": 0,
+        "confidence": 0.0,
+        "estimated_font": {
+          "family": "宋体",
+          "size": "小四",
+          "weight": "normal",
+          "line_height": "1.5",
+          "text_align": "left",
+          "margin_top": "0",
+          "margin_bottom": "0",
+          "text_indent": "2em"
+        }
+      }
+    ],
+    "lists": [],
+    "special_elements": [],
+    "estimated_format": {},
+    "analysis_confidence": 0.0
+  },
+  "format_rules": {
+    "heading_formats": {},
+    "paragraph_format": {
+      "font_family": "宋体",
+      "font_size": "小四",
+      "text_align": "left",
+      "text_indent": "2em",
+      "line_height": "1.5",
+      "margin_bottom": "0"
+    },
+    "list_format": {
+      "list_type": "bullet",
+      "font_family": "宋体",
+      "font_size": "小四",
+      "line_height": "1.5",
+      "margin_left": "2em"
+    },
+    "general_settings": {}
+  },
+  "format_prompt": "请把内容以HTML生成，智能自动识别各级标题，内容排版要求如下:\n1、正文 小四 宋体，对齐方式为left，首行缩进两个字符。\n2、少用项目符号，禁止多级项目符号，去掉后面无文字的项目符号\n用Html的格式输出，需要有能直接下载word文档的功能（不要调用doc JS库）。",
+  "created_time": "2025-06-28T17:35:17.005678",
+  "html_template": "<style>\n        p {\n            font-family: '宋体';\n            font-size: 12pt;\n            text-align: left;\n            text-indent: 2em;\n            line-height: 1.5;\n        }</style>"
+}

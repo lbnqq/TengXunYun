@@ -460,18 +460,127 @@ class PreciseFormatApplier:
     
     def _generate_pdf_document(self, content_elements: List[ContentElement], 
                               template_data: Dict[str, Any], output_path: str = None) -> Dict[str, Any]:
-        """生成PDF文档（简化实现）"""
-        return {"error": "PDF生成功能待实现"}
+        """
+        MVP: 生成PDF文档
+        
+        当前实现范围：
+        - 只支持纯文本段落导出
+        - 不支持表格、复杂样式、图片等
+        - 使用reportlab库进行基础PDF生成
+        - 遇到异常直接返回错误信息
+        
+        后续扩展点：
+        - 支持表格导出
+        - 支持复杂样式（字体、颜色、对齐等）
+        - 支持图片插入
+        - 支持页眉页脚
+        - 支持自定义页面设置
+        """
+        try:
+            # TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出
+            try:
+                from reportlab.lib.pagesizes import A4
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.styles import getSampleStyleSheet
+                from reportlab.lib.units import inch
+            except ImportError:
+                return {"error": "MVP: PDF生成需要安装reportlab库: pip install reportlab"}
+            
+            # 确定输出路径
+            if not output_path:
+                import time
+                output_path = f"output/document_{int(time.time())}.pdf"
+            
+            # 确保输出目录存在
+            import os
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            # 创建PDF文档
+            doc = SimpleDocTemplate(output_path, pagesize=A4)
+            styles = getSampleStyleSheet()
+            story = []
+            
+            # 处理内容元素 - MVP只处理文本类型
+            for element in content_elements:
+                if element.type == 'title':
+                    # 标题样式
+                    title_style = styles['Heading1']
+                    story.append(Paragraph(element.content, title_style))
+                    story.append(Spacer(1, 12))
+                    
+                elif element.type == 'heading':
+                    # 标题样式
+                    heading_style = styles['Heading2']
+                    story.append(Paragraph(element.content, heading_style))
+                    story.append(Spacer(1, 8))
+                    
+                elif element.type == 'paragraph':
+                    # 段落内容
+                    para_style = styles['Normal']
+                    story.append(Paragraph(element.content, para_style))
+                    story.append(Spacer(1, 6))
+                    
+                elif element.type == 'table':
+                    # TODO: MVP仅占位，后续完善 - 表格功能暂不支持
+                    story.append(Paragraph(f"[表格内容: {len(element.table_data) if element.table_data else 0} 行]", styles['Normal']))
+                    story.append(Spacer(1, 6))
+                    
+                elif element.type == 'list':
+                    # TODO: MVP仅占位，后续完善 - 列表功能暂不支持
+                    story.append(Paragraph(f"[列表内容: {element.content}]", styles['Normal']))
+                    story.append(Spacer(1, 6))
+            
+            # 生成PDF
+            doc.build(story)
+            
+            return {
+                "success": True,
+                "output_path": output_path,
+                "file_size": os.path.getsize(output_path),
+                "pages": 1,  # MVP简化：假设只有1页
+                "note": "MVP: 仅支持纯文本导出，表格和复杂样式后续完善"
+            }
+            
+        except Exception as e:
+            return {"error": f"MVP: PDF生成失败: {str(e)}"}
     
     def _generate_excel_document(self, content_elements: List[ContentElement], 
                                 template_data: Dict[str, Any], output_path: str = None) -> Dict[str, Any]:
-        """生成Excel文档（简化实现）"""
-        return {"error": "Excel生成功能待实现"}
+        """
+        MVP: 生成Excel文档
+        
+        当前实现范围：
+        - 返回错误信息，表示功能暂未实现
+        - 保持接口完整性，便于后续扩展
+        
+        后续扩展点：
+        - 使用openpyxl库实现Excel生成
+        - 支持表格数据导出
+        - 支持单元格样式设置
+        - 支持多工作表创建
+        - 支持公式和图表
+        """
+        # TODO: MVP仅占位，后续完善 - Excel生成功能待实现
+        return {"error": "MVP: Excel生成功能待实现，后续使用openpyxl库完善"}
     
     def _generate_ppt_document(self, content_elements: List[ContentElement], 
                               template_data: Dict[str, Any], output_path: str = None) -> Dict[str, Any]:
-        """生成PowerPoint文档（简化实现）"""
-        return {"error": "PowerPoint生成功能待实现"}
+        """
+        MVP: 生成PowerPoint文档
+        
+        当前实现范围：
+        - 返回错误信息，表示功能暂未实现
+        - 保持接口完整性，便于后续扩展
+        
+        后续扩展点：
+        - 使用python-pptx库实现PPT生成
+        - 支持幻灯片创建和布局
+        - 支持文本、图片、表格插入
+        - 支持主题和样式应用
+        - 支持动画和过渡效果
+        """
+        # TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现
+        return {"error": "MVP: PowerPoint生成功能待实现，后续使用python-pptx库完善"}
     
     def batch_apply_format(self, source_files: List[str], target_template_id: str, 
                           output_dir: str = "output/batch_formatted") -> Dict[str, Any]:

@@ -207,47 +207,6 @@ def api_upload():
     except Exception as e:
         return jsonify({'success': False, 'error': f'文件上传失败: {str(e)}'}), 500
 
-@app.route('/api/document/parse', methods=['POST'])
-def api_document_parse():
-    """文档解析API"""
-    try:
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'error': '没有文件'}), 400
-
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'success': False, 'error': '没有选择文件'}), 400
-
-        # 模拟文档解析
-        content = file.read()
-        try:
-            text_content = content.decode('utf-8', errors='ignore')
-        except:
-            text_content = content.decode('gbk', errors='ignore')
-
-        # 模拟提取表格
-        tables = []
-        if '表格' in text_content or 'table' in text_content.lower():
-            tables.append({
-                'columns': ['姓名', '年龄', '职位'],
-                'data': [['张三', '', ''], ['李四', '', ''], ['王五', '', '']]
-            })
-
-        return jsonify({
-            'success': True,
-            'document_id': f"doc_{int(time.time())}",
-            'text': text_content,
-            'tables': tables,
-            'metadata': {
-                'filename': file.filename,
-                'size': len(content),
-                'pages': 1
-            }
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'文档解析失败: {str(e)}'}), 500
-
 @app.route('/api/document/fill', methods=['POST'])
 def api_document_fill():
     """文档智能填充API"""

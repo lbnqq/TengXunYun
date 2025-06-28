@@ -13,6 +13,7 @@ from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 from collections import Counter
 import numpy as np
+import yaml
 
 
 @dataclass
@@ -44,6 +45,17 @@ class EfficientDocumentClassifier:
     """高效文档分类器"""
     
     def __init__(self):
+        # 加载置信度阈值配置
+        config_path = 'config/config.yaml'
+        config = {}  # 保证类型为dict
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                loaded = yaml.safe_load(f)
+                if isinstance(loaded, dict):
+                    config = loaded
+        except Exception:
+            config = {}
+        self.intent_confidence_thresholds = config.get('intent_confidence_thresholds', {})
         # 文档类型的快速识别规则
         self.quick_rules = {
             "empty_form": {
@@ -52,7 +64,7 @@ class EfficientDocumentClassifier:
                     lambda sig: sig.has_forms or sig.has_tables,
                     lambda sig: sig.structure_complexity > 0.3
                 ],
-                "confidence_threshold": 0.8
+                "confidence_threshold": self.intent_confidence_thresholds.get("fill_form", 0.8)
             },
             "format_messy": {
                 "conditions": [
@@ -60,7 +72,7 @@ class EfficientDocumentClassifier:
                     lambda sig: sig.word_count > 100,
                     lambda sig: not sig.has_headers or sig.structure_complexity < 0.3
                 ],
-                "confidence_threshold": 0.7
+                "confidence_threshold": self.intent_confidence_thresholds.get("format_cleanup", 0.7)
             },
             "content_incomplete": {
                 "conditions": [
@@ -68,7 +80,7 @@ class EfficientDocumentClassifier:
                     lambda sig: sig.structure_complexity > 0.5,
                     lambda sig: sig.format_consistency > 0.6
                 ],
-                "confidence_threshold": 0.6
+                "confidence_threshold": self.intent_confidence_thresholds.get("content_completion", 0.6)
             },
             "aigc_heavy": {
                 "conditions": [
@@ -76,7 +88,31 @@ class EfficientDocumentClassifier:
                     lambda sig: sig.avg_sentence_length > 20,
                     lambda sig: sig.formality_score > 0.7
                 ],
-                "confidence_threshold": 0.5
+                "confidence_threshold": self.intent_confidence_thresholds.get("style_rewrite", 0.5)
+            },
+            "contract_template": {
+                "conditions": [
+                    lambda sig: sig.word_count > 300,
+                    lambda sig: sig.technical_density < 0.2,
+                    lambda sig: sig.has_headers and sig.has_tables,
+                ],
+                "confidence_threshold": self.intent_confidence_thresholds.get("contract_template", 0.85)
+            },
+            "paper_draft": {
+                "conditions": [
+                    lambda sig: sig.word_count > 500,
+                    lambda sig: sig.technical_density > 0.3,
+                    lambda sig: sig.has_headers and sig.has_tables,
+                ],
+                "confidence_threshold": self.intent_confidence_thresholds.get("paper_draft", 0.75)
+            },
+            "aigc_incomplete": {
+                "conditions": [
+                    lambda sig: sig.word_count > 100,
+                    lambda sig: sig.formality_score > 0.7,
+                    lambda sig: sig.structure_complexity < 0.4
+                ],
+                "confidence_threshold": self.intent_confidence_thresholds.get("aigc_incomplete", 0.7)
             }
         }
         
@@ -98,6 +134,8 @@ class EfficientDocumentClassifier:
         """
         # 1. 提取文档签名（最核心的特征）
         signature = self._extract_document_signature(content)
+        if metadata is None:
+            metadata = {}
         
         # 2. 快速筛选阶段
         quick_results = self._quick_classification(signature, content)
@@ -305,10 +343,25 @@ class EfficientDocumentClassifier:
         if 100 < signature.word_count < 1000 and signature.structure_complexity > 0.4:
             scores["content_incomplete"] = 0.6
         
+        # 合同模板检测
+        contract_keywords = ["合同", "甲方", "乙方", "签章", "签署"]
+        if any(kw in content for kw in contract_keywords) and signature.word_count > 300:
+            scores["contract_template"] = 0.85
+        
+        # 论文草稿检测
+        paper_keywords = ["摘要", "引言", "方法", "结论", "参考文献"]
+        if sum(1 for kw in paper_keywords if kw in content) >= 3 and signature.word_count > 500:
+            scores["paper_draft"] = 0.75
+        
         # AIGC检测
         aigc_score = self._detect_aigc_precise(content)
         if aigc_score > 0.5:
             scores["aigc_heavy"] = aigc_score
+        
+        # AIGC+内容不全检测
+        incomplete_indicators = ["待补充", "TODO", "TBD", "省略"]
+        if aigc_score > 0.5 and any(ind in content for ind in incomplete_indicators):
+            scores["aigc_incomplete"] = 0.7
         
         if scores:
             best_type = max(scores.items(), key=lambda x: x[1])
@@ -368,11 +421,28 @@ class EfficientDocumentClassifier:
             "format_messy": "format_cleanup", 
             "content_incomplete": "content_completion",
             "aigc_heavy": "style_rewrite",
+            "contract_template": "contract_processing",
+            "paper_draft": "paper_processing",
+            "aigc_incomplete": "aigc_content_completion",
             "general_document": "general_processing"
         }
         return mapping.get(doc_type, "general_processing")
     
     def _load_precise_templates(self) -> Dict[str, Any]:
-        """加载精确识别模板"""
-        # 这里可以加载预训练的模板或模型
+        """
+        MVP: 加载精确识别模板
+        
+        当前实现范围：
+        - 返回空字典，表示暂无预训练模板
+        - 不依赖外部模型或复杂规则
+        - 作为占位符保持接口完整性
+        
+        后续扩展点：
+        - 加载预训练的机器学习模型
+        - 支持自定义模板规则配置
+        - 支持模板的动态更新和版本管理
+        - 集成外部AI服务进行文档分类
+        - 支持多语言模板识别
+        """
+        # TODO: MVP仅占位，后续完善 - 当前返回空字典，后续加载预训练模板或模型
         return {}

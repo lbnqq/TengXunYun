@@ -195,6 +195,369 @@ class EnhancedDocumentFiller:
         except Exception as e:
             return {"error": f"智能文档填充失败: {str(e)}"}
     
+    def generate_fill_preview(self, analysis_result: Dict[str, Any], 
+                            user_data: Dict[str, Any] = None,
+                            image_files: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        生成填充预览
+        
+        Args:
+            analysis_result: 文档分析结果
+            user_data: 用户提供的数据
+            image_files: 图片文件列表
+            
+        Returns:
+            预览结果
+        """
+        try:
+            # 1. 验证输入参数
+            if not analysis_result or "error" in analysis_result:
+                return {
+                    "success": False,
+                    "error": "文档分析结果无效"
+                }
+            
+            document_type = analysis_result.get("document_type", "general")
+            document_content = analysis_result.get("original_content", "")
+            
+            # 2. 生成AI填写内容（仅预览，不保存）
+            ai_filled_data = self._generate_ai_filled_content(analysis_result, user_data)
+            
+            # 3. 合并用户数据和AI数据
+            combined_data = self._merge_user_and_ai_data(user_data, ai_filled_data)
+            
+            # 4. 生成预览内容
+            preview_content = self._generate_preview_content(analysis_result, combined_data, document_content)
+            
+            # 5. 生成预览报告
+            preview_report = self._generate_preview_report(analysis_result, combined_data, ai_filled_data)
+            
+            # 6. 生成字段映射信息
+            field_mapping = self._generate_field_mapping(analysis_result, combined_data)
+            
+            return {
+                "success": True,
+                "preview_id": f"preview_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                "document_type": document_type,
+                "preview_content": preview_content,
+                "preview_report": preview_report,
+                "field_mapping": field_mapping,
+                "data_summary": {
+                    "total_fields": len(analysis_result.get("fields", [])),
+                    "filled_fields": len([f for f in combined_data.values() if f]),
+                    "ai_generated_fields": len([f for f in ai_filled_data.values() if f]),
+                    "user_provided_fields": len([f for f in (user_data or {}).values() if f]),
+                    "unfilled_fields": len([f for f in analysis_result.get("fields", []) if not combined_data.get(f.get("name"))])
+                },
+                "quality_metrics": self._calculate_preview_quality(combined_data, analysis_result),
+                "recommendations": self._generate_preview_recommendations(combined_data, analysis_result),
+                "generated_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"生成填充预览失败: {str(e)}"
+            }
+    
+    def _generate_preview_content(self, analysis_result: Dict[str, Any], 
+                                combined_data: Dict[str, Any], 
+                                original_content: str) -> str:
+        """生成预览内容"""
+        try:
+            # 创建预览内容
+            preview_lines = []
+            preview_lines.append("# 文档填充预览")
+            preview_lines.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            preview_lines.append(f"文档类型: {analysis_result.get('document_type', 'general')}")
+            preview_lines.append("")
+            
+            # 添加字段填充信息
+            fields = analysis_result.get("fields", [])
+            for field in fields:
+                field_name = field.get("name", "")
+                field_value = combined_data.get(field_name, "")
+                field_type = field.get("type", "text")
+                
+                preview_lines.append(f"## {field_name}")
+                preview_lines.append(f"类型: {field_type}")
+                preview_lines.append(f"值: {field_value}")
+                preview_lines.append("")
+            
+            # 添加原始内容（如果较短）
+            if len(original_content) < 1000:
+                preview_lines.append("## 原始内容")
+                preview_lines.append(original_content)
+            
+            return "\n".join(preview_lines)
+            
+        except Exception as e:
+            return f"预览内容生成失败: {str(e)}"
+    
+    def _generate_preview_report(self, analysis_result: Dict[str, Any], 
+                               combined_data: Dict[str, Any], 
+                               ai_filled_data: Dict[str, Any]) -> Dict[str, Any]:
+        """生成预览报告"""
+        try:
+            fields = analysis_result.get("fields", [])
+            
+            # 统计信息
+            total_fields = len(fields)
+            filled_fields = len([f for f in combined_data.values() if f])
+            ai_generated = len([f for f in ai_filled_data.values() if f])
+            empty_fields = total_fields - filled_fields
+            
+            # 字段状态
+            field_status = []
+            for field in fields:
+                field_name = field.get("name", "")
+                field_value = combined_data.get(field_name, "")
+                is_ai_generated = field_name in ai_filled_data and ai_filled_data[field_name]
+                
+                field_status.append({
+                    "name": field_name,
+                    "type": field.get("type", "text"),
+                    "filled": bool(field_value),
+                    "ai_generated": is_ai_generated,
+                    "value_preview": field_value[:100] + "..." if len(field_value) > 100 else field_value
+                })
+            
+            return {
+                "summary": {
+                    "total_fields": total_fields,
+                    "filled_fields": filled_fields,
+                    "empty_fields": empty_fields,
+                    "ai_generated_fields": ai_generated,
+                    "fill_rate": filled_fields / total_fields if total_fields > 0 else 0
+                },
+                "field_status": field_status,
+                "quality_assessment": self._assess_preview_quality(combined_data, analysis_result)
+            }
+            
+        except Exception as e:
+            return {"error": f"预览报告生成失败: {str(e)}"}
+    
+    def _generate_field_mapping(self, analysis_result: Dict[str, Any], 
+                              combined_data: Dict[str, Any]) -> Dict[str, Any]:
+        """生成字段映射信息"""
+        try:
+            fields = analysis_result.get("fields", [])
+            mapping = {
+                "exact_matches": [],
+                "partial_matches": [],
+                "unmatched_fields": [],
+                "confidence_scores": {}
+            }
+            
+            for field in fields:
+                field_name = field.get("name", "")
+                field_value = combined_data.get(field_name, "")
+                
+                if field_value:
+                    # 计算匹配度
+                    confidence = self._calculate_field_confidence(field, field_value)
+                    mapping["confidence_scores"][field_name] = confidence
+                    
+                    if confidence >= 0.8:
+                        mapping["exact_matches"].append(field_name)
+                    elif confidence >= 0.5:
+                        mapping["partial_matches"].append(field_name)
+                    else:
+                        mapping["unmatched_fields"].append(field_name)
+                else:
+                    mapping["unmatched_fields"].append(field_name)
+                    mapping["confidence_scores"][field_name] = 0.0
+            
+            return mapping
+            
+        except Exception as e:
+            return {"error": f"字段映射生成失败: {str(e)}"}
+    
+    def _calculate_field_confidence(self, field: Dict[str, Any], value: str) -> float:
+        """计算字段匹配置信度"""
+        try:
+            confidence = 0.5  # 基础置信度
+            
+            # 根据字段类型调整置信度
+            field_type = field.get("type", "text")
+            if field_type == "date" and self._validate_date_format(value):
+                confidence += 0.3
+            elif field_type == "email" and self._validate_email_format(value):
+                confidence += 0.3
+            elif field_type == "phone" and self._validate_phone_format(value):
+                confidence += 0.3
+            
+            # 根据内容长度调整置信度
+            if len(value) >= field.get("min_length", 0):
+                confidence += 0.1
+            
+            if len(value) <= field.get("max_length", 1000):
+                confidence += 0.1
+            
+            return min(1.0, confidence)
+            
+        except Exception:
+            return 0.0
+    
+    def _calculate_preview_quality(self, combined_data: Dict[str, Any], 
+                                 analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """计算预览质量指标"""
+        try:
+            total_fields = len(analysis_result.get("fields", []))
+            filled_fields = len([v for v in combined_data.values() if v])
+            
+            quality_metrics = {
+                "completeness": filled_fields / total_fields if total_fields > 0 else 0,
+                "average_length": sum(len(str(v)) for v in combined_data.values() if v) / max(filled_fields, 1),
+                "validation_score": self._calculate_validation_score(combined_data, analysis_result),
+                "consistency_score": self._calculate_consistency_score(combined_data, analysis_result)
+            }
+            
+            return quality_metrics
+            
+        except Exception as e:
+            return {"error": f"质量计算失败: {str(e)}"}
+    
+    def _calculate_validation_score(self, combined_data: Dict[str, Any], 
+                                  analysis_result: Dict[str, Any]) -> float:
+        """计算验证分数"""
+        try:
+            fields = analysis_result.get("fields", [])
+            valid_fields = 0
+            
+            for field in fields:
+                field_name = field.get("name", "")
+                field_value = combined_data.get(field_name, "")
+                
+                if field_value and self._validate_field_type(field.get("type", "text"), field_value):
+                    valid_fields += 1
+            
+            return valid_fields / len(fields) if fields else 0.0
+            
+        except Exception:
+            return 0.0
+    
+    def _calculate_consistency_score(self, combined_data: Dict[str, Any], 
+                                   analysis_result: Dict[str, Any]) -> float:
+        """计算一致性分数"""
+        try:
+            # 简化的相关性检查
+            score = 0.5  # 基础分数
+            
+            # 检查日期格式一致性
+            date_fields = [f for f in analysis_result.get("fields", []) if f.get("type") == "date"]
+            if len(date_fields) > 1:
+                date_values = [combined_data.get(f.get("name", "")) for f in date_fields]
+                if all(self._validate_date_format(v) for v in date_values if v):
+                    score += 0.2
+            
+            # 检查必填字段完整性
+            required_fields = [f for f in analysis_result.get("fields", []) if f.get("required", False)]
+            filled_required = sum(1 for f in required_fields if combined_data.get(f.get("name", "")))
+            if required_fields:
+                score += 0.3 * (filled_required / len(required_fields))
+            
+            return min(1.0, score)
+            
+        except Exception:
+            return 0.0
+    
+    def _assess_preview_quality(self, combined_data: Dict[str, Any], 
+                              analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """评估预览质量"""
+        try:
+            quality_metrics = self._calculate_preview_quality(combined_data, analysis_result)
+            
+            # 质量等级评估
+            completeness = quality_metrics.get("completeness", 0)
+            validation_score = quality_metrics.get("validation_score", 0)
+            consistency_score = quality_metrics.get("consistency_score", 0)
+            
+            overall_score = (completeness + validation_score + consistency_score) / 3
+            
+            if overall_score >= 0.8:
+                quality_level = "excellent"
+                assessment = "预览质量优秀，可以立即应用"
+            elif overall_score >= 0.6:
+                quality_level = "good"
+                assessment = "预览质量良好，建议小幅调整"
+            elif overall_score >= 0.4:
+                quality_level = "fair"
+                assessment = "预览质量一般，需要中等程度修改"
+            else:
+                quality_level = "poor"
+                assessment = "预览质量较差，需要大量修改"
+            
+            return {
+                "overall_score": overall_score,
+                "quality_level": quality_level,
+                "assessment": assessment,
+                "metrics": quality_metrics,
+                "improvement_suggestions": self._generate_quality_suggestions(quality_metrics)
+            }
+            
+        except Exception as e:
+            return {"error": f"质量评估失败: {str(e)}"}
+    
+    def _generate_quality_suggestions(self, quality_metrics: Dict[str, Any]) -> List[str]:
+        """生成质量改进建议"""
+        suggestions = []
+        
+        completeness = quality_metrics.get("completeness", 0)
+        if completeness < 0.8:
+            suggestions.append("建议填写更多字段以提高完整性")
+        
+        validation_score = quality_metrics.get("validation_score", 0)
+        if validation_score < 0.9:
+            suggestions.append("建议检查字段格式和验证规则")
+        
+        consistency_score = quality_metrics.get("consistency_score", 0)
+        if consistency_score < 0.8:
+            suggestions.append("建议检查字段间的一致性和相关性")
+        
+        if not suggestions:
+            suggestions.append("预览质量良好，可以继续")
+        
+        return suggestions
+    
+    def _generate_preview_recommendations(self, combined_data: Dict[str, Any], 
+                                        analysis_result: Dict[str, Any]) -> List[str]:
+        """生成预览建议"""
+        recommendations = []
+        
+        # 检查必填字段
+        required_fields = [f for f in analysis_result.get("fields", []) if f.get("required", False)]
+        missing_required = [f.get("name") for f in required_fields if not combined_data.get(f.get("name", ""))]
+        
+        if missing_required:
+            recommendations.append(f"需要填写必填字段: {', '.join(missing_required)}")
+        
+        # 检查字段长度
+        for field in analysis_result.get("fields", []):
+            field_name = field.get("name", "")
+            field_value = combined_data.get(field_name, "")
+            
+            if field_value:
+                min_length = field.get("min_length", 0)
+                max_length = field.get("max_length", 1000)
+                
+                if len(field_value) < min_length:
+                    recommendations.append(f"字段 '{field_name}' 内容过短，建议补充")
+                elif len(field_value) > max_length:
+                    recommendations.append(f"字段 '{field_name}' 内容过长，建议精简")
+        
+        # 检查文档类型特定建议
+        document_type = analysis_result.get("document_type", "general")
+        if document_type == "patent":
+            recommendations.append("专利文档建议检查技术术语的准确性")
+        elif document_type == "contract":
+            recommendations.append("合同文档建议检查法律条款的完整性")
+        
+        if not recommendations:
+            recommendations.append("预览内容符合要求，可以应用")
+        
+        return recommendations
+    
     def _process_document_images(self, image_files: List[Dict[str, Any]], 
                                analysis_result: Dict[str, Any]) -> Dict[str, Any]:
         """处理文档图片"""
@@ -1095,4 +1458,742 @@ class EnhancedDocumentFiller:
             
             return True
         except:
-            return False 
+            return False
+
+    def apply_fill_changes(self, analysis_result: Dict[str, Any], 
+                          fill_data: Dict[str, Any],
+                          image_files: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        应用填充变化到文档
+        
+        Args:
+            analysis_result: 文档分析结果
+            fill_data: 填充数据
+            image_files: 图片文件列表
+            
+        Returns:
+            应用结果
+        """
+        try:
+            # 1. 验证输入参数
+            if not analysis_result or "error" in analysis_result:
+                return {
+                    "success": False,
+                    "error": "文档分析结果无效"
+                }
+            
+            if not fill_data:
+                return {
+                    "success": False,
+                    "error": "没有提供填充数据"
+                }
+            
+            document_type = analysis_result.get("document_type", "general")
+            document_content = analysis_result.get("original_content", "")
+            
+            # 2. 验证填充数据
+            validation_result = self._validate_fill_data(fill_data, analysis_result)
+            if not validation_result["valid"]:
+                return {
+                    "success": False,
+                    "error": "填充数据验证失败",
+                    "validation_errors": validation_result["errors"]
+                }
+            
+            # 3. 处理图片文件
+            processed_content = document_content
+            image_processing_result = None
+            if image_files and analysis_result.get("image_processing_required", False):
+                image_processing_result = self._process_document_images(image_files, analysis_result)
+                if "error" not in image_processing_result:
+                    processed_content = image_processing_result["updated_document"]
+            
+            # 4. 应用填充数据
+            if document_type == "patent":
+                fill_result = self._apply_patent_fill_changes(analysis_result, fill_data, processed_content)
+            else:
+                fill_result = self._apply_general_fill_changes(analysis_result, fill_data, processed_content)
+            
+            # 5. 生成最终文档
+            final_document = self._generate_final_document(fill_result, analysis_result, fill_data)
+            
+            # 6. 生成应用报告
+            application_report = self._generate_fill_application_report(fill_result, analysis_result, fill_data)
+            
+            return {
+                "success": True,
+                "document_type": document_type,
+                "final_document": final_document,
+                "application_report": application_report,
+                "fill_statistics": {
+                    "total_fields": len(analysis_result.get("fields", [])),
+                    "filled_fields": len([f for f in fill_data.values() if f]),
+                    "fill_rate": len([f for f in fill_data.values() if f]) / len(analysis_result.get("fields", [])) if analysis_result.get("fields") else 0,
+                    "image_count": len(image_files) if image_files else 0
+                },
+                "quality_assessment": self._assess_final_quality(fill_result, analysis_result, fill_data),
+                "applied_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"应用填充变化失败: {str(e)}"
+            }
+    
+    def _validate_fill_data(self, fill_data: Dict[str, Any], analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """验证填充数据"""
+        try:
+            errors = []
+            fields = analysis_result.get("fields", [])
+            
+            for field in fields:
+                field_name = field.get("name", "")
+                field_value = fill_data.get(field_name, "")
+                field_type = field.get("type", "text")
+                required = field.get("required", False)
+                
+                # 检查必填字段
+                if required and not field_value:
+                    errors.append(f"必填字段 '{field_name}' 不能为空")
+                    continue
+                
+                # 检查字段类型
+                if field_value and not self._validate_field_type(field_type, field_value):
+                    errors.append(f"字段 '{field_name}' 的值不符合类型要求: {field_type}")
+                
+                # 检查字段约束
+                constraints = field.get("constraints", {})
+                if field_value and not self._validate_field_constraints(field_value, constraints):
+                    errors.append(f"字段 '{field_name}' 的值不符合约束要求")
+            
+            return {
+                "valid": len(errors) == 0,
+                "errors": errors
+            }
+            
+        except Exception as e:
+            return {
+                "valid": False,
+                "errors": [f"验证过程发生错误: {str(e)}"]
+            }
+    
+    def _apply_patent_fill_changes(self, analysis_result: Dict[str, Any], 
+                                 fill_data: Dict[str, Any], 
+                                 document_content: str) -> Dict[str, Any]:
+        """应用专利文档填充变化"""
+        try:
+            # 使用专利分析器的填充方法
+            fill_result = self.patent_analyzer.fill_patent_document(analysis_result, fill_data, document_content)
+            
+            if "error" in fill_result:
+                return fill_result
+            
+            # 增强结果
+            enhanced_result = {
+                "success": True,
+                "filled_content": fill_result.get("filled_content", document_content),
+                "fill_summary": fill_result.get("fill_summary", {}),
+                "html_output": fill_result.get("html_output", ""),
+                "document_type": "patent"
+            }
+            
+            return enhanced_result
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"专利文档填充失败: {str(e)}"
+            }
+    
+    def _apply_general_fill_changes(self, analysis_result: Dict[str, Any], 
+                                  fill_data: Dict[str, Any], 
+                                  document_content: str) -> Dict[str, Any]:
+        """应用通用文档填充变化"""
+        try:
+            # 使用通用文档填充器
+            fill_result = self.document_filler.fill_document(analysis_result, fill_data)
+            
+            if "error" in fill_result:
+                return fill_result
+            
+            # 增强结果
+            enhanced_result = {
+                "success": True,
+                "filled_content": fill_result.get("filled_content", document_content),
+                "fill_summary": fill_result.get("fill_summary", {}),
+                "document_type": "general"
+            }
+            
+            return enhanced_result
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"通用文档填充失败: {str(e)}"
+            }
+    
+    def _generate_final_document(self, fill_result: Dict[str, Any], 
+                               analysis_result: Dict[str, Any], 
+                               fill_data: Dict[str, Any]) -> Dict[str, Any]:
+        """生成最终文档"""
+        try:
+            document_type = analysis_result.get("document_type", "general")
+            filled_content = fill_result.get("filled_content", "")
+            
+            final_document = {
+                "content": filled_content,
+                "document_type": document_type,
+                "metadata": {
+                    "title": analysis_result.get("title", "未命名文档"),
+                    "author": fill_data.get("author", "未知"),
+                    "created_at": datetime.now().isoformat(),
+                    "version": "1.0"
+                },
+                "format": "text"
+            }
+            
+            # 根据文档类型添加特定格式
+            if document_type == "patent":
+                final_document["html_content"] = fill_result.get("html_output", "")
+                final_document["format"] = "html"
+            
+            return final_document
+            
+        except Exception as e:
+            return {
+                "error": f"生成最终文档失败: {str(e)}"
+            }
+    
+    def _generate_fill_application_report(self, fill_result: Dict[str, Any], 
+                                        analysis_result: Dict[str, Any], 
+                                        fill_data: Dict[str, Any]) -> Dict[str, Any]:
+        """生成填充应用报告"""
+        try:
+            fields = analysis_result.get("fields", [])
+            
+            # 统计信息
+            total_fields = len(fields)
+            filled_fields = len([f for f in fill_data.values() if f])
+            empty_fields = total_fields - filled_fields
+            
+            # 字段状态
+            field_status = []
+            for field in fields:
+                field_name = field.get("name", "")
+                field_value = fill_data.get(field_name, "")
+                
+                field_status.append({
+                    "name": field_name,
+                    "type": field.get("type", "text"),
+                    "filled": bool(field_value),
+                    "value_preview": field_value[:100] + "..." if len(field_value) > 100 else field_value,
+                    "validation_status": "valid" if self._validate_field_type(field.get("type", "text"), field_value) else "invalid"
+                })
+            
+            return {
+                "summary": {
+                    "total_fields": total_fields,
+                    "filled_fields": filled_fields,
+                    "empty_fields": empty_fields,
+                    "fill_rate": filled_fields / total_fields if total_fields > 0 else 0
+                },
+                "field_status": field_status,
+                "quality_metrics": self._calculate_fill_quality(fill_data, analysis_result),
+                "recommendations": self._generate_fill_recommendations(fill_data, analysis_result)
+            }
+            
+        except Exception as e:
+            return {"error": f"生成填充应用报告失败: {str(e)}"}
+    
+    def _calculate_fill_quality(self, fill_data: Dict[str, Any], analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """计算填充质量"""
+        try:
+            fields = analysis_result.get("fields", [])
+            
+            # 完整性
+            total_fields = len(fields)
+            filled_fields = len([f for f in fill_data.values() if f])
+            completeness = filled_fields / total_fields if total_fields > 0 else 0
+            
+            # 准确性
+            valid_fields = 0
+            for field in fields:
+                field_name = field.get("name", "")
+                field_value = fill_data.get(field_name, "")
+                if field_value and self._validate_field_type(field.get("type", "text"), field_value):
+                    valid_fields += 1
+            
+            accuracy = valid_fields / total_fields if total_fields > 0 else 0
+            
+            # 一致性
+            consistency_score = self._calculate_consistency_score(fill_data, analysis_result)
+            
+            return {
+                "completeness": completeness,
+                "accuracy": accuracy,
+                "consistency": consistency_score,
+                "overall_score": (completeness + accuracy + consistency_score) / 3
+            }
+            
+        except Exception as e:
+            return {"error": f"质量计算失败: {str(e)}"}
+    
+    def _generate_fill_recommendations(self, fill_data: Dict[str, Any], analysis_result: Dict[str, Any]) -> List[str]:
+        """生成填充建议"""
+        recommendations = []
+        
+        # 检查必填字段
+        required_fields = [f for f in analysis_result.get("fields", []) if f.get("required", False)]
+        missing_required = [f.get("name") for f in required_fields if not fill_data.get(f.get("name", ""))]
+        
+        if missing_required:
+            recommendations.append(f"需要填写必填字段: {', '.join(missing_required)}")
+        
+        # 检查字段质量
+        for field in analysis_result.get("fields", []):
+            field_name = field.get("name", "")
+            field_value = fill_data.get(field_name, "")
+            
+            if field_value:
+                if not self._validate_field_type(field.get("type", "text"), field_value):
+                    recommendations.append(f"字段 '{field_name}' 的值格式不正确")
+        
+        if not recommendations:
+            recommendations.append("填充质量良好，可以导出文档")
+        
+        return recommendations
+    
+    def _assess_final_quality(self, fill_result: Dict[str, Any], 
+                            analysis_result: Dict[str, Any], 
+                            fill_data: Dict[str, Any]) -> Dict[str, Any]:
+        """评估最终质量"""
+        try:
+            quality_metrics = self._calculate_fill_quality(fill_data, analysis_result)
+            
+            overall_score = quality_metrics.get("overall_score", 0)
+            
+            if overall_score >= 0.9:
+                quality_level = "excellent"
+                assessment = "文档质量优秀，可以直接使用"
+            elif overall_score >= 0.7:
+                quality_level = "good"
+                assessment = "文档质量良好，建议小幅调整"
+            elif overall_score >= 0.5:
+                quality_level = "fair"
+                assessment = "文档质量一般，需要中等程度修改"
+            else:
+                quality_level = "poor"
+                assessment = "文档质量较差，需要大量修改"
+            
+            return {
+                "overall_score": overall_score,
+                "quality_level": quality_level,
+                "assessment": assessment,
+                "metrics": quality_metrics
+            }
+            
+        except Exception as e:
+            return {"error": f"质量评估失败: {str(e)}"}
+    
+    def export_document(self, final_document: Dict[str, Any], 
+                       export_format: str = "docx",
+                       export_options: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        导出文档
+        
+        Args:
+            final_document: 最终文档数据
+            export_format: 导出格式 (docx, pdf, html, txt)
+            export_options: 导出选项
+            
+        Returns:
+            导出结果
+        """
+        try:
+            # 1. 验证输入参数
+            if not final_document or "error" in final_document:
+                return {
+                    "success": False,
+                    "error": "最终文档数据无效"
+                }
+            
+            if export_format not in ["docx", "pdf", "html", "txt"]:
+                return {
+                    "success": False,
+                    "error": f"不支持的导出格式: {export_format}"
+                }
+            
+            # 2. 准备导出选项
+            if export_options is None:
+                export_options = {}
+            
+            default_options = {
+                "include_metadata": True,
+                "include_watermark": False,
+                "page_break": True,
+                "font_size": 12,
+                "line_spacing": 1.5
+            }
+            export_options = {**default_options, **export_options}
+            
+            # 3. 根据格式导出文档
+            if export_format == "docx":
+                export_result = self._export_to_docx(final_document, export_options)
+            elif export_format == "pdf":
+                export_result = self._export_to_pdf(final_document, export_options)
+            elif export_format == "html":
+                export_result = self._export_to_html(final_document, export_options)
+            elif export_format == "txt":
+                export_result = self._export_to_txt(final_document, export_options)
+            
+            # 4. 生成导出报告
+            export_report = self._generate_export_report(final_document, export_format, export_options, export_result)
+            
+            return {
+                "success": True,
+                "export_format": export_format,
+                "export_result": export_result,
+                "export_report": export_report,
+                "exported_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"导出文档失败: {str(e)}"
+            }
+    
+    def _export_to_docx(self, final_document: Dict[str, Any], export_options: Dict[str, Any]) -> Dict[str, Any]:
+        """导出为DOCX格式"""
+        try:
+            from docx import Document
+            from docx.shared import Inches, Pt
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            
+            # 创建文档
+            doc = Document()
+            
+            # 设置文档属性
+            metadata = final_document.get("metadata", {})
+            if metadata.get("title"):
+                doc.core_properties.title = metadata["title"]
+            if metadata.get("author"):
+                doc.core_properties.author = metadata["author"]
+            
+            # 添加标题
+            title = metadata.get("title", "未命名文档")
+            title_paragraph = doc.add_paragraph()
+            title_run = title_paragraph.add_run(title)
+            title_run.font.size = Pt(18)
+            title_run.font.bold = True
+            title_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            
+            # 添加元数据
+            if export_options.get("include_metadata", True):
+                doc.add_paragraph(f"作者: {metadata.get('author', '未知')}")
+                doc.add_paragraph(f"创建时间: {metadata.get('created_at', '未知')}")
+                doc.add_paragraph(f"版本: {metadata.get('version', '1.0')}")
+                doc.add_paragraph("")  # 空行
+            
+            # 添加内容
+            content = final_document.get("content", "")
+            if content:
+                # 按段落分割
+                paragraphs = content.split('\n\n')
+                for para_text in paragraphs:
+                    if para_text.strip():
+                        paragraph = doc.add_paragraph(para_text.strip())
+                        paragraph.paragraph_format.line_spacing = export_options.get("line_spacing", 1.5)
+            
+            # 添加HTML内容（如果有）
+            html_content = final_document.get("html_content", "")
+            if html_content:
+                doc.add_paragraph("HTML版本:")
+                doc.add_paragraph(html_content)
+            
+            # 保存文档
+            output_path = f"output/document_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            doc.save(output_path)
+            
+            return {
+                "file_path": output_path,
+                "file_size": os.path.getsize(output_path),
+                "format": "docx"
+            }
+            
+        except ImportError:
+            return {
+                "success": False,
+                "error": "缺少python-docx库，无法导出DOCX格式"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"导出DOCX失败: {str(e)}"
+            }
+    
+    def _export_to_pdf(self, final_document: Dict[str, Any], export_options: Dict[str, Any]) -> Dict[str, Any]:
+        """导出为PDF格式"""
+        try:
+            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            
+            # 创建PDF文档
+            output_path = f"output/document_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            doc = SimpleDocTemplate(output_path, pagesize=A4)
+            styles = getSampleStyleSheet()
+            
+            # 创建自定义样式
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=18,
+                spaceAfter=30,
+                alignment=1  # 居中
+            )
+            
+            content_style = ParagraphStyle(
+                'CustomContent',
+                parent=styles['Normal'],
+                fontSize=export_options.get("font_size", 12),
+                spaceAfter=12,
+                leading=export_options.get("line_spacing", 1.5) * 12
+            )
+            
+            # 构建内容
+            story = []
+            
+            # 添加标题
+            metadata = final_document.get("metadata", {})
+            title = metadata.get("title", "未命名文档")
+            story.append(Paragraph(title, title_style))
+            story.append(Spacer(1, 20))
+            
+            # 添加元数据
+            if export_options.get("include_metadata", True):
+                story.append(Paragraph(f"作者: {metadata.get('author', '未知')}", content_style))
+                story.append(Paragraph(f"创建时间: {metadata.get('created_at', '未知')}", content_style))
+                story.append(Paragraph(f"版本: {metadata.get('version', '1.0')}", content_style))
+                story.append(Spacer(1, 20))
+            
+            # 添加内容
+            content = final_document.get("content", "")
+            if content:
+                paragraphs = content.split('\n\n')
+                for para_text in paragraphs:
+                    if para_text.strip():
+                        story.append(Paragraph(para_text.strip(), content_style))
+            
+            # 构建PDF
+            doc.build(story)
+            
+            return {
+                "file_path": output_path,
+                "file_size": os.path.getsize(output_path),
+                "format": "pdf"
+            }
+            
+        except ImportError:
+            return {
+                "success": False,
+                "error": "缺少reportlab库，无法导出PDF格式"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"导出PDF失败: {str(e)}"
+            }
+    
+    def _export_to_html(self, final_document: Dict[str, Any], export_options: Dict[str, Any]) -> Dict[str, Any]:
+        """导出为HTML格式"""
+        try:
+            metadata = final_document.get("metadata", {})
+            content = final_document.get("content", "")
+            html_content = final_document.get("html_content", "")
+            
+            # 生成HTML
+            html_template = f"""
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{metadata.get('title', '未命名文档')}</title>
+    <style>
+        body {{
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: {export_options.get('line_spacing', 1.5)};
+            font-size: {export_options.get('font_size', 12)}px;
+            margin: 40px;
+            color: #333;
+        }}
+        .title {{
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }}
+        .metadata {{
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            border-left: 4px solid #007bff;
+        }}
+        .content {{
+            text-align: justify;
+        }}
+        .paragraph {{
+            margin-bottom: 15px;
+        }}
+        .watermark {{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 48px;
+            color: rgba(0,0,0,0.1);
+            z-index: -1;
+        }}
+    </style>
+</head>
+<body>
+"""
+            
+            # 添加水印
+            if export_options.get("include_watermark", False):
+                html_template += '<div class="watermark">DRAFT</div>'
+            
+            # 添加标题
+            html_template += f'<div class="title">{metadata.get("title", "未命名文档")}</div>'
+            
+            # 添加元数据
+            if export_options.get("include_metadata", True):
+                html_template += f'''
+<div class="metadata">
+    <p><strong>作者:</strong> {metadata.get('author', '未知')}</p>
+    <p><strong>创建时间:</strong> {metadata.get('created_at', '未知')}</p>
+    <p><strong>版本:</strong> {metadata.get('version', '1.0')}</p>
+</div>
+'''
+            
+            # 添加内容
+            html_template += '<div class="content">'
+            if html_content:
+                html_template += html_content
+            else:
+                paragraphs = content.split('\n\n')
+                for para_text in paragraphs:
+                    if para_text.strip():
+                        html_template += f'<div class="paragraph">{para_text.strip()}</div>'
+            
+            html_template += '''
+</div>
+</body>
+</html>
+'''
+            
+            # 保存HTML文件
+            output_path = f"output/document_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(html_template)
+            
+            return {
+                "file_path": output_path,
+                "file_size": os.path.getsize(output_path),
+                "format": "html"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"导出HTML失败: {str(e)}"
+            }
+    
+    def _export_to_txt(self, final_document: Dict[str, Any], export_options: Dict[str, Any]) -> Dict[str, Any]:
+        """导出为TXT格式"""
+        try:
+            metadata = final_document.get("metadata", {})
+            content = final_document.get("content", "")
+            
+            # 生成文本内容
+            text_content = []
+            
+            # 添加标题
+            text_content.append(metadata.get("title", "未命名文档"))
+            text_content.append("=" * 50)
+            text_content.append("")
+            
+            # 添加元数据
+            if export_options.get("include_metadata", True):
+                text_content.append(f"作者: {metadata.get('author', '未知')}")
+                text_content.append(f"创建时间: {metadata.get('created_at', '未知')}")
+                text_content.append(f"版本: {metadata.get('version', '1.0')}")
+                text_content.append("")
+            
+            # 添加内容
+            text_content.append(content)
+            
+            # 保存文本文件
+            output_path = f"output/document_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(text_content))
+            
+            return {
+                "file_path": output_path,
+                "file_size": os.path.getsize(output_path),
+                "format": "txt"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"导出TXT失败: {str(e)}"
+            }
+    
+    def _generate_export_report(self, final_document: Dict[str, Any], 
+                              export_format: str, 
+                              export_options: Dict[str, Any], 
+                              export_result: Dict[str, Any]) -> Dict[str, Any]:
+        """生成导出报告"""
+        try:
+            metadata = final_document.get("metadata", {})
+            content = final_document.get("content", "")
+            
+            report = {
+                "export_summary": {
+                    "format": export_format,
+                    "file_path": export_result.get("file_path", ""),
+                    "file_size": export_result.get("file_size", 0),
+                    "export_time": datetime.now().isoformat()
+                },
+                "document_info": {
+                    "title": metadata.get("title", "未命名文档"),
+                    "author": metadata.get("author", "未知"),
+                    "content_length": len(content),
+                    "word_count": len(content.split()),
+                    "paragraph_count": len([p for p in content.split('\n\n') if p.strip()])
+                },
+                "export_options": export_options,
+                "quality_metrics": {
+                    "completeness": 1.0 if content else 0.0,
+                    "formatting": 1.0 if export_format in ["docx", "pdf", "html"] else 0.8,
+                    "accessibility": 1.0 if export_format in ["txt", "html"] else 0.9
+                }
+            }
+            
+            return report
+            
+        except Exception as e:
+            return {"error": f"生成导出报告失败: {str(e)}"}

@@ -1,0 +1,12 @@
+{
+  "document_content": "模板测试文档",
+  "document_name": "模板测试",
+  "style_type": "academic",
+  "style_features": {
+    "formality": 0.9,
+    "technicality": 0.8,
+    "objectivity": 0.9
+  },
+  "confidence_score": 0.9,
+  "template_id": "f9bdf5352e95"
+}

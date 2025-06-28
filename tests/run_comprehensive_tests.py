@@ -48,7 +48,7 @@ class ComprehensiveTestRunner:
         print("🔧 运行集成测试...")
         try:
             result = subprocess.run(
-                [sys.executable, "test_comprehensive_integration.py"],
+                [sys.executable, "tests/test_comprehensive_integration.py"],
                 capture_output=True,
                 text=True,
                 timeout=300
@@ -76,7 +76,7 @@ class ComprehensiveTestRunner:
         print("🌐 运行API测试...")
         try:
             result = subprocess.run(
-                [sys.executable, "test_api_comprehensive.py"],
+                [sys.executable, "tests/test_api_comprehensive.py"],
                 capture_output=True,
                 text=True,
                 timeout=300
@@ -104,7 +104,7 @@ class ComprehensiveTestRunner:
         print("🖥️ 运行前端测试...")
         try:
             result = subprocess.run(
-                [sys.executable, "test_frontend_integration.py"],
+                [sys.executable, "tests/test_frontend_integration.py"],
                 capture_output=True,
                 text=True,
                 timeout=300
@@ -132,7 +132,7 @@ class ComprehensiveTestRunner:
         print("🎭 运行端到端测试...")
         try:
             result = subprocess.run(
-                [sys.executable, "test_end_to_end_scenarios.py"],
+                [sys.executable, "tests/test_end_to_end_scenarios.py"],
                 capture_output=True,
                 text=True,
                 timeout=600

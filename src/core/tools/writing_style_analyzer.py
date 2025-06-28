@@ -4,6 +4,7 @@ import os
 from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 import hashlib
+import difflib
 
 # 导入增强的文风分析组件
 try:
@@ -97,6 +98,10 @@ class WritingStyleAnalyzer:
             }
         }
     
+        # 初始化风格行为缓存/导出目录
+        self.semantic_behavior_dir = os.path.join(self.storage_path, "semantic_behavior")
+        os.makedirs(os.path.join(self.semantic_behavior_dir, "profiles"), exist_ok=True)
+
     def analyze_writing_style(self, document_content: str, document_name: str = None,
                              use_enhanced: bool = None) -> Dict[str, Any]:
         """
@@ -1697,8 +1702,13 @@ class WritingStyleAnalyzer:
         """保存文风模板"""
         try:
             template_id = analysis_result.get("template_id")
+            # 自动补全template_id
             if not template_id:
-                return {"error": "缺少模板ID"}
+                template_id = self._generate_template_id(
+                    analysis_result.get("document_name", "未命名文档"),
+                    analysis_result.get("style_features", {})
+                )
+                analysis_result["template_id"] = template_id
             
             # 保存到JSON文件
             template_file = os.path.join(self.storage_path, f"{template_id}.json")
@@ -2059,200 +2069,1491 @@ class WritingStyleAnalyzer:
 
     def export_styled_document(self, session_id: str) -> Dict[str, Any]:
         """
-        导出应用了文风变化的文档
-        
-        Args:
-            session_id: 会话ID
-            
-        Returns:
-            导出结果
+        导出应用了文风变化的文档（增强：保留结构、自动封面、目录、批注、高亮diff、原格式、元数据、变更报告）
         """
         try:
-            # 从会话存储中获取文风调整结果
+            # 1. 读取会话数据
             session_file = os.path.join(self.semantic_behavior_dir, "profiles", f"{session_id}.json")
             if not os.path.exists(session_file):
                 return {"error": "会话不存在或已过期"}
+            with open(session_file, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+            original_content = session_data.get("original_content", "")
+            suggested_changes = session_data.get("suggested_changes", [])
+            doc_name = session_data.get("document_name", f"session_{session_id}")
+            template_id = session_data.get("style_template_id", "template")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # 2. 应用变更，保留结构，按diff顺序合成
+            from docx import Document
+            from docx.shared import Pt, Inches, RGBColor
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            from docx.oxml.ns import qn
+            from docx.enum.style import WD_STYLE_TYPE
+            from docx.oxml import OxmlElement
+            import re
+            doc = Document()
+            # 2.1 封面
+            doc.add_section()
+            cover = doc.add_paragraph()
+            run = cover.add_run(f"文风统一导出文档\n\n原文件: {doc_name}\n模板: {template_id}\n导出时间: {timestamp}")
+            run.font.size = Pt(20)
+            run.bold = True
+            cover.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            doc.add_page_break()
+            # 2.2 目录
+            toc = doc.add_paragraph("目录", style='Heading 1')
+            doc.add_paragraph("（请在Word中更新目录域以显示章节）")
+            doc.add_page_break()
+            # 2.3 正文（保留原结构，应用变更并高亮diff）
+            paragraphs = original_content.split('\n')
+            for para_text in paragraphs:
+                if not para_text.strip():
+                    doc.add_paragraph()
+                    continue
+                para = doc.add_paragraph()
+                applied = False
+                for change in suggested_changes:
+                    if change.get("status") == "accepted" and change.get("original_text") in para_text:
+                        before, match, after = para_text.partition(change["original_text"])
+                        if before:
+                            para.add_run(before)
+                        run = para.add_run(change["suggested_text"])
+                        # 简化高亮设置，避免导入问题
+                        run.font.color.rgb = RGBColor(255, 255, 0)  # 黄色文字
+                        comment = OxmlElement('w:commentRangeStart')
+                        comment.set(qn('w:id'), '0')
+                        para._p.append(comment)
+                        run = para.add_run(f"（风格变更：{change.get('change_type','')}，置信度{change.get('confidence',0):.2f}）")
+                        run.font.size = Pt(8)
+                        run.font.color.rgb = RGBColor(255,0,0)
+                        comment_end = OxmlElement('w:commentRangeEnd')
+                        comment_end.set(qn('w:id'), '0')
+                        para._p.append(comment_end)
+                        if after:
+                            para.add_run(after)
+                        applied = True
+                        break
+                if not applied:
+                    para.add_run(para_text)
+            # 2.4 统一样式
+            for section in doc.sections:
+                section.top_margin = Inches(1)
+                section.bottom_margin = Inches(1)
+                section.left_margin = Inches(1.25)
+                section.right_margin = Inches(1.25)
+            # 简化样式设置，避免复杂的字体操作
+            for style in doc.styles:
+                if style.type == WD_STYLE_TYPE.PARAGRAPH:
+                    style.font.name = '宋体'
+                    style._element.rPr.rFonts.set(qn('w:eastAsia'), '宋体')
+                    style.font.size = Pt(12)
+            # 2.5 元数据嵌入
+            core_props = doc.core_properties
+            core_props.title = f"文风统一导出-{doc_name}"
+            core_props.subject = f"风格模板ID: {template_id}"
+            core_props.author = "智能文档助手"
+            core_props.comments = f"导出时间: {timestamp}；变更数: {len([c for c in suggested_changes if c.get('status') == 'accepted'])}"
+            core_props.keywords = f"style_template_id:{template_id};export_time:{timestamp}"
+            # 2.6 文档末尾添加风格调整报告
+            doc.add_page_break()
+            report = doc.add_paragraph("风格调整报告", style='Heading 1')
+            report.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            doc.add_paragraph(f"原文件名: {doc_name}")
+            doc.add_paragraph(f"风格模板ID: {template_id}")
+            doc.add_paragraph(f"导出时间: {timestamp}")
+            doc.add_paragraph(f"总变更数: {len([c for c in suggested_changes if c.get('status') == 'accepted'])}")
+            for idx, change in enumerate(suggested_changes, 1):
+                if change.get("status") == "accepted":
+                    para = doc.add_paragraph(f"[{idx}] 类型: {change.get('change_type','')} | 置信度: {change.get('confidence',0):.2f}", style='List Number')
+                    para.add_run(f"\n原文: {change.get('original_text','')}")
+                    para.add_run(f"\n建议: {change.get('suggested_text','')}")
+            # 2.7 文件命名
+            filename = f"{doc_name}_{template_id}_{timestamp}.docx"
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            output_path = os.path.join(temp_dir, filename)
+            doc.save(output_path)
+            with open(output_path, 'rb') as f:
+                docx_content = f.read()
+            try:
+                os.remove(output_path)
+            except:
+                pass
+            return {
+                "success": True,
+                "docx_content": docx_content,
+                "filename": filename,
+                "content_length": len(paragraphs),
+                "changes_applied": len([c for c in suggested_changes if c.get("status") == "accepted"])
+            }
+        except Exception as e:
+            return {"error": f"导出文风调整文档失败: {str(e)}"}
+
+    def generate_style_preview(self, analysis_result: dict, style_template_id: str) -> dict:
+        """
+        根据分析结果和风格模板ID，对目标文档进行风格迁移预览，并返回迁移结果、diff和一致性评分。
+        
+        Args:
+            analysis_result: 文档分析结果
+            style_template_id: 风格模板ID
+            
+        Returns:
+            风格预览结果，包含预览文本、差异、一致性评分等
+        """
+        try:
+            # 1. 获取目标文档内容
+            document_content = analysis_result.get("document_content") or analysis_result.get("text") or ""
+            document_name = analysis_result.get("document_name", "未命名文档")
+
+            # 2. 加载风格模板（增强版，带回退机制）
+            template = self._load_template_with_fallback(style_template_id, analysis_result)
+            if not template:
+                return {"error": "无法加载风格模板且无法创建默认模板", "success": False}
+
+            target_style_type = template.get("style_type") or template.get("styleType") or "business_professional"
+
+            # 3. 选择增强处理器或规则引擎进行风格迁移
+            if self.use_enhanced_features and self.enhanced_processor and hasattr(self.enhanced_processor, "transfer_style"):
+                # 使用增强风格迁移
+                transfer_result = self.enhanced_processor.transfer_style(
+                    document_content=document_content,
+                    target_style_type=target_style_type,
+                    template=template,
+                    original_analysis=analysis_result
+                )
+            else:
+                # 基础规则迁移（可自定义更复杂逻辑）
+                transfer_result = {
+                    "rewritten_text": document_content,  # 这里可调用基础迁移方法
+                    "style_changes": [],
+                    "success": True,
+                    "note": "未启用增强风格迁移，返回原文"
+                }
+
+            # 4. 计算风格一致性分数
+            consistency_score = 0.0
+            if "rewritten_text" in transfer_result:
+                generated_features = self._analyze_style_features(transfer_result["rewritten_text"])
+                target_features = template.get("style_features", {})
+                consistency_score = self._calculate_style_consistency(target_features, generated_features, target_style_type)
+
+            # 5. 生成diff（可选：对比迁移前后文本差异）
+            diff = []
+            if "rewritten_text" in transfer_result and transfer_result["rewritten_text"] != document_content:
+                import difflib
+                diff = list(difflib.unified_diff(
+                    document_content.splitlines(), 
+                    transfer_result["rewritten_text"].splitlines(),
+                    lineterm=""
+                ))
+
+            # 6. 返回结构化结果
+            return {
+                "success": True,
+                "preview_text": transfer_result.get("rewritten_text", document_content),
+                "diff": diff,
+                "consistency_score": consistency_score,
+                "style_changes": transfer_result.get("style_changes", []),
+                "note": transfer_result.get("note", ""),
+                "template_id": style_template_id,
+                "target_style_type": target_style_type
+            }
+        except Exception as e:
+            return {"error": f"风格迁移预览失败: {str(e)}", "success": False}
+
+    def _load_template_with_fallback(self, template_id: str, analysis_result: dict = None) -> Optional[dict]:
+        """
+        带回退机制的模板加载
+        
+        Args:
+            template_id: 模板ID
+            analysis_result: 分析结果（用于创建默认模板）
+            
+        Returns:
+            模板数据或None
+        """
+        # 1. 尝试加载指定模板
+        template = self.load_style_template(template_id)
+        if template and "error" not in template:
+            return template
+        
+        # 2. 如果模板不存在且有分析结果，尝试保存分析结果作为模板
+        if analysis_result:
+            print(f"模板 {template_id} 不存在，尝试保存分析结果作为模板")
+            save_result = self.save_style_template(analysis_result)
+            if save_result.get("success"):
+                print(f"成功保存模板: {save_result.get('template_id')}")
+                return analysis_result  # 使用分析结果作为模板
+        
+        # 3. 尝试查找相似模板
+        similar_template = self._find_similar_template(template_id)
+        if similar_template:
+            print(f"使用相似模板: {similar_template.get('template_id', 'unknown')}")
+            return similar_template
+        
+        # 4. 使用默认模板
+        default_template = self._get_default_template()
+        if default_template:
+            print("使用默认模板")
+            return default_template
+        
+        # 5. 创建基础模板
+        basic_template = self._create_basic_template()
+        if basic_template:
+            print("创建基础模板")
+            return basic_template
+        
+        return None
+
+    def _find_similar_template(self, template_id: str) -> Optional[dict]:
+        """
+        查找相似模板
+        
+        Args:
+            template_id: 目标模板ID
+            
+        Returns:
+            相似模板或None
+        """
+        try:
+            templates = self.list_style_templates()
+            if not templates:
+                return None
+            
+            # 简单的相似性查找（基于ID前缀）
+            template_prefix = template_id[:8] if len(template_id) >= 8 else template_id
+            
+            for template in templates:
+                current_id = template.get("template_id", "")
+                if current_id.startswith(template_prefix):
+                    return self.load_style_template(current_id)
+            
+            # 如果没有找到相似ID，返回第一个可用模板
+            if templates:
+                first_template_id = templates[0].get("template_id")
+                if first_template_id:
+                    return self.load_style_template(first_template_id)
+            
+            return None
+            
+        except Exception as e:
+            print(f"查找相似模板失败: {str(e)}")
+            return None
+
+    def _get_default_template(self) -> Optional[dict]:
+        """
+        获取默认模板
+        
+        Returns:
+            默认模板或None
+        """
+        try:
+            # 创建默认的商务专业风格模板
+            default_template = {
+                "template_id": "default_business_professional",
+                "document_name": "默认商务专业模板",
+                "style_type": "business_professional",
+                "style_features": {
+                    "formality": 0.8,
+                    "technicality": 0.6,
+                    "objectivity": 0.7,
+                    "conciseness": 0.5,
+                    "professionalism": 0.8
+                },
+                "style_prompt": """
+请使用商务专业的写作风格，要求：
+1. 语言正式、客观，避免主观色彩
+2. 使用专业术语，但保持易懂
+3. 结构清晰，逻辑严密
+4. 避免口语化表达
+5. 保持简洁明了
+                """.strip(),
+                "confidence_score": 0.9,
+                "created_time": datetime.now().isoformat()
+            }
+            
+            return default_template
+            
+        except Exception as e:
+            print(f"获取默认模板失败: {str(e)}")
+            return None
+
+    def _create_basic_template(self) -> Optional[dict]:
+        """
+        创建基础模板
+        
+        Returns:
+            基础模板或None
+        """
+        try:
+            basic_template = {
+                "template_id": "basic_template",
+                "document_name": "基础模板",
+                "style_type": "general",
+                "style_features": {
+                    "formality": 0.5,
+                    "technicality": 0.3,
+                    "objectivity": 0.6,
+                    "conciseness": 0.5,
+                    "professionalism": 0.5
+                },
+                "style_prompt": """
+请使用通用的写作风格，要求：
+1. 语言清晰易懂
+2. 结构合理
+3. 表达准确
+4. 避免过于复杂的句式
+                """.strip(),
+                "confidence_score": 0.7,
+                "created_time": datetime.now().isoformat()
+            }
+            
+            return basic_template
+            
+        except Exception as e:
+            print(f"创建基础模板失败: {str(e)}")
+            return None
+
+    def handle_batch_style_changes(self, session_id: str, action: str = "accept_all") -> dict:
+        """
+        批量处理风格变化（如全部接受/全部拒绝）- 真实实现
+        """
+        try:
+            # 1. 从session文件中读取真实的原始文档内容和风格模板
+            session_file = os.path.join(self.semantic_behavior_dir, "profiles", f"{session_id}.json")
+            if not os.path.exists(session_file):
+                return {
+                    "success": False,
+                    "error": f"会话文件不存在: {session_id}"
+                }
             
             with open(session_file, 'r', encoding='utf-8') as f:
                 session_data = json.load(f)
             
-            # 获取原始内容和调整后的内容
+            # 获取真实的原始文档内容
+            original_content = session_data.get("original_content", "")
+            document_name = session_data.get("document_name", f"session_{session_id}")
+            style_template_id = session_data.get("style_template_id", "")
+            
+            if not original_content:
+                return {
+                    "success": False,
+                    "error": "session文件中没有找到原始文档内容"
+                }
+            
+            if not style_template_id:
+                return {
+                    "success": False,
+                    "error": "session文件中没有找到风格模板ID"
+                }
+            
+            # 2. 加载风格模板
+            template = self.load_style_template(style_template_id)
+            if not template:
+                template = {
+                    "style_type": "business_professional",
+                    "style_features": {
+                        "formality": 0.8,
+                        "technicality": 0.6,
+                        "objectivity": 0.7,
+                        "conciseness": 0.5
+                    }
+                }
+            
+            # 3. 根据action执行真实的风格迁移
+            if action == "accept_all":
+                # 使用LLM进行真实的风格迁移
+                migrated_content = self._perform_real_style_migration(
+                    original_content, template, style_template_id
+                )
+                
+                # 生成真实的变更记录
+                suggested_changes = self._generate_real_changes(
+                    original_content, migrated_content, template
+                )
+                
+                # 标记所有变更为已接受
+                for change in suggested_changes:
+                    change["status"] = "accepted"
+                    
+            elif action == "reject_all":
+                # 拒绝所有变更，保持原文
+                migrated_content = original_content
+                suggested_changes = []
+                
+            else:
+                return {
+                    "success": False,
+                    "error": f"不支持的操作: {action}"
+                }
+            
+            # 4. 更新session数据
+            session_data.update({
+                "action": action,
+                "migrated_content": migrated_content,
+                "suggested_changes": suggested_changes,
+                "target_style": template.get("style_type", "business_professional"),
+                "last_updated": datetime.now().isoformat()
+            })
+            
+            # 保存更新后的session文件
+            with open(session_file, 'w', encoding='utf-8') as f:
+                json.dump(session_data, f, ensure_ascii=False, indent=2)
+            
+            print(f"会话数据已保存: {session_file}")
+            
+            return {
+                "success": True,
+                "session_id": session_id,
+                "action": action,
+                "message": f"批量{action}风格变化已处理",
+                "changes_count": len(suggested_changes),
+                "accepted_count": len([c for c in suggested_changes if c.get("status") == "accepted"]),
+                "migrated_content_length": len(migrated_content)
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"批量处理风格变化失败: {str(e)}"
+            }
+    
+    def _perform_real_style_migration(self, original_content: str, template: dict, template_id: str) -> str:
+        """
+        执行真实的风格迁移
+        """
+        try:
+            # 1. 构建风格迁移提示词
+            target_style = template.get("style_type", "business_professional")
+            style_features = template.get("style_features", {})
+            
+            prompt = self._build_style_migration_prompt(
+                original_content, target_style, style_features
+            )
+            
+            # 2. 调用LLM进行风格迁移
+            if self.llm_client:
+                response = self.llm_client.generate_text(prompt, max_tokens=2000)
+                if response and "content" in response:
+                    migrated_content = response["content"].strip()
+                    # 清理可能的markdown格式
+                    if migrated_content.startswith("```"):
+                        lines = migrated_content.split('\n')
+                        if len(lines) > 2:
+                            migrated_content = '\n'.join(lines[1:-1])
+                    return migrated_content
+            
+            # 3. 如果LLM调用失败，使用规则基础迁移
+            return self._rule_based_style_migration(original_content, target_style, style_features)
+            
+        except Exception as e:
+            print(f"风格迁移失败: {e}")
+            return original_content
+    
+    def _build_style_migration_prompt(self, content: str, target_style: str, style_features: dict) -> str:
+        """
+        构建风格迁移的LLM提示词
+        """
+        formality = style_features.get("formality", 0.5)
+        technicality = style_features.get("technicality", 0.5)
+        objectivity = style_features.get("objectivity", 0.5)
+        conciseness = style_features.get("conciseness", 0.5)
+        
+        prompt = f"""
+请将以下文档的风格调整为{target_style}风格，要求：
+
+风格特征：
+- 正式程度：{formality:.1f}（0-1，越高越正式）
+- 技术性：{technicality:.1f}（0-1，越高越技术化）
+- 客观性：{objectivity:.1f}（0-1，越高越客观）
+- 简洁性：{conciseness:.1f}（0-1，越高越简洁）
+
+调整要求：
+1. 保持原文的核心信息和逻辑结构
+2. 调整词汇选择，使其符合目标风格
+3. 优化句式结构，提高表达的专业性
+4. 确保语言的一致性和连贯性
+
+原文：
+{content}
+
+请直接返回调整后的文本，不要添加任何解释或标记。
+"""
+        return prompt
+    
+    def _rule_based_style_migration(self, content: str, target_style: str, style_features: dict) -> str:
+        """
+        基于规则的风格迁移（LLM不可用时的备选方案）
+        """
+        migrated_content = content
+        
+        # 根据目标风格应用不同的规则
+        if target_style == "business_professional":
+            # 商务专业风格调整
+            replacements = {
+                "我觉得": "我认为",
+                "挺好的": "较为理想",
+                "应该可以": "能够",
+                "解决问题": "解决相关问题",
+                "用了": "采用了",
+                "算了一下": "进行了分析",
+                "总的来说": "综上所述",
+                "不错": "良好",
+                "应该能用": "具备可行性"
+            }
+            
+            for old, new in replacements.items():
+                migrated_content = migrated_content.replace(old, new)
+        
+        elif target_style == "academic":
+            # 学术风格调整
+            replacements = {
+                "我觉得": "研究表明",
+                "挺好的": "具有积极效果",
+                "应该可以": "能够有效",
+                "解决问题": "解决相关问题",
+                "用了": "采用了",
+                "算了一下": "进行了统计分析",
+                "总的来说": "综上所述",
+                "不错": "表现良好",
+                "应该能用": "具备应用价值"
+            }
+            
+            for old, new in replacements.items():
+                migrated_content = migrated_content.replace(old, new)
+        
+        return migrated_content
+    
+    def _generate_real_changes(self, original_content: str, migrated_content: str, template: dict) -> list:
+        """
+        生成真实的变更记录
+        """
+        changes = []
+        
+        # 使用difflib生成差异
+        import difflib
+        
+        # 简单的词级别差异检测
+        original_words = original_content.split()
+        migrated_words = migrated_content.split()
+        
+        matcher = difflib.SequenceMatcher(None, original_words, migrated_words)
+        
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == 'replace':
+                original_text = ' '.join(original_words[i1:i2])
+                suggested_text = ' '.join(migrated_words[j1:j2])
+                
+                if original_text.strip() and suggested_text.strip():
+                    change = {
+                        "original_text": original_text,
+                        "suggested_text": suggested_text,
+                        "status": "accepted",
+                        "change_type": self._classify_change_type(original_text, suggested_text),
+                        "confidence": 0.85,
+                        "position": i1
+                    }
+                    changes.append(change)
+        
+        return changes
+    
+    def _classify_change_type(self, original: str, suggested: str) -> str:
+        """
+        分类变更类型
+        """
+        if len(original) < len(suggested):
+            return "vocabulary_improvement"
+        elif len(original) > len(suggested):
+            return "conciseness_improvement"
+        else:
+            return "style_alignment"
+
+    def handle_style_change(self, session_id: str, change_id: str, action: str) -> dict:
+        """
+        处理单个风格变化（接受/拒绝）
+        
+        Args:
+            session_id: 会话ID
+            change_id: 变化ID
+            action: 操作类型 ('accept' 或 'reject')
+            
+        Returns:
+            Dict: 处理结果
+        """
+        try:
+            # 1. 验证参数
+            if action not in ['accept', 'reject']:
+                return {
+                    "success": False,
+                    "error": f"不支持的操作: {action}，必须是 'accept' 或 'reject'"
+                }
+            
+            # 2. 从session文件中读取数据
+            session_file = os.path.join(self.semantic_behavior_dir, "profiles", f"{session_id}.json")
+            if not os.path.exists(session_file):
+                return {
+                    "success": False,
+                    "error": f"会话文件不存在: {session_id}"
+                }
+            
+            with open(session_file, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+            
+            # 3. 获取原始内容和建议的变化
             original_content = session_data.get("original_content", "")
             suggested_changes = session_data.get("suggested_changes", [])
             
             if not original_content:
-                return {"error": "文档内容为空"}
+                return {
+                    "success": False,
+                    "error": "session文件中没有找到原始文档内容"
+                }
             
-            # 应用所有已接受的调整
-            styled_content = original_content
+            # 4. 查找指定的变化
+            target_change = None
             for change in suggested_changes:
-                if change.get("status") == "accepted":
-                    original_text = change.get("original_text", "")
-                    suggested_text = change.get("suggested_text", "")
-                    if original_text and suggested_text:
-                        styled_content = styled_content.replace(original_text, suggested_text, 1)
+                if change.get("change_id") == change_id:
+                    target_change = change
+                    break
             
-            # 生成Word文档
-            try:
-                from docx import Document
-                from docx.shared import Inches
-                from docx.enum.text import WD_ALIGN_PARAGRAPH
-                
-                doc = Document()
-                
-                # 设置页面边距
-                sections = doc.sections
-                for section in sections:
-                    section.top_margin = Inches(1)
-                    section.bottom_margin = Inches(1)
-                    section.left_margin = Inches(1.25)
-                    section.right_margin = Inches(1.25)
-                
-                # 添加标题
-                title = doc.add_heading('文风调整后文档', 0)
-                title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                
-                # 添加内容
-                paragraphs = styled_content.split('\n')
-                for para_text in paragraphs:
-                    if para_text.strip():
-                        para = doc.add_paragraph(para_text.strip())
-                        # 设置段落格式
-                        para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                
-                # 保存到临时文件
-                import tempfile
-                temp_dir = tempfile.gettempdir()
-                output_path = os.path.join(temp_dir, f"styled_document_{session_id}.docx")
-                doc.save(output_path)
-                
-                # 读取文件内容
-                with open(output_path, 'rb') as f:
-                    docx_content = f.read()
-                
-                # 清理临时文件
-                try:
-                    os.remove(output_path)
-                except:
-                    pass
-                
+            if not target_change:
                 return {
-                    "success": True,
-                    "docx_content": docx_content,
-                    "filename": f"styled_document_{session_id}.docx",
-                    "content_length": len(styled_content),
-                    "changes_applied": len([c for c in suggested_changes if c.get("status") == "accepted"])
+                    "success": False,
+                    "error": f"未找到指定的变化: {change_id}"
                 }
-                
-            except ImportError:
-                # 如果没有python-docx，生成HTML格式
-                html_content = self._generate_html_document(styled_content, session_data)
-                return {
-                    "success": True,
-                    "html_content": html_content,
-                    "filename": f"styled_document_{session_id}.html",
-                    "content_length": len(styled_content),
-                    "changes_applied": len([c for c in suggested_changes if c.get("status") == "accepted"])
+            
+            # 5. 更新变化状态
+            target_change["status"] = action
+            target_change["action_time"] = datetime.now().isoformat()
+            
+            # 6. 生成更新后的预览内容
+            updated_preview = self._generate_updated_preview(original_content, suggested_changes)
+            
+            # 7. 更新session数据
+            session_data.update({
+                "suggested_changes": suggested_changes,
+                "updated_preview": updated_preview,
+                "last_updated": datetime.now().isoformat()
+            })
+            
+            # 8. 保存更新后的session文件
+            with open(session_file, 'w', encoding='utf-8') as f:
+                json.dump(session_data, f, ensure_ascii=False, indent=2)
+            
+            print(f"单个风格变化已处理: {change_id} -> {action}")
+            
+            return {
+                "success": True,
+                "change_id": change_id,
+                "action": action,
+                "message": f"变化 {change_id} 已{action}",
+                "updated_preview": {
+                    "content": updated_preview,
+                    "accepted_changes": len([c for c in suggested_changes if c.get("status") == "accepted"]),
+                    "rejected_changes": len([c for c in suggested_changes if c.get("status") == "rejected"]),
+                    "pending_changes": len([c for c in suggested_changes if c.get("status") == "pending"])
                 }
+            }
             
         except Exception as e:
-            return {"error": f"导出文风调整文档失败: {str(e)}"}
+            return {
+                "success": False,
+                "error": f"处理单个风格变化失败: {str(e)}"
+            }
     
-    def _generate_html_document(self, content: str, session_data: Dict[str, Any]) -> str:
-        """生成HTML格式的文档"""
-        html_template = f"""
-        <!DOCTYPE html>
-        <html lang="zh-CN">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>文风调整后文档</title>
-            <style>
-                body {{
-                    font-family: 'SimSun', 'Microsoft YaHei', serif;
-                    line-height: 1.8;
-                    margin: 40px;
-                    color: #333;
-                    background-color: #fff;
-                }}
-                .document-container {{
-                    max-width: 800px;
-                    margin: 0 auto;
-                    background-color: #fff;
-                    padding: 40px;
-                    box-shadow: 0 0 20px rgba(0,0,0,0.1);
-                    border-radius: 8px;
-                }}
-                .document-title {{
-                    text-align: center;
-                    font-size: 24px;
-                    font-weight: bold;
-                    margin-bottom: 30px;
-                    color: #2c3e50;
-                    border-bottom: 2px solid #3498db;
-                    padding-bottom: 15px;
-                }}
-                .document-content {{
-                    white-space: pre-wrap;
-                    font-size: 16px;
-                    text-align: justify;
-                }}
-                .change-highlight {{
-                    background-color: #e8f5e8;
-                    padding: 2px 4px;
-                    border-radius: 3px;
-                    border-left: 3px solid #27ae60;
-                }}
-                .document-info {{
-                    margin-top: 30px;
-                    padding: 15px;
-                    background-color: #f8f9fa;
-                    border-radius: 5px;
-                    font-size: 14px;
-                    color: #666;
-                }}
-                .download-btn {{
-                    display: inline-block;
-                    margin-top: 20px;
-                    padding: 10px 20px;
-                    background-color: #3498db;
-                    color: white;
-                    text-decoration: none;
-                    border-radius: 5px;
-                    font-weight: bold;
-                }}
-                .download-btn:hover {{
-                    background-color: #2980b9;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="document-container">
-                <div class="document-title">文风调整后文档</div>
-                <div class="document-content">{content}</div>
-                <div class="document-info">
-                    <p><strong>文档信息：</strong></p>
-                    <p>• 调整时间：{session_data.get('timestamp', '未知')}</p>
-                    <p>• 应用调整：{len([c for c in session_data.get('suggested_changes', []) if c.get('status') == 'accepted'])} 处</p>
-                    <p>• 文档长度：{len(content)} 字符</p>
-                </div>
-                <a href="#" class="download-btn" onclick="downloadDocument()">下载文档</a>
-            </div>
-            
-            <script>
-                function downloadDocument() {{
-                    const content = document.querySelector('.document-container').innerHTML;
-                    const blob = new Blob([content], {{type: 'text/html'}});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'styled_document.html';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                }}
-            </script>
-        </body>
-        </html>
+    def _generate_updated_preview(self, original_content: str, suggested_changes: list) -> str:
         """
+        根据已接受的变化生成更新后的预览内容
         
-        return html_template
+        Args:
+            original_content: 原始内容
+            suggested_changes: 建议的变化列表
+            
+        Returns:
+            str: 更新后的预览内容
+        """
+        try:
+            # 按位置排序变化，确保按顺序应用
+            accepted_changes = [c for c in suggested_changes if c.get("status") == "accepted"]
+            accepted_changes.sort(key=lambda x: x.get("position", {}).get("start", 0))
+            
+            # 从后往前应用变化，避免位置偏移
+            updated_content = original_content
+            offset = 0
+            
+            for change in accepted_changes:
+                position = change.get("position", {})
+                start = position.get("start", 0) + offset
+                end = position.get("end", 0) + offset
+                suggested_text = change.get("suggested_text", "")
+                
+                # 应用变化
+                if start < len(updated_content) and end <= len(updated_content):
+                    updated_content = updated_content[:start] + suggested_text + updated_content[end:]
+                    # 更新偏移量
+                    offset += len(suggested_text) - (end - start)
+            
+            return updated_content
+            
+        except Exception as e:
+            print(f"生成更新预览失败: {e}")
+            return original_content
+
+    def apply_style_changes(self, session_id: str, changes: List[Dict[str, Any]]) -> dict:
+        """
+        应用风格变化到文档
+        
+        Args:
+            session_id: 会话ID
+            changes: 要应用的变化列表
+            
+        Returns:
+            Dict: 应用结果
+        """
+        try:
+            # 1. 验证参数
+            if not changes:
+                return {
+                    "success": False,
+                    "error": "没有提供要应用的变化"
+                }
+            
+            # 2. 从session文件中读取数据
+            session_file = os.path.join(self.semantic_behavior_dir, "profiles", f"{session_id}.json")
+            if not os.path.exists(session_file):
+                return {
+                    "success": False,
+                    "error": f"会话文件不存在: {session_id}"
+                }
+            
+            with open(session_file, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+            
+            # 3. 获取原始文档内容
+            original_content = session_data.get("original_content", "")
+            if not original_content:
+                return {
+                    "success": False,
+                    "error": "会话中没有原始文档内容"
+                }
+            
+            # 4. 应用变化
+            updated_content = original_content
+            applied_changes = []
+            failed_changes = []
+            
+            for change in changes:
+                change_id = change.get("id")
+                change_type = change.get("type")
+                change_data = change.get("data", {})
+                
+                try:
+                    if change_type == "text_replacement":
+                        result = self._apply_text_replacement(updated_content, change_data)
+                        if result["success"]:
+                            updated_content = result["updated_content"]
+                            applied_changes.append({
+                                "id": change_id,
+                                "type": change_type,
+                                "status": "applied"
+                            })
+                        else:
+                            failed_changes.append({
+                                "id": change_id,
+                                "type": change_type,
+                                "error": result["error"]
+                            })
+                    
+                    elif change_type == "format_change":
+                        result = self._apply_format_change(updated_content, change_data)
+                        if result["success"]:
+                            updated_content = result["updated_content"]
+                            applied_changes.append({
+                                "id": change_id,
+                                "type": change_type,
+                                "status": "applied"
+                            })
+                        else:
+                            failed_changes.append({
+                                "id": change_id,
+                                "type": change_type,
+                                "error": result["error"]
+                            })
+                    
+                    elif change_type == "style_adjustment":
+                        result = self._apply_style_adjustment(updated_content, change_data)
+                        if result["success"]:
+                            updated_content = result["updated_content"]
+                            applied_changes.append({
+                                "id": change_id,
+                                "type": change_type,
+                                "status": "applied"
+                            })
+                        else:
+                            failed_changes.append({
+                                "id": change_id,
+                                "type": change_type,
+                                "error": result["error"]
+                            })
+                    
+                    else:
+                        failed_changes.append({
+                            "id": change_id,
+                            "type": change_type,
+                            "error": f"不支持的变化类型: {change_type}"
+                        })
+                
+                except Exception as e:
+                    failed_changes.append({
+                        "id": change_id,
+                        "type": change_type,
+                        "error": f"应用变化时发生错误: {str(e)}"
+                    })
+            
+            # 5. 更新session数据
+            session_data["updated_content"] = updated_content
+            session_data["applied_changes"] = applied_changes
+            session_data["failed_changes"] = failed_changes
+            session_data["last_updated"] = datetime.now().isoformat()
+            
+            # 6. 保存更新后的session
+            with open(session_file, 'w', encoding='utf-8') as f:
+                json.dump(session_data, f, ensure_ascii=False, indent=2)
+            
+            # 7. 生成应用报告
+            application_report = self._generate_application_report(applied_changes, failed_changes, changes)
+            
+            return {
+                "success": True,
+                "session_id": session_id,
+                "applied_changes_count": len(applied_changes),
+                "failed_changes_count": len(failed_changes),
+                "total_changes_count": len(changes),
+                "application_report": application_report,
+                "updated_content_preview": updated_content[:500] + "..." if len(updated_content) > 500 else updated_content,
+                "applied_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"应用风格变化失败: {str(e)}"
+            }
+    
+    def _apply_text_replacement(self, content: str, change_data: Dict[str, Any]) -> Dict[str, Any]:
+        """应用文本替换"""
+        try:
+            old_text = change_data.get("old_text", "")
+            new_text = change_data.get("new_text", "")
+            
+            if not old_text:
+                return {
+                    "success": False,
+                    "error": "缺少要替换的文本"
+                }
+            
+            if old_text not in content:
+                return {
+                    "success": False,
+                    "error": f"在文档中找不到文本: {old_text[:50]}..."
+                }
+            
+            updated_content = content.replace(old_text, new_text)
+            
+            return {
+                "success": True,
+                "updated_content": updated_content,
+                "replacement_count": content.count(old_text)
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"文本替换失败: {str(e)}"
+            }
+    
+    def _apply_format_change(self, content: str, change_data: Dict[str, Any]) -> Dict[str, Any]:
+        """应用格式变化"""
+        try:
+            format_type = change_data.get("format_type")
+            target_text = change_data.get("target_text", "")
+            new_format = change_data.get("new_format", {})
+            
+            if not target_text or not format_type:
+                return {
+                    "success": False,
+                    "error": "缺少格式变化的目标文本或格式类型"
+                }
+            
+            if target_text not in content:
+                return {
+                    "success": False,
+                    "error": f"在文档中找不到目标文本: {target_text[:50]}..."
+                }
+            
+            # 根据格式类型应用不同的格式
+            if format_type == "bold":
+                updated_content = content.replace(target_text, f"**{target_text}**")
+            elif format_type == "italic":
+                updated_content = content.replace(target_text, f"*{target_text}*")
+            elif format_type == "underline":
+                updated_content = content.replace(target_text, f"__{target_text}__")
+            elif format_type == "highlight":
+                updated_content = content.replace(target_text, f"=={target_text}==")
+            else:
+                return {
+                    "success": False,
+                    "error": f"不支持的格式类型: {format_type}"
+                }
+            
+            return {
+                "success": True,
+                "updated_content": updated_content,
+                "format_type": format_type
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"格式变化失败: {str(e)}"
+            }
+    
+    def _apply_style_adjustment(self, content: str, change_data: Dict[str, Any]) -> Dict[str, Any]:
+        """应用风格调整"""
+        try:
+            adjustment_type = change_data.get("adjustment_type")
+            target_section = change_data.get("target_section", "")
+            adjustment_data = change_data.get("adjustment_data", {})
+            
+            if not adjustment_type:
+                return {
+                    "success": False,
+                    "error": "缺少风格调整类型"
+                }
+            
+            # 根据调整类型应用不同的风格调整
+            if adjustment_type == "tone_adjustment":
+                # 调整语气
+                tone = adjustment_data.get("tone", "neutral")
+                updated_content = self._adjust_tone(content, tone)
+            elif adjustment_type == "complexity_adjustment":
+                # 调整复杂度
+                complexity = adjustment_data.get("complexity", "medium")
+                updated_content = self._adjust_complexity(content, complexity)
+            elif adjustment_type == "formality_adjustment":
+                # 调整正式程度
+                formality = adjustment_data.get("formality", "neutral")
+                updated_content = self._adjust_formality(content, formality)
+            else:
+                return {
+                    "success": False,
+                    "error": f"不支持的风格调整类型: {adjustment_type}"
+                }
+            
+            return {
+                "success": True,
+                "updated_content": updated_content,
+                "adjustment_type": adjustment_type
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"风格调整失败: {str(e)}"
+            }
+    
+    def _adjust_tone(self, content: str, tone: str) -> str:
+        """调整语气"""
+        # 简化的语气调整实现
+        if tone == "formal":
+            # 增加正式性
+            content = content.replace("我们", "本机构")
+            content = content.replace("你们", "贵方")
+        elif tone == "casual":
+            # 增加随意性
+            content = content.replace("本机构", "我们")
+            content = content.replace("贵方", "你们")
+        
+        return content
+    
+    def _adjust_complexity(self, content: str, complexity: str) -> str:
+        """调整复杂度"""
+        # 简化的复杂度调整实现
+        if complexity == "simple":
+            # 简化表达
+            content = content.replace("因此", "所以")
+            content = content.replace("然而", "但是")
+        elif complexity == "complex":
+            # 增加复杂度
+            content = content.replace("所以", "因此")
+            content = content.replace("但是", "然而")
+        
+        return content
+    
+    def _adjust_formality(self, content: str, formality: str) -> str:
+        """调整正式程度"""
+        # 简化的正式程度调整实现
+        if formality == "formal":
+            # 增加正式性
+            content = content.replace("这个", "该")
+            content = content.replace("那个", "该")
+        elif formality == "informal":
+            # 减少正式性
+            content = content.replace("该", "这个")
+        
+        return content
+    
+    def _generate_application_report(self, applied_changes: List[Dict[str, Any]], 
+                                   failed_changes: List[Dict[str, Any]], 
+                                   total_changes: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """生成应用报告"""
+        try:
+            # 统计信息
+            total_count = len(total_changes)
+            applied_count = len(applied_changes)
+            failed_count = len(failed_changes)
+            success_rate = applied_count / total_count if total_count > 0 else 0
+            
+            # 按类型统计
+            type_stats = {}
+            for change in total_changes:
+                change_type = change.get("type", "unknown")
+                if change_type not in type_stats:
+                    type_stats[change_type] = {"total": 0, "applied": 0, "failed": 0}
+                type_stats[change_type]["total"] += 1
+            
+            for change in applied_changes:
+                change_type = change.get("type", "unknown")
+                if change_type in type_stats:
+                    type_stats[change_type]["applied"] += 1
+            
+            for change in failed_changes:
+                change_type = change.get("type", "unknown")
+                if change_type in type_stats:
+                    type_stats[change_type]["failed"] += 1
+            
+            return {
+                "summary": {
+                    "total_changes": total_count,
+                    "applied_changes": applied_count,
+                    "failed_changes": failed_count,
+                    "success_rate": success_rate
+                },
+                "type_statistics": type_stats,
+                "applied_changes": applied_changes,
+                "failed_changes": failed_changes,
+                "recommendations": self._generate_application_recommendations(applied_changes, failed_changes)
+            }
+            
+        except Exception as e:
+            return {"error": f"生成应用报告失败: {str(e)}"}
+    
+    def _generate_application_recommendations(self, applied_changes: List[Dict[str, Any]], 
+                                            failed_changes: List[Dict[str, Any]]) -> List[str]:
+        """生成应用建议"""
+        recommendations = []
+        
+        if failed_changes:
+            recommendations.append(f"有 {len(failed_changes)} 个变化应用失败，建议检查失败原因")
+        
+        if applied_changes:
+            recommendations.append(f"成功应用了 {len(applied_changes)} 个变化")
+        
+        # 检查特定类型的失败
+        text_replacement_failures = [c for c in failed_changes if c.get("type") == "text_replacement"]
+        if text_replacement_failures:
+            recommendations.append("文本替换失败较多，建议检查目标文本是否存在")
+        
+        format_failures = [c for c in failed_changes if c.get("type") == "format_change"]
+        if format_failures:
+            recommendations.append("格式变化失败较多，建议检查格式类型是否支持")
+        
+        if not recommendations:
+            recommendations.append("所有变化都已成功应用")
+        
+        return recommendations
+
+    def handle_batch_style_changes(self, session_id: str, changes: List[Dict[str, Any]]) -> dict:
+        """
+        批量处理风格变化（如全部接受/全部拒绝）- 真实实现
+        """
+        try:
+            # 1. 从session文件中读取真实的原始文档内容和风格模板
+            session_file = os.path.join(self.semantic_behavior_dir, "profiles", f"{session_id}.json")
+            if not os.path.exists(session_file):
+                return {
+                    "success": False,
+                    "error": f"会话文件不存在: {session_id}"
+                }
+            
+            with open(session_file, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+            
+            # 获取真实的原始文档内容
+            original_content = session_data.get("original_content", "")
+            document_name = session_data.get("document_name", f"session_{session_id}")
+            style_template_id = session_data.get("style_template_id", "")
+            
+            if not original_content:
+                return {
+                    "success": False,
+                    "error": "session文件中没有找到原始文档内容"
+                }
+            
+            if not style_template_id:
+                return {
+                    "success": False,
+                    "error": "session文件中没有找到风格模板ID"
+                }
+            
+            # 2. 加载风格模板
+            template = self.load_style_template(style_template_id)
+            if not template:
+                template = {
+                    "style_type": "business_professional",
+                    "style_features": {
+                        "formality": 0.8,
+                        "technicality": 0.6,
+                        "objectivity": 0.7,
+                        "conciseness": 0.5
+                    }
+                }
+            
+            # 3. 根据action执行真实的风格迁移
+            if action == "accept_all":
+                # 使用LLM进行真实的风格迁移
+                migrated_content = self._perform_real_style_migration(
+                    original_content, template, style_template_id
+                )
+                
+                # 生成真实的变更记录
+                suggested_changes = self._generate_real_changes(
+                    original_content, migrated_content, template
+                )
+                
+                # 标记所有变更为已接受
+                for change in suggested_changes:
+                    change["status"] = "accepted"
+                    
+            elif action == "reject_all":
+                # 拒绝所有变更，保持原文
+                migrated_content = original_content
+                suggested_changes = []
+                
+            else:
+                return {
+                    "success": False,
+                    "error": f"不支持的操作: {action}"
+                }
+            
+            # 4. 更新session数据
+            session_data.update({
+                "action": action,
+                "migrated_content": migrated_content,
+                "suggested_changes": suggested_changes,
+                "target_style": template.get("style_type", "business_professional"),
+                "last_updated": datetime.now().isoformat()
+            })
+            
+            # 保存更新后的session文件
+            with open(session_file, 'w', encoding='utf-8') as f:
+                json.dump(session_data, f, ensure_ascii=False, indent=2)
+            
+            print(f"会话数据已保存: {session_file}")
+            
+            return {
+                "success": True,
+                "session_id": session_id,
+                "action": action,
+                "message": f"批量{action}风格变化已处理",
+                "changes_count": len(suggested_changes),
+                "accepted_count": len([c for c in suggested_changes if c.get("status") == "accepted"]),
+                "migrated_content_length": len(migrated_content)
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"批量处理风格变化失败: {str(e)}"
+            }
+    
+    def _perform_real_style_migration(self, original_content: str, template: dict, template_id: str) -> str:
+        """
+        执行真实的风格迁移
+        """
+        try:
+            # 1. 构建风格迁移提示词
+            target_style = template.get("style_type", "business_professional")
+            style_features = template.get("style_features", {})
+            
+            prompt = self._build_style_migration_prompt(
+                original_content, target_style, style_features
+            )
+            
+            # 2. 调用LLM进行风格迁移
+            if self.llm_client:
+                response = self.llm_client.generate_text(prompt, max_tokens=2000)
+                if response and "content" in response:
+                    migrated_content = response["content"].strip()
+                    # 清理可能的markdown格式
+                    if migrated_content.startswith("```"):
+                        lines = migrated_content.split('\n')
+                        if len(lines) > 2:
+                            migrated_content = '\n'.join(lines[1:-1])
+                    return migrated_content
+            
+            # 3. 如果LLM调用失败，使用规则基础迁移
+            return self._rule_based_style_migration(original_content, target_style, style_features)
+            
+        except Exception as e:
+            print(f"风格迁移失败: {e}")
+            return original_content
+    
+    def _build_style_migration_prompt(self, content: str, target_style: str, style_features: dict) -> str:
+        """
+        构建风格迁移的LLM提示词
+        """
+        formality = style_features.get("formality", 0.5)
+        technicality = style_features.get("technicality", 0.5)
+        objectivity = style_features.get("objectivity", 0.5)
+        conciseness = style_features.get("conciseness", 0.5)
+        
+        prompt = f"""
+请将以下文档的风格调整为{target_style}风格，要求：
+
+风格特征：
+- 正式程度：{formality:.1f}（0-1，越高越正式）
+- 技术性：{technicality:.1f}（0-1，越高越技术化）
+- 客观性：{objectivity:.1f}（0-1，越高越客观）
+- 简洁性：{conciseness:.1f}（0-1，越高越简洁）
+
+调整要求：
+1. 保持原文的核心信息和逻辑结构
+2. 调整词汇选择，使其符合目标风格
+3. 优化句式结构，提高表达的专业性
+4. 确保语言的一致性和连贯性
+
+原文：
+{content}
+
+请直接返回调整后的文本，不要添加任何解释或标记。
+"""
+        return prompt
+    
+    def _rule_based_style_migration(self, content: str, target_style: str, style_features: dict) -> str:
+        """
+        基于规则的风格迁移（LLM不可用时的备选方案）
+        """
+        migrated_content = content
+        
+        # 根据目标风格应用不同的规则
+        if target_style == "business_professional":
+            # 商务专业风格调整
+            replacements = {
+                "我觉得": "我认为",
+                "挺好的": "较为理想",
+                "应该可以": "能够",
+                "解决问题": "解决相关问题",
+                "用了": "采用了",
+                "算了一下": "进行了分析",
+                "总的来说": "综上所述",
+                "不错": "良好",
+                "应该能用": "具备可行性"
+            }
+            
+            for old, new in replacements.items():
+                migrated_content = migrated_content.replace(old, new)
+        
+        elif target_style == "academic":
+            # 学术风格调整
+            replacements = {
+                "我觉得": "研究表明",
+                "挺好的": "具有积极效果",
+                "应该可以": "能够有效",
+                "解决问题": "解决相关问题",
+                "用了": "采用了",
+                "算了一下": "进行了统计分析",
+                "总的来说": "综上所述",
+                "不错": "表现良好",
+                "应该能用": "具备应用价值"
+            }
+            
+            for old, new in replacements.items():
+                migrated_content = migrated_content.replace(old, new)
+        
+        return migrated_content
+    
+    def _generate_real_changes(self, original_content: str, migrated_content: str, template: dict) -> list:
+        """
+        生成真实的变更记录
+        """
+        changes = []
+        
+        # 使用difflib生成差异
+        import difflib
+        
+        # 简单的词级别差异检测
+        original_words = original_content.split()
+        migrated_words = migrated_content.split()
+        
+        matcher = difflib.SequenceMatcher(None, original_words, migrated_words)
+        
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == 'replace':
+                original_text = ' '.join(original_words[i1:i2])
+                suggested_text = ' '.join(migrated_words[j1:j2])
+                
+                if original_text.strip() and suggested_text.strip():
+                    change = {
+                        "original_text": original_text,
+                        "suggested_text": suggested_text,
+                        "status": "accepted",
+                        "change_type": self._classify_change_type(original_text, suggested_text),
+                        "confidence": 0.85,
+                        "position": i1
+                    }
+                    changes.append(change)
+        
+        return changes
+    
+    def _classify_change_type(self, original: str, suggested: str) -> str:
+        """
+        分类变更类型
+        """
+        if len(original) < len(suggested):
+            return "vocabulary_improvement"
+        elif len(original) > len(suggested):
+            return "conciseness_improvement"
+        else:
+            return "style_alignment"
+
+    def handle_style_change(self, session_id: str, change_id: str, action: str) -> dict:
+        """
+        处理单个风格变化（接受/拒绝）
+        
+        Args:
+            session_id: 会话ID
+            change_id: 变化ID
+            action: 操作类型 ('accept' 或 'reject')
+            
+        Returns:
+            Dict: 处理结果
+        """
+        try:
+            # 1. 验证参数
+            if action not in ['accept', 'reject']:
+                return {
+                    "success": False,
+                    "error": f"不支持的操作: {action}，必须是 'accept' 或 'reject'"
+                }
+            
+            # 2. 从session文件中读取数据
+            session_file = os.path.join(self.semantic_behavior_dir, "profiles", f"{session_id}.json")
+            if not os.path.exists(session_file):
+                return {
+                    "success": False,
+                    "error": f"会话文件不存在: {session_id}"
+                }
+            
+            with open(session_file, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+            
+            # 3. 获取原始内容和建议的变化
+            original_content = session_data.get("original_content", "")
+            suggested_changes = session_data.get("suggested_changes", [])
+            
+            if not original_content:
+                return {
+                    "success": False,
+                    "error": "session文件中没有找到原始文档内容"
+                }
+            
+            # 4. 查找指定的变化
+            target_change = None
+            for change in suggested_changes:
+                if change.get("change_id") == change_id:
+                    target_change = change
+                    break
+            
+            if not target_change:
+                return {
+                    "success": False,
+                    "error": f"未找到指定的变化: {change_id}"
+                }
+            
+            # 5. 更新变化状态
+            target_change["status"] = action
+            target_change["action_time"] = datetime.now().isoformat()
+            
+            # 6. 生成更新后的预览内容
+            updated_preview = self._generate_updated_preview(original_content, suggested_changes)
+            
+            # 7. 更新session数据
+            session_data.update({
+                "suggested_changes": suggested_changes,
+                "updated_preview": updated_preview,
+                "last_updated": datetime.now().isoformat()
+            })
+            
+            # 8. 保存更新后的session文件
+            with open(session_file, 'w', encoding='utf-8') as f:
+                json.dump(session_data, f, ensure_ascii=False, indent=2)
+            
+            print(f"单个风格变化已处理: {change_id} -> {action}")
+            
+            return {
+                "success": True,
+                "change_id": change_id,
+                "action": action,
+                "message": f"变化 {change_id} 已{action}",
+                "updated_preview": {
+                    "content": updated_preview,
+                    "accepted_changes": len([c for c in suggested_changes if c.get("status") == "accepted"]),
+                    "rejected_changes": len([c for c in suggested_changes if c.get("status") == "rejected"]),
+                    "pending_changes": len([c for c in suggested_changes if c.get("status") == "pending"])
+                }
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"处理单个风格变化失败: {str(e)}"
+            }
+    
+    def _generate_updated_preview(self, original_content: str, suggested_changes: list) -> str:
+        """
+        根据已接受的变化生成更新后的预览内容
+        
+        Args:
+            original_content: 原始内容
+            suggested_changes: 建议的变化列表
+            
+        Returns:
+            str: 更新后的预览内容
+        """
+        try:
+            # 按位置排序变化，确保按顺序应用
+            accepted_changes = [c for c in suggested_changes if c.get("status") == "accepted"]
+            accepted_changes.sort(key=lambda x: x.get("position", {}).get("start", 0))
+            
+            # 从后往前应用变化，避免位置偏移
+            updated_content = original_content
+            offset = 0
+            
+            for change in accepted_changes:
+                position = change.get("position", {})
+                start = position.get("start", 0) + offset
+                end = position.get("end", 0) + offset
+                suggested_text = change.get("suggested_text", "")
+                
+                # 应用变化
+                if start < len(updated_content) and end <= len(updated_content):
+                    updated_content = updated_content[:start] + suggested_text + updated_content[end:]
+                    # 更新偏移量
+                    offset += len(suggested_text) - (end - start)
+            
+            return updated_content
+            
+        except Exception as e:
+            print(f"生成更新预览失败: {e}")
+            return original_content

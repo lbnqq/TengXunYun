@@ -1,0 +1,58 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-8.4.1, pluggy-1.6.0 -- C:\Users\Zhang\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: D:\DAIP\contest\office-doc-agent
+plugins: anyio-4.9.0, langsmith-0.3.45, asyncio-0.23.5, requests-mock-1.12.1
+asyncio: mode=Mode.STRICT
+collecting ... collected 179 items / 4 errors
+
+=================================== ERRORS ====================================
+_____________ ERROR collecting tests/test_e2e_complete_system.py ______________
+ImportError while importing test module 'D:\DAIP\contest\office-doc-agent\tests\test_e2e_complete_system.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\Zhang\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_e2e_complete_system.py:14: in <module>
+    from selenium import webdriver
+E   ModuleNotFoundError: No module named 'selenium'
+_____________ ERROR collecting tests/test_frontend_file_upload.py _____________
+ImportError while importing test module 'D:\DAIP\contest\office-doc-agent\tests\test_frontend_file_upload.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\Zhang\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_frontend_file_upload.py:3: in <module>
+    from selenium import webdriver
+E   ModuleNotFoundError: No module named 'selenium'
+_______________ ERROR collecting tests/test_selenium_minimal.py _______________
+ImportError while importing test module 'D:\DAIP\contest\office-doc-agent\tests\test_selenium_minimal.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\Zhang\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_selenium_minimal.py:1: in <module>
+    from selenium import webdriver
+E   ModuleNotFoundError: No module named 'selenium'
+_______________ ERROR collecting tests/test_svg_integration.py ________________
+ImportError while importing test module 'D:\DAIP\contest\office-doc-agent\tests\test_svg_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\Zhang\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_svg_integration.py:18: in <module>
+    from src.core.tools.intelligent_image_processor import IntelligentImageProcessor
+src\core\tools\intelligent_image_processor.py:15: in <module>
+    import svgwrite
+E   ModuleNotFoundError: No module named 'svgwrite'
+=========================== short test summary info ===========================
+ERROR tests/test_e2e_complete_system.py
+ERROR tests/test_frontend_file_upload.py
+ERROR tests/test_selenium_minimal.py
+ERROR tests/test_svg_integration.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!
+======================== 1 warning, 4 errors in 4.33s =========================

@@ -41,7 +41,8 @@ def test_real_webapp_api():
         response = requests.post(
             f"{base_url}/api/table-fill",
             json=test_data,
-            timeout=10
+            timeout=10,
+            headers={'Content-Type': 'application/json'}
         )
         
         print(f"✅ 表格填充API: {response.status_code}")

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 mypy pytest
+      - name: Lint with flake8
+        run: |
+          flake8 .
+      - name: Type check with mypy
+        run: |
+          mypy src/ tests/
+      - name: Run tests
+        run: |
+          pytest --maxfail=1 --disable-warnings
+      - name: Compare API usage with doc
+        run: |
+          python tools/compare_api_usage_with_doc.py
+      - name: Compare id usage with report
+        run: |
+          python tools/compare_id_usage_with_report.py
+      - name: Fail if API diff found
+        run: |
+          if grep -q '建议:' api_usage_diff_report.md; then echo 'API实现与文档不一致，禁止合并！'; exit 1; fi
+      - name: Fail if id diff found
+        run: |
+          if grep -q '建议:' id_usage_diff_report.md; then echo '页面元素id实现与对照表不一致，禁止合并！'; exit 1; fi
+      - name: API协议与Content-Type一致性校验
+        run: |
+          python tools/compare_api_usage_with_doc.py
+          python tools/compare_id_usage_with_report.py
+          # 检查所有API返回结构，禁止HTML/未定义结构
+          python tools/project_status_checker.py --check-api-structure
+          # 检查前端API调用点Content-Type和参数传递方式
+          python tools/project_status_checker.py --check-frontend-api-usage
+      - name: 检查高频易错点防控报告变更
+        run: |
+          git fetch origin master
+          if git diff --name-only origin/master...HEAD | grep 'docs/高频易错点防控与扫描报告.md'; then
+            echo '⚠️ 高频易错点防控与扫描报告有变更，请重点评审本报告内容，确保规范和CI同步更新！';
+          else
+            echo '高频易错点防控报告无变更。';
+          fi 

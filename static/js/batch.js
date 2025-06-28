@@ -24,7 +24,11 @@ class BatchProcessor {
         const dropZone = document.getElementById('dropZone');
         
         selectFilesBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => this.handleFileSelect(e.target.files));
+        fileInput.addEventListener('change', (e) => {
+            this.handleFileSelect(e.target.files);
+            // 全局保存
+            this.selectedFiles = Array.from(e.target.files);
+        });
         
         // 拖拽上传
         dropZone.addEventListener('dragover', (e) => {
@@ -40,6 +44,8 @@ class BatchProcessor {
             e.preventDefault();
             dropZone.classList.remove('dragover');
             this.handleFileSelect(e.dataTransfer.files);
+            // 全局保存
+            this.selectedFiles = Array.from(e.dataTransfer.files);
         });
         
         // 开始批量处理
@@ -166,6 +172,10 @@ class BatchProcessor {
                 })
             });
             
+            if (!response.ok) {
+                throw new Error('创建作业失败');
+            }
+            
             const result = await response.json();
             
             if (result.success) {
@@ -204,6 +214,10 @@ class BatchProcessor {
                 body: formData
             });
 
+            if (!response.ok) {
+                throw new Error('上传文件失败');
+            }
+
             const result = await response.json();
 
             if (result.success) {
@@ -220,6 +234,10 @@ class BatchProcessor {
         const response = await fetch(`/api/batch/start/${jobId}`, {
             method: 'POST'
         });
+        
+        if (!response.ok) {
+            throw new Error('启动作业失败');
+        }
         
         const result = await response.json();
         
@@ -243,6 +261,11 @@ class BatchProcessor {
     async loadActiveJobs() {
         try {
             const response = await fetch('/api/batch/jobs');
+            
+            if (!response.ok) {
+                throw new Error('加载作业列表失败');
+            }
+            
             const result = await response.json();
             
             if (result.success) {
@@ -393,3 +416,48 @@ window.addEventListener('beforeunload', () => {
         batchProcessor.stopAutoRefresh();
     }
 });
+
+function readFileContentAsync(file, callback) {
+    const reader = new FileReader();
+    reader.onload = function(e) { callback(e.target.result); };
+    reader.onerror = function() { showMessage('文件读取失败', 'error'); callback(null); };
+    reader.readAsText(file);
+}
+
+async function processBatchFiles() {
+    if (!this.selectedFiles || this.selectedFiles.length === 0) {
+        showMessage('请先选择文件', 'error');
+        return;
+    }
+    for (const file of this.selectedFiles) {
+        await new Promise((resolve) => {
+            readFileContentAsync(file, async (content) => {
+                if (!content || content.trim() === '') {
+                    showMessage('文件内容为空，跳过', 'warning');
+                    resolve();
+                    return;
+                }
+                // 举例：批量格式对齐
+                try {
+                    showLoading('正在格式对齐...');
+                    const response = await fetch('/api/format-alignment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ document_content: content, document_name: file.name })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        // 处理结果
+                    } else {
+                        showMessage(result.error || '格式对齐失败', 'error');
+                    }
+                } catch (err) {
+                    showMessage('API调用失败: ' + err.message, 'error');
+                } finally {
+                    hideLoading();
+                    resolve();
+                }
+            });
+        });
+    }
+}

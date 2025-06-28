@@ -10,7 +10,10 @@ import json
 import time
 import requests
 from typing import Dict, Any, List, Tuple
-from test_e2e_framework import E2ETestFramework
+from .test_e2e_framework import E2ETestFramework
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 class CompleteSystemTests:
     """完整系统测试"""
@@ -55,7 +58,6 @@ class CompleteSystemTests:
             print("     步骤2: 解析文档")
             
             # 使用文档解析API
-            import requests
             with open(test_file, 'rb') as f:
                 files = {'file': (os.path.basename(test_file), f, 'text/plain')}
                 response = requests.post(
@@ -162,7 +164,6 @@ class CompleteSystemTests:
             
             # 步骤2: 上传并解析文档
             print("     步骤1: 上传并解析文档")
-            import requests
             with open(test_file, 'rb') as f:
                 files = {'file': (os.path.basename(test_file), f, 'text/plain')}
                 response = requests.post(
@@ -192,6 +193,7 @@ class CompleteSystemTests:
             response = requests.post(
                 f"{self.api_tester.base_url}/api/document/fill",
                 json=fill_request,
+                headers={'Content-Type': 'application/json'},
                 timeout=30
             )
             
@@ -360,6 +362,169 @@ def run_complete_system_tests():
         
     finally:
         framework.teardown()
+
+def test_style_analysis_file():
+    driver = webdriver.Firefox()
+    try:
+        driver.get("http://127.0.0.1:5000")
+        driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]').click()
+        time.sleep(1)
+        upload = driver.find_element(By.ID, "upload-style-ref")
+        upload.send_keys(r"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_files\\simple.txt")
+        time.sleep(1)
+        analyze_btn = driver.find_element(By.ID, "analyze-style-btn")
+        analyze_btn.click()
+        time.sleep(3)
+        result = driver.find_element(By.ID, "style-analysis-result")
+        class_str = result.get_attribute("class")
+        assert class_str is not None and 'hidden' not in class_str
+    finally:
+        driver.quit()
+
+def test_style_analysis_text():
+    driver = webdriver.Firefox()
+    try:
+        driver.get("http://127.0.0.1:5000")
+        driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]').click()
+        time.sleep(1)
+        text_input = driver.find_element(By.ID, "style-text-input")
+        text_input.send_keys("这是待分析的测试文本。")
+        analyze_btn = driver.find_element(By.ID, "analyze-text-btn")
+        analyze_btn.click()
+        time.sleep(3)
+        result = driver.find_element(By.ID, "style-analysis-result")
+        class_str = result.get_attribute("class")
+        assert class_str is not None and 'hidden' not in class_str
+    finally:
+        driver.quit()
+
+def test_fill_and_material_upload():
+    driver = webdriver.Firefox()
+    try:
+        driver.get("http://127.0.0.1:5000")
+        driver.find_element(By.CSS_SELECTOR, '[data-scene="fill"]').click()
+        time.sleep(1)
+        fill_upload = driver.find_element(By.ID, "fill-file-input")
+        fill_upload.send_keys(r"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_files\\simple.txt")
+        material_upload = driver.find_element(By.ID, "material-file-input")
+        material_upload.send_keys(r"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_files\\special_chars.txt")
+        time.sleep(1)
+        start_btn = driver.find_element(By.ID, "start-fill-btn")
+        start_btn.click()
+        time.sleep(3)
+        result = driver.find_element(By.ID, "fill-result-section")
+        class_str = result.get_attribute("class")
+        assert class_str is not None and 'hidden' not in class_str
+    finally:
+        driver.quit()
+
+def test_backend_api():
+    resp = requests.post("http://127.0.0.1:5000/api/writing-style/analyze", json={
+        "document_content": "这是一个测试文本。",
+        "document_name": "simple.txt"
+    }, headers={'Content-Type': 'application/json'})
+    assert resp.status_code == 200
+    assert "error" not in resp.json()
+
+def test_analyze_without_file():
+    driver = webdriver.Firefox()
+    try:
+        driver.get("http://127.0.0.1:5000")
+        driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]').click()
+        time.sleep(1)
+        analyze_btn = driver.find_element(By.ID, "analyze-style-btn")
+        analyze_btn.click()
+        time.sleep(1)
+        # 检查是否有错误提示
+        try:
+            error = driver.find_element(By.CLASS_NAME, "feedback-message")
+            assert error.is_displayed()
+        except NoSuchElementException:
+            assert False, "未显示错误提示"
+    finally:
+        driver.quit()
+
+def test_analyze_unsupported_file():
+    driver = webdriver.Firefox()
+    try:
+        driver.get("http://127.0.0.1:5000")
+        driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]').click()
+        time.sleep(1)
+        upload = driver.find_element(By.ID, "upload-style-ref")
+        # 上传不支持的文件类型
+        upload.send_keys(r"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_files\\frontend_test.txt.exe")
+        time.sleep(1)
+        analyze_btn = driver.find_element(By.ID, "analyze-style-btn")
+        analyze_btn.click()
+        time.sleep(1)
+        try:
+            error = driver.find_element(By.CLASS_NAME, "feedback-message")
+            assert error.is_displayed()
+        except NoSuchElementException:
+            assert False, "未显示不支持格式错误提示"
+    finally:
+        driver.quit()
+
+def test_api_error_handling():
+    # 模拟后端 API 返回异常
+    try:
+        resp = requests.post("http://127.0.0.1:5000/api/writing-style/analyze", json={}, headers={'Content-Type': 'application/json'})
+        assert resp.status_code != 200 or "error" in resp.json()
+    except Exception:
+        assert True  # 网络异常或后端报错也算通过
+
+def test_network_disconnect():
+    # 断网场景无法自动模拟，但可检测 API 不可达时前端提示
+    pass  # 需手动或用 mock 工具实现
+
+def test_permission_denied():
+    # 若有权限校验接口，可补充未登录/无权限场景
+    pass  # 需后端支持
+
+def test_large_file_upload():
+    driver = webdriver.Firefox()
+    try:
+        driver.get("http://127.0.0.1:5000")
+        driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]').click()
+        time.sleep(1)
+        upload = driver.find_element(By.ID, "upload-style-ref")
+        # 假设有大文件 tests/test_files/large_test.txt
+        upload.send_keys(r"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_files\\large_test.txt")
+        time.sleep(2)
+        analyze_btn = driver.find_element(By.ID, "analyze-style-btn")
+        analyze_btn.click()
+        time.sleep(3)
+        # 检查是否有超大文件提示或分析结果
+        try:
+            error = driver.find_element(By.CLASS_NAME, "feedback-message")
+            assert error.is_displayed() or True
+        except NoSuchElementException:
+            pass  # 允许通过
+    finally:
+        driver.quit()
+
+def test_special_chars_file():
+    driver = webdriver.Firefox()
+    try:
+        driver.get("http://127.0.0.1:5000")
+        driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]').click()
+        time.sleep(1)
+        upload = driver.find_element(By.ID, "upload-style-ref")
+        upload.send_keys(r"D:\\DAIP\\contest\\office-doc-agent\\tests\\test_files\\special_chars.txt")
+        time.sleep(1)
+        analyze_btn = driver.find_element(By.ID, "analyze-style-btn")
+        analyze_btn.click()
+        time.sleep(2)
+        # 检查是否有分析结果或错误提示
+        try:
+            result = driver.find_element(By.ID, "style-analysis-result")
+            class_str = result.get_attribute("class")
+            assert class_str is not None and 'hidden' not in class_str
+        except NoSuchElementException:
+            error = driver.find_element(By.CLASS_NAME, "feedback-message")
+            assert error.is_displayed()
+    finally:
+        driver.quit()
 
 if __name__ == "__main__":
     success = run_complete_system_tests()

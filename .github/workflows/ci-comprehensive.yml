@@ -1,0 +1,298 @@
+name: Comprehensive CI Integration Tests
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+  schedule:
+    # 每天凌晨2点运行完整测试
+    - cron: '0 2 * * *'
+
+jobs:
+  # 环境准备和依赖安装
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      python-version: ${{ steps.setup-python.outputs.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest-cov pytest-mock pytest-asyncio pytest-html pytest-xdist pytest-timeout pytest-benchmark
+          pip install coverage flake8 mypy black isort bandit safety
+
+  # 代码质量检查
+  code-quality:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 mypy black isort bandit safety
+      - name: Check code formatting with black
+        run: |
+          black --check --diff src/ tests/
+      - name: Check import sorting with isort
+        run: |
+          isort --check-only --diff src/ tests/
+      - name: Lint with flake8
+        run: |
+          flake8 src/ tests/ --max-line-length=120 --ignore=E203,W503
+      - name: Type check with mypy
+        run: |
+          mypy src/ --ignore-missing-imports --no-strict-optional
+      - name: Security check with bandit
+        run: |
+          bandit -r src/ -f json -o bandit-report.json || true
+      - name: Check for known security vulnerabilities
+        run: |
+          safety check --json --output safety-report.json || true
+
+  # 单元测试
+  unit-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run unit tests with coverage
+        run: |
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # 集成测试
+  integration-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run integration tests
+        run: |
+          pytest tests/test_integration.py tests/test_comprehensive_integration.py -v --timeout=300
+      - name: Run E2E tests
+        run: |
+          pytest tests/test_e2e_complete_system.py tests/test_e2e_workflow.py -v --timeout=600
+
+  # API测试
+  api-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Start web server
+        run: |
+          python src/web_app.py &
+          sleep 10
+      - name: Run API tests
+        run: |
+          pytest tests/test_api_comprehensive.py tests/test_api_content_type.py -v --timeout=300
+
+  # MVP功能测试
+  mvp-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run MVP functionality tests
+        run: |
+          python tests/test_mvp_functionality.py
+
+  # 性能测试
+  performance-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run performance tests
+        run: |
+          pytest tests/test_e2e_performance.py -v --benchmark-only
+
+  # 文档一致性检查
+  doc-consistency:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Compare API usage with doc
+        run: |
+          python tools/compare_api_usage_with_doc.py
+      - name: Compare id usage with report
+        run: |
+          python tools/compare_id_usage_with_report.py
+      - name: Check API structure consistency
+        run: |
+          python tools/project_status_checker.py --check-api-structure
+      - name: Check frontend API usage
+        run: |
+          python tools/project_status_checker.py --check-frontend-api-usage
+
+  # 桩子函数检测
+  stub-detection:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run stub function detection
+        run: |
+          python tools/stub_function_detector.py --output docs/stub_detection_report.md --json docs/stub_detection_result.json
+      - name: Check for critical stubs
+        run: |
+          if grep -q '"severity": "critical"' docs/stub_detection_result.json; then
+            echo "❌ 发现严重级别的桩子函数，禁止合并！"
+            exit 1
+          fi
+
+  # 测试报告生成
+  test-report:
+    needs: [unit-tests, integration-tests, api-tests, mvp-tests, performance-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Generate comprehensive test report
+        run: |
+          python tests/generate_test_report.py
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            test_results/
+            coverage.xml
+            coverage_html/
+            bandit-report.json
+            safety-report.json
+
+  # 最终验证
+  final-validation:
+    needs: [code-quality, unit-tests, integration-tests, api-tests, mvp-tests, doc-consistency, stub-detection]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for any failures
+        run: |
+          echo "🔍 检查所有测试结果..."
+          if [ "${{ needs.code-quality.result }}" != "success" ]; then
+            echo "❌ 代码质量检查失败"
+            exit 1
+          fi
+          if [ "${{ needs.unit-tests.result }}" != "success" ]; then
+            echo "❌ 单元测试失败"
+            exit 1
+          fi
+          if [ "${{ needs.integration-tests.result }}" != "success" ]; then
+            echo "❌ 集成测试失败"
+            exit 1
+          fi
+          if [ "${{ needs.api-tests.result }}" != "success" ]; then
+            echo "❌ API测试失败"
+            exit 1
+          fi
+          if [ "${{ needs.mvp-tests.result }}" != "success" ]; then
+            echo "❌ MVP功能测试失败"
+            exit 1
+          fi
+          if [ "${{ needs.doc-consistency.result }}" != "success" ]; then
+            echo "❌ 文档一致性检查失败"
+            exit 1
+          fi
+          if [ "${{ needs.stub-detection.result }}" != "success" ]; then
+            echo "❌ 桩子函数检测失败"
+            exit 1
+          fi
+          echo "✅ 所有检查通过！" 

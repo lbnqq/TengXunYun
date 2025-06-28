@@ -1,0 +1,24 @@
+{
+  "session_id": "08369fc5-4f6b-4e59-8a03-9e56855033e4",
+  "timestamp": "2025-06-28T08:32:54.765369",
+  "action": "accept_all",
+  "original_content": "这是一个示例文档内容，用于演示文风调整功能。",
+  "suggested_changes": [
+    {
+      "original_text": "这是一个示例文档内容",
+      "suggested_text": "这是一份专业的示例文档内容",
+      "status": "accepted",
+      "change_type": "vocabulary_improvement",
+      "confidence": 0.85
+    },
+    {
+      "original_text": "用于演示文风调整功能",
+      "suggested_text": "用于展示文风统一与优化功能",
+      "status": "accepted",
+      "change_type": "style_alignment",
+      "confidence": 0.92
+    }
+  ],
+  "style_template_id": "3b4de8533f95",
+  "target_style": "business_professional"
+}

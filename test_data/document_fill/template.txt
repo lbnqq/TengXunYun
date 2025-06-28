@@ -1,0 +1,22 @@
+# 项目申请书
+
+## 项目基本信息
+- 项目名称：{project_name}
+- 申请人：{applicant_name}
+- 申请日期：{application_date}
+- 项目类型：{project_type}
+
+## 项目描述
+{project_description}
+
+## 技术方案
+{technical_solution}
+
+## 预期成果
+{expected_results}
+
+## 预算信息
+- 总预算：{total_budget}元
+- 设备费用：{equipment_cost}元
+- 人员费用：{personnel_cost}元
+- 其他费用：{other_cost}元

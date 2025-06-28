@@ -50,7 +50,7 @@ def test_bearer_token_auth():
         print(f"📋 请求头: {headers}")
         print(f"📦 请求体: {json.dumps(payload, ensure_ascii=False, indent=2)}")
         
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=30)
         
         print(f"📊 响应状态码: {response.status_code}")
         print(f"📄 响应头: {dict(response.headers)}")
@@ -140,7 +140,7 @@ def test_api_key_secret_auth():
             print(f"\n🧪 测试{method_name}认证...")
             print(f"📋 请求头: {headers}")
             
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=30)
             
             print(f"📊 响应状态码: {response.status_code}")
             print(f"📝 响应内容: {response.text[:200]}...")
@@ -194,7 +194,7 @@ def test_different_endpoints():
         try:
             print(f"\n🔗 测试端点: {endpoint}")
             
-            response = requests.post(endpoint, headers=headers, json=payload, timeout=10)
+            response = requests.post(endpoint, json=payload, headers={'Content-Type': 'application/json'}, timeout=10)
             
             print(f"📊 状态码: {response.status_code}")
             if response.status_code != 404:  # 只显示非404的响应
@@ -239,7 +239,7 @@ def test_minimal_request():
     try:
         print(f"📦 最简请求: {json.dumps(minimal_payload)}")
         
-        response = requests.post(url, headers=headers, json=minimal_payload, timeout=30)
+        response = requests.post(url, json=minimal_payload, headers={'Content-Type': 'application/json'}, timeout=30)
         
         print(f"📊 状态码: {response.status_code}")
         print(f"📝 完整响应: {response.text}")

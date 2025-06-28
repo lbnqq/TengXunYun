@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>办公文档智能代理 - 完整版</title>
+    <link rel="stylesheet" href="/static/css/enhanced-frontend-complete.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <meta name="description" content="智能办公文档处理系统，支持格式对齐、文风统一、智能填报、文档审查等功能">
+</head>
+<body>
+    <!-- 全局进度条 -->
+    <div class="global-progress-bar" id="global-progress">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- 应用头部 -->
+        <header class="app-header">
+            <h1 class="main-title">📄 办公文档智能代理</h1>
+            <div class="logo">📄 办公文档智能代理</div>
+            <nav class="main-nav">
+                <a href="#" class="nav-item active" data-scene="format">格式对齐</a>
+                <a href="#" class="nav-item" data-scene="style">文风统一</a>
+                <a href="#" class="nav-item" data-scene="fill">智能填报</a>
+                <a href="#" class="nav-item" data-scene="review">文档审查</a>
+                <a href="#" class="nav-item" data-scene="management">管理中心</a>
+            </nav>
+        </header>
+
+        <!-- 格式对齐场景 -->
+        <section id="scene-format" class="scene-section">
+            <h2 class="scene-title">📐 格式对齐</h2>
+            <p class="scene-description">将文档格式统一到参考模板的标准，确保文档风格一致</p>
+            
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step-item active">
+                    <div class="step-number">1</div>
+                    <span>上传文件</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <span>格式分析</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <span>预览结果</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <span>导出文档</span>
+                </div>
+            </div>
+
+            <!-- 工作流块 -->
+            <div class="workflow-block">
+                <h3 class="workflow-title">文件上传</h3>
+                
+                <div class="input-group">
+                    <label>参考格式文件:</label>
+                    <div class="file-upload-area" id="format-base-upload">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-base">
+                        <div class="file-upload-text">点击或拖拽上传参考格式文件</div>
+                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>待处理文档:</label>
+                    <div class="file-upload-area" id="format-target-upload">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-target">
+                        <div class="file-upload-text">点击或拖拽上传待处理文档</div>
+                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>格式模板:</label>
+                    <select class="input-select" id="format-template-select">
+                        <option value="">选择格式模板</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 操作块 -->
+            <div class="action-block">
+                <h3 class="workflow-title">操作控制</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="format_alignment">
+                        <span>🔄</span> 应用格式对齐
+                    </button>
+                    <button class="btn btn-secondary" data-action="set_baseline">
+                        <span>📌</span> 设置基准格式
+                    </button>
+                    <button class="btn btn-success" data-action="save_format">
+                        <span>💾</span> 保存格式模板
+                    </button>
+                </div>
+                
+                <div class="feedback-message" id="format-feedback"></div>
+            </div>
+
+            <!-- 结果预览区域 -->
+            <div class="workflow-block" id="format-result-area" style="display: none;">
+                <h3 class="workflow-title">处理结果</h3>
+                <div id="format-preview-content"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="preview_result">
+                        <span>👁️</span> 预览结果
+                    </button>
+                    <button class="btn btn-success" data-action="export_result">
+                        <span>📥</span> 导出文档
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 文风统一场景 -->
+        <section id="scene-style" class="scene-section hidden">
+            <h2 class="scene-title">🎨 文风统一</h2>
+            <p class="scene-description">分析参考文档的写作风格，并将其应用到目标文档中</p>
+            
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step-item active">
+                    <div class="step-number">1</div>
+                    <span>上传文件</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <span>风格分析</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <span>预览修改</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <span>应用风格</span>
+                </div>
+            </div>
+
+            <!-- 工作流块 -->
+            <div class="workflow-block">
+                <h3 class="workflow-title">文件上传</h3>
+                
+                <div class="input-group">
+                    <label>参考文风文档:</label>
+                    <div class="file-upload-area" id="style-ref-upload">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-style-ref">
+                        <div class="file-upload-text">点击或拖拽上传参考文风文档</div>
+                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>目标文档:</label>
+                    <div class="file-upload-area" id="style-target-upload">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-style-target">
+                        <div class="file-upload-text">点击或拖拽上传目标文档</div>
+                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>文风模板:</label>
+                    <select class="input-select" id="style-template-select">
+                        <option value="">选择文风模板</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 操作块 -->
+            <div class="action-block">
+                <h3 class="workflow-title">操作控制</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="style_alignment">
+                        <span>🎨</span> 分析文风
+                    </button>
+                    <button class="btn btn-secondary" data-action="apply_style">
+                        <span>✨</span> 应用风格
+                    </button>
+                    <button class="btn btn-success" data-action="save_style">
+                        <span>💾</span> 保存文风模板
+                    </button>
+                </div>
+                
+                <div class="feedback-message" id="style-feedback"></div>
+            </div>
+
+            <!-- 结果预览区域 -->
+            <div class="workflow-block" id="style-result-area" style="display: none;">
+                <h3 class="workflow-title">风格分析结果</h3>
+                <div id="style-preview-content"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="preview_style">
+                        <span>👁️</span> 预览修改
+                    </button>
+                    <button class="btn btn-success" data-action="export_style">
+                        <span>📥</span> 导出文档
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 智能填报场景 -->
+        <section id="scene-fill" class="scene-section hidden">
+            <h2 class="scene-title">🤖 智能填报</h2>
+            <p class="scene-description">智能识别文档字段，自动匹配数据源，快速完成文档填写</p>
+            
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step-item active">
+                    <div class="step-number">1</div>
+                    <span>上传文档</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <span>字段识别</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <span>数据匹配</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <span>生成文档</span>
+                </div>
+            </div>
+
+            <!-- 工作流块 -->
+            <div class="workflow-block">
+                <h3 class="workflow-title">文件上传</h3>
+                
+                <div class="input-group">
+                    <label>文档模板:</label>
+                    <div class="file-upload-area" id="fill-template-upload">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-fill-template">
+                        <div class="file-upload-text">点击或拖拽上传文档模板</div>
+                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>数据源文件:</label>
+                    <div class="file-upload-area" id="fill-data-upload">
+                        <input type="file" accept=".json,.csv,.xlsx,.xls,.txt" id="upload-fill-data">
+                        <div class="file-upload-text">点击或拖拽上传数据源文件</div>
+                        <div class="file-upload-hint">支持 .json, .csv, .xlsx, .xls, .txt 格式</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>填写规则:</label>
+                    <textarea class="input-textarea" id="fill-rules" placeholder="请输入填写规则和约束条件..."></textarea>
+                </div>
+            </div>
+
+            <!-- 操作块 -->
+            <div class="action-block">
+                <h3 class="workflow-title">操作控制</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="auto_match_data">
+                        <span>🔍</span> 自动匹配数据
+                    </button>
+                    <button class="btn btn-secondary" data-action="manual_match">
+                        <span>✏️</span> 手动匹配
+                    </button>
+                    <button class="btn btn-success" data-action="export_filled_doc">
+                        <span>📥</span> 导出填写文档
+                    </button>
+                </div>
+                
+                <div class="feedback-message" id="fill-feedback"></div>
+            </div>
+
+            <!-- 结果预览区域 -->
+            <div class="workflow-block" id="fill-result-area" style="display: none;">
+                <h3 class="workflow-title">填写结果</h3>
+                <div id="fill-preview-content"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="preview_fill">
+                        <span>👁️</span> 预览结果
+                    </button>
+                    <button class="btn btn-success" data-action="export_fill">
+                        <span>📥</span> 导出文档
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 文档审查场景 -->
+        <section id="scene-review" class="scene-section hidden">
+            <h2 class="scene-title">🔍 文档审查</h2>
+            <p class="scene-description">智能审查文档内容，发现潜在问题并提供改进建议</p>
+            
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step-item active">
+                    <div class="step-number">1</div>
+                    <span>上传文档</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <span>内容分析</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <span>问题识别</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <span>生成报告</span>
+                </div>
+            </div>
+
+            <!-- 工作流块 -->
+            <div class="workflow-block">
+                <h3 class="workflow-title">文件上传</h3>
+                
+                <div class="input-group">
+                    <label>待审查文档:</label>
+                    <div class="file-upload-area" id="review-doc-upload">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-review-doc">
+                        <div class="file-upload-text">点击或拖拽上传待审查文档</div>
+                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>审查标准:</label>
+                    <select class="input-select" id="review-standard-select">
+                        <option value="">选择审查标准</option>
+                        <option value="grammar">语法检查</option>
+                        <option value="style">格式规范</option>
+                        <option value="content">内容完整性</option>
+                        <option value="comprehensive">综合审查</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>审查要求:</label>
+                    <textarea class="input-textarea" id="review-requirements" placeholder="请输入特定的审查要求..."></textarea>
+                </div>
+            </div>
+
+            <!-- 操作块 -->
+            <div class="action-block">
+                <h3 class="workflow-title">操作控制</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="start_review">
+                        <span>🔍</span> 开始审查
+                    </button>
+                    <button class="btn btn-secondary" data-action="review_settings">
+                        <span>⚙️</span> 审查设置
+                    </button>
+                    <button class="btn btn-success" data-action="export_review_report">
+                        <span>📊</span> 导出报告
+                    </button>
+                </div>
+                
+                <div class="feedback-message" id="review-feedback"></div>
+            </div>
+
+            <!-- 结果预览区域 -->
+            <div class="workflow-block" id="review-result-area" style="display: none;">
+                <h3 class="workflow-title">审查结果</h3>
+                <div id="review-preview-content"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" data-action="preview_review">
+                        <span>👁️</span> 预览报告
+                    </button>
+                    <button class="btn btn-success" data-action="export_review">
+                        <span>📥</span> 导出报告
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 管理中心场景 -->
+        <section id="scene-management" class="scene-section hidden">
+            <h2 class="scene-title">🏢 管理中心</h2>
+            <p class="scene-description">管理文档历史、模板库、系统设置和性能监控</p>
+            
+            <!-- 管理标签页 -->
+            <div class="management-tabs">
+                <button class="btn btn-tab active" data-tab="history">📋 文档历史</button>
+                <button class="btn btn-tab" data-tab="templates">📚 模板库</button>
+                <button class="btn btn-tab" data-tab="settings">⚙️ 系统设置</button>
+                <button class="btn btn-tab" data-tab="performance">📊 性能监控</button>
+            </div>
+
+            <!-- 文档历史标签页 -->
+            <div class="tab-content active" data-tab-content="history">
+                <div class="workflow-block">
+                    <h3 class="workflow-title">文档处理历史</h3>
+                    <div class="history-table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>操作类型</th>
+                                    <th>文件名</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- 动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模板库标签页 -->
+            <div class="tab-content" data-tab-content="templates">
+                <div class="workflow-block">
+                    <h3 class="workflow-title">模板管理</h3>
+                    <div class="template-grid" id="template-grid">
+                        <!-- 动态填充 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统设置标签页 -->
+            <div class="tab-content" data-tab-content="settings">
+                <div class="workflow-block">
+                    <h3 class="workflow-title">系统设置</h3>
+                    <div class="settings-form">
+                        <div class="input-group">
+                            <label>自动保存:</label>
+                            <input type="checkbox" id="auto-save-setting" checked>
+                        </div>
+                        <div class="input-group">
+                            <label>显示预览:</label>
+                            <input type="checkbox" id="show-preview-setting" checked>
+                        </div>
+                        <div class="input-group">
+                            <label>启用通知:</label>
+                            <input type="checkbox" id="enable-notifications-setting" checked>
+                        </div>
+                        <div class="input-group">
+                            <label>语言设置:</label>
+                            <select class="input-select" id="language-setting">
+                                <option value="zh-CN">中文</option>
+                                <option value="en-US">English</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 性能监控标签页 -->
+            <div class="tab-content" data-tab-content="performance">
+                <div class="workflow-block">
+                    <h3 class="workflow-title">性能统计</h3>
+                    <div class="performance-stats">
+                        <div class="stat-card">
+                            <h4>处理文档数</h4>
+                            <div class="stat-value" id="total-documents">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>平均处理时间</h4>
+                            <div class="stat-value" id="avg-processing-time">0s</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>成功率</h4>
+                            <div class="stat-value" id="success-rate">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 通知容器 -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- 加载状态 -->
+    <div class="loading" id="global-loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-message" id="loading-message">处理中...</div>
+    </div>
+
+    <!-- 脚本引用 -->
+    <script src="/static/js/enhanced-frontend-complete.js"></script>
+</body>
+</html> 

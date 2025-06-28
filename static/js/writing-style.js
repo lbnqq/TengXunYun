@@ -30,7 +30,10 @@ class WritingStyleManager {
             });
 
             // 文件选择变化事件
-            styleAnalysisInput.addEventListener('change', this.handleStyleFileSelect.bind(this));
+            styleAnalysisInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                this.currentStyleFile = file || null;
+            });
 
             // 拖拽上传支持
             styleAnalysisUpload.addEventListener('dragover', (e) => {
@@ -229,10 +232,19 @@ class WritingStyleManager {
                 })
             });
 
+            if (!response.ok) {
+                let errMsg = '分析请求失败';
+                try {
+                    const errResult = await response.json();
+                    errMsg = errResult.error || errMsg;
+                } catch {}
+                throw new Error(errMsg);
+            }
+
             const result = await response.json();
             
-            if (result.error) {
-                this.showError(result.error);
+            if (result.success === false || result.error) {
+                this.showError(result.error || '未知错误');
                 return;
             }
 
@@ -245,59 +257,13 @@ class WritingStyleManager {
     }
 
     displayAnalysisResult(analysis) {
-        const resultSection = document.getElementById('style-analysis-result');
-
-        if (!resultSection) return;
-
-        // 显示结果区域
-        resultSection.classList.remove('hidden');
-        resultSection.scrollIntoView({ behavior: 'smooth' });
-
-        // 更新分析模式显示
-        this.updateAnalysisMode(analysis.analysis_method || 'enhanced');
-
-        // 更新量化特征 - 从增强分析结果中提取
-        const enhancedAnalysis = analysis.enhanced_analysis || {};
-        const basicFeatures = enhancedAnalysis.basic_features || {};
-        const advancedFeatures = enhancedAnalysis.advanced_features || {};
-
-        this.updateQuantitativeFeatures(analysis.style_features || basicFeatures.quantitative_features || {});
-
-        // 更新语义特征 - 从增强分析中提取语义相关数据
-        const semanticData = {
-            topic_consistency: basicFeatures.semantic_coherence?.topic_consistency,
-            logical_coherence: basicFeatures.semantic_coherence?.logical_coherence,
-            semantic_density: basicFeatures.semantic_density,
-            expression_style: analysis.style_features?.expression_style?.tone_strength || '中性'
-        };
-        this.updateSemanticFeatures(semanticData);
-
-        // 更新语义空间行为分析 - 从语义空间行为引擎结果中提取
-        const semanticBehavior = enhancedAnalysis.comprehensive_analysis?.semantic_behavior || {};
-        const behaviorData = {
-            semantic_units_count: semanticBehavior.semantic_units?.length || 0,
-            behavior_pattern: semanticBehavior.behavior_pattern || '分析型',
-            similarity_score: semanticBehavior.similarity_score || 0
-        };
-        this.updateSemanticBehaviorAnalysis(behaviorData);
-
-        // 更新LLM深度评估 - 从高级特征中提取
-        const llmAssessment = {
-            style_characteristics: advancedFeatures.comprehensive_analysis?.style_summary ||
-                                 this._generateStyleCharacteristics(analysis),
-            improvement_suggestions: analysis.writing_recommendations?.join('; ') ||
-                                   this._generateImprovementSuggestions(analysis)
-        };
-        this.updateLLMAssessment(llmAssessment);
-
-        // 更新调试信息
-        const debugInfo = {
-            processing_time: enhancedAnalysis.processing_time || '未知',
-            used_model: analysis.analysis_method === 'enhanced' ? '增强模式 + LLM' : '基础模式',
-            analysis_method: analysis.analysis_method || 'enhanced',
-            confidence_score: (analysis.confidence_score * 100).toFixed(1) || '未知'
-        };
-        this.updateDebugInfo(debugInfo);
+        const el = document.getElementById("style-analysis-result");
+        if (!el) return;
+        el.innerHTML = `
+            <div>style_type: ${analysis.style_type || ''}</div>
+            <div>style_prompt: ${analysis.style_prompt || ''}</div>
+            <div>writing_recommendations: ${analysis.writing_recommendations || ''}</div>
+        `;
     }
 
     updateAnalysisMode(method) {
@@ -476,44 +442,6 @@ class WritingStyleManager {
         return suggestions.length > 0 ? suggestions.join('；') : '文风表达良好，继续保持';
     }
 
-                <div class="space-y-4">
-                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                        <h6 class="font-semibold text-orange-800 mb-2">表达方式</h6>
-                        <div class="space-y-2 text-sm">
-                            ${this.renderFeatureItem('被动/主动比例', features.expression_style?.passive_active_ratio)}
-                            ${this.renderFeatureItem('语气强度', features.expression_style?.tone_strength)}
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <h6 class="font-semibold text-gray-800 mb-2">文本组织</h6>
-                        <div class="space-y-2 text-sm">
-                            ${this.renderFeatureItem('段落数量', features.text_organization?.paragraph_count)}
-                            ${this.renderFeatureItem('连接词密度', features.text_organization?.connector_density)}
-                            ${this.renderFeatureItem('总结性表达', features.text_organization?.summary_usage)}
-                        </div>
-                    </div>
-
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <h6 class="font-semibold text-yellow-800 mb-2">语言习惯</h6>
-                        <div class="space-y-2 text-sm">
-                            ${this.renderFeatureItem('口语化程度', features.language_habits?.colloquial_level)}
-                            ${this.renderFeatureItem('书面语规范', features.language_habits?.formal_structure_usage)}
-                            ${this.renderFeatureItem('"的"字结构密度', features.language_habits?.de_structure_density)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h6 class="font-semibold text-gray-800 mb-2">生成的文风提示词</h6>
-                <div class="bg-white border rounded p-3 text-sm max-h-32 overflow-y-auto">
-                    <pre class="whitespace-pre-wrap text-gray-700">${analysis.style_prompt || '暂无提示词'}</pre>
-                </div>
-            </div>
-        `;
-    }
-
     renderFeatureItem(label, value, unit = '', isPercentage = false) {
         if (value === undefined || value === null) {
             return `
@@ -575,6 +503,10 @@ class WritingStyleManager {
                 })
             });
 
+            if (!response.ok) {
+                throw new Error('保存失败');
+            }
+
             const result = await response.json();
             
             if (result.error) {
@@ -632,6 +564,9 @@ class WritingStyleManager {
     async loadStyleTemplates() {
         try {
             const response = await fetch('/api/writing-style/templates');
+            if (!response.ok) {
+                throw new Error('加载文风模板失败');
+            }
             const result = await response.json();
             
             if (result.success) {
@@ -695,6 +630,9 @@ class WritingStyleManager {
     async viewTemplate(templateId) {
         try {
             const response = await fetch(`/api/writing-style/templates/${templateId}`);
+            if (!response.ok) {
+                throw new Error('获取模板详情失败');
+            }
             const result = await response.json();
             
             if (result.success) {
@@ -793,3 +731,41 @@ class WritingStyleManager {
 document.addEventListener('DOMContentLoaded', () => {
     window.writingStyleManager = new WritingStyleManager();
 });
+
+function readFileContentAsync(file, callback) {
+    const reader = new FileReader();
+    reader.onload = function(e) { callback(e.target.result); };
+    reader.onerror = function() { showMessage('文件读取失败', 'error'); callback(null); };
+    reader.readAsText(file);
+}
+
+async function analyzeWritingStyle() {
+    if (!this.currentStyleFile) {
+        showMessage('请先上传文件', 'error');
+        return;
+    }
+    readFileContentAsync(this.currentStyleFile, async (content) => {
+        if (!content || content.trim() === '') {
+            showMessage('文件内容为空，无法分析', 'error');
+            return;
+        }
+        try {
+            showLoading('正在分析文风...');
+            const response = await fetch('/api/writing-style/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ document_content: content })
+            });
+            const result = await response.json();
+            if (result.success) {
+                // 展示分析结果
+            } else {
+                showMessage(result.error || '分析失败', 'error');
+            }
+        } catch (err) {
+            showMessage('API调用失败: ' + err.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+}

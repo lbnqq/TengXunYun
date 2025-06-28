@@ -96,7 +96,7 @@ class EnhancedVirtualReviewerTool(BaseTool):
 
     def execute(self, operation: str = "review_document", **kwargs) -> Dict[str, Any]:
         """
-        Execute virtual review operation.
+        执行虚拟评审操作
 
         Args:
             operation: Type of operation (review_document, multi_reviewer, generate_report)
@@ -116,8 +116,81 @@ class EnhancedVirtualReviewerTool(BaseTool):
         except Exception as e:
             return {"error": f"Error in virtual review: {e}"}
 
+    def assess_review_quality(self, review_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        评估评审质量
+        
+        Args:
+            review_result: 评审结果
+            
+        Returns:
+            Dict: 质量评估结果
+        """
+        try:
+            comments = review_result.get("review_comments", {}).get("comments", [])
+            
+            # 计算质量指标
+            total_comments = len(comments)
+            critical_count = len([c for c in comments if c.get("priority") == "critical"])
+            major_count = len([c for c in comments if c.get("priority") == "major"])
+            minor_count = len([c for c in comments if c.get("priority") == "minor"])
+            
+            # 计算质量分数
+            quality_score = 100.0
+            if critical_count > 0:
+                quality_score -= critical_count * 20
+            if major_count > 0:
+                quality_score -= major_count * 10
+            if minor_count > 0:
+                quality_score -= minor_count * 2
+            
+            quality_score = max(0.0, quality_score)
+            
+            return {
+                "success": True,
+                "quality_score": quality_score,
+                "quality_level": self._get_quality_level(quality_score),
+                "total_issues": total_comments,
+                "critical_issues": critical_count,
+                "major_issues": major_count,
+                "minor_issues": minor_count,
+                "assessment": self._get_quality_assessment(quality_score, total_comments)
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"质量评估失败: {str(e)}"
+            }
+    
+    def _get_quality_level(self, score: float) -> str:
+        """获取质量等级"""
+        if score >= 90:
+            return "excellent"
+        elif score >= 80:
+            return "good"
+        elif score >= 70:
+            return "fair"
+        elif score >= 60:
+            return "poor"
+        else:
+            return "critical"
+    
+    def _get_quality_assessment(self, score: float, total_issues: int) -> str:
+        """获取质量评估描述"""
+        if score >= 90:
+            return "文档质量优秀，可以立即使用"
+        elif score >= 80:
+            return "文档质量良好，建议进行小幅修改"
+        elif score >= 70:
+            return "文档质量一般，需要中等程度的修改"
+        elif score >= 60:
+            return "文档质量较差，需要大量修改"
+        else:
+            return "文档质量严重不足，需要重新编写"
+
     def review_document(self, document_content: str, reviewer_role_name: str,
-                       review_focus: str = None, custom_criteria: List[str] = None) -> Dict[str, Any]:
+                       review_focus: Optional[str] = None, custom_criteria: Optional[List[str]] = None) -> Dict[str, Any]:
         """Enhanced document review with intelligent analysis."""
 
         if not document_content or not document_content.strip():
@@ -132,16 +205,16 @@ class EnhancedVirtualReviewerTool(BaseTool):
         doc_analysis = self._analyze_document_characteristics(document_content)
 
         # Determine review criteria based on reviewer role
-        criteria = self._determine_review_criteria(reviewer_role_name, custom_criteria)
+        criteria = self._determine_review_criteria(reviewer_role_name, custom_criteria or [])
 
         # Generate review comments
         if self.llm_client:
             review_comments = self._generate_llm_review(
-                document_content, reviewer_profile, review_focus, criteria, doc_analysis
+                document_content, reviewer_profile, review_focus or "General document quality", criteria, doc_analysis
             )
         else:
             review_comments = self._generate_rule_based_review(
-                document_content, reviewer_profile, review_focus, criteria, doc_analysis
+                document_content, reviewer_profile, review_focus or "General document quality", criteria, doc_analysis
             )
 
         # Post-process and validate comments
@@ -248,7 +321,7 @@ class EnhancedVirtualReviewerTool(BaseTool):
         else:
             return "low"
 
-    def _determine_review_criteria(self, reviewer_role: str, custom_criteria: List[str] = None) -> List[str]:
+    def _determine_review_criteria(self, reviewer_role: str, custom_criteria: Optional[List[str]] = None) -> List[str]:
         """Determine review criteria based on reviewer role."""
         if custom_criteria:
             return custom_criteria
@@ -568,59 +641,352 @@ Provide 3-8 meaningful comments covering different aspects of the document."""
         }
 
     def _generate_review_summary(self, comments: List[Dict[str, Any]], reviewer_role: str) -> Dict[str, Any]:
-        """Generate a summary of the review."""
-
+        """Generate a comprehensive review summary."""
         if not comments:
             return {
-                "overall_assessment": "No specific issues identified",
-                "key_strengths": ["Document reviewed without major concerns"],
-                "priority_actions": [],
-                "recommendations": ["Continue with current approach"]
+                "overall_assessment": "No comments provided",
+                "key_issues": [],
+                "recommendations": [],
+                "priority_level": "low"
             }
 
-        # Categorize comments
-        critical_issues = [c for c in comments if c.get("severity") == "critical"]
-        high_issues = [c for c in comments if c.get("severity") == "high"]
-        positive_feedback = [c for c in comments if c.get("severity") == "info"]
+        # Count issues by priority
+        critical_issues = [c for c in comments if c.get("priority") == "critical"]
+        major_issues = [c for c in comments if c.get("priority") == "major"]
+        minor_issues = [c for c in comments if c.get("priority") == "minor"]
 
-        # Generate assessment
+        # Determine overall priority level
         if critical_issues:
-            assessment = "Critical issues identified that must be addressed"
-        elif high_issues:
-            assessment = "High priority issues require attention"
-        elif len(comments) > 5:
-            assessment = "Multiple improvement opportunities identified"
+            priority_level = "critical"
+        elif major_issues:
+            priority_level = "major"
+        elif minor_issues:
+            priority_level = "minor"
         else:
-            assessment = "Generally good with minor improvements needed"
+            priority_level = "low"
 
-        # Extract key strengths
-        strengths = [c["comment"] for c in positive_feedback]
-        if not strengths:
-            strengths = ["Document structure is clear", "Content is relevant to the topic"]
-
-        # Priority actions
-        priority_actions = []
-        for comment in critical_issues + high_issues:
-            priority_actions.append(f"{comment['area']}: {comment['comment']}")
-
-        # Recommendations
+        # Generate key recommendations
         recommendations = []
-        if critical_issues:
-            recommendations.append("Address all critical issues before proceeding")
-        if high_issues:
-            recommendations.append("Prioritize high-severity improvements")
-        recommendations.append("Consider implementing suggested improvements")
-        recommendations.append("Schedule follow-up review after revisions")
+        for comment in comments[:5]:  # Top 5 recommendations
+            if comment.get("suggestion"):
+                recommendations.append(comment["suggestion"])
 
         return {
-            "overall_assessment": assessment,
-            "key_strengths": strengths[:3],  # Top 3 strengths
-            "priority_actions": priority_actions[:5],  # Top 5 actions
-            "recommendations": recommendations
+            "overall_assessment": f"Document reviewed by {reviewer_role}",
+            "total_issues": len(comments),
+            "critical_issues": len(critical_issues),
+            "major_issues": len(major_issues),
+            "minor_issues": len(minor_issues),
+            "key_issues": [c.get("issue", "") for c in comments[:3]],
+            "recommendations": recommendations,
+            "priority_level": priority_level,
+            "reviewer_role": reviewer_role
         }
 
+    def generate_review_report(self, document_content: str, reviewer_role_name: Optional[str] = None,
+                             review_focus: Optional[str] = None, custom_criteria: Optional[List[str]] = None,
+                             include_detailed_analysis: bool = True) -> Dict[str, Any]:
+        """
+        生成评审报告
+        
+        Args:
+            document_content: 文档内容
+            reviewer_role_name: 评审员角色名称
+            review_focus: 评审重点
+            custom_criteria: 自定义评审标准
+            include_detailed_analysis: 是否包含详细分析
+            
+        Returns:
+            Dict: 评审报告
+        """
+        try:
+            # 1. 验证输入参数
+            if not document_content or not document_content.strip():
+                return {
+                    "success": False,
+                    "error": "文档内容为空"
+                }
+            
+            # 2. 设置默认评审员角色
+            if not reviewer_role_name:
+                reviewer_role_name = "editor"
+            
+            # 3. 执行文档评审
+            review_result = self.review_document(
+                document_content=document_content,
+                reviewer_role_name=reviewer_role_name,
+                review_focus=review_focus or "General document quality",
+                custom_criteria=custom_criteria or []
+            )
+            
+            if not review_result.get("success"):
+                return review_result
+            
+            # 4. 生成评审报告结构
+            report = {
+                "success": True,
+                "report_id": f"review_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                "generated_at": datetime.now().isoformat(),
+                "document_info": {
+                    "content_length": len(document_content),
+                    "word_count": len(document_content.split()),
+                    "review_focus": review_focus or "General document quality"
+                },
+                "reviewer_info": {
+                    "role": reviewer_role_name,
+                    "profile": review_result.get("reviewer_profile", {}),
+                    "criteria_used": review_result.get("review_criteria", [])
+                },
+                "executive_summary": self._generate_executive_summary(review_result),
+                "detailed_findings": self._generate_detailed_findings(review_result) if include_detailed_analysis else {},
+                "recommendations": self._generate_recommendations(review_result),
+                "quality_metrics": review_result.get("review_metrics", {}),
+                "approval_status": self._determine_approval_status(review_result),
+                "next_steps": self._generate_next_steps(review_result)
+            }
+            
+            # 5. 添加详细分析（如果请求）
+            if include_detailed_analysis:
+                report["detailed_analysis"] = {
+                    "document_characteristics": review_result.get("document_analysis", {}),
+                    "style_analysis": self._analyze_writing_style(document_content),
+                    "structure_analysis": self._analyze_document_structure(document_content),
+                    "content_quality_analysis": self._analyze_content_quality(document_content)
+                }
+            
+            print(f"✅ 评审报告已生成: {report['report_id']}")
+            return report
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"生成评审报告失败: {str(e)}"
+            }
+    
+    def _generate_executive_summary(self, review_result: Dict[str, Any]) -> Dict[str, Any]:
+        """生成执行摘要"""
+        summary = review_result.get("review_summary", {})
+        comments = review_result.get("review_comments", {}).get("comments", [])
+        
+        return {
+            "overall_assessment": summary.get("overall_assessment", "文档评审完成"),
+            "total_issues_found": summary.get("total_issues", 0),
+            "critical_issues": summary.get("critical_issues", 0),
+            "major_issues": summary.get("major_issues", 0),
+            "minor_issues": summary.get("minor_issues", 0),
+            "priority_level": summary.get("priority_level", "low"),
+            "key_highlights": [c.get("issue", "") for c in comments[:3] if c.get("priority") in ["critical", "major"]],
+            "overall_score": self._calculate_overall_score(comments)
+        }
+    
+    def _generate_detailed_findings(self, review_result: Dict[str, Any]) -> Dict[str, Any]:
+        """生成详细发现"""
+        comments = review_result.get("review_comments", {}).get("comments", [])
+        
+        # 按优先级分组
+        findings = {
+            "critical_issues": [],
+            "major_issues": [],
+            "minor_issues": [],
+            "suggestions": []
+        }
+        
+        for comment in comments:
+            priority = comment.get("priority", "minor")
+            if priority == "critical":
+                findings["critical_issues"].append(comment)
+            elif priority == "major":
+                findings["major_issues"].append(comment)
+            elif priority == "minor":
+                findings["minor_issues"].append(comment)
+            else:
+                findings["suggestions"].append(comment)
+        
+        return findings
+    
+    def _generate_recommendations(self, review_result: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """生成建议列表"""
+        comments = review_result.get("review_comments", {}).get("comments", [])
+        recommendations = []
+        
+        for comment in comments:
+            if comment.get("suggestion"):
+                recommendations.append({
+                    "priority": comment.get("priority", "minor"),
+                    "category": comment.get("category", "general"),
+                    "suggestion": comment.get("suggestion"),
+                    "rationale": comment.get("rationale", ""),
+                    "estimated_effort": self._estimate_effort(comment.get("priority", "minor"))
+                })
+        
+        # 按优先级排序
+        recommendations.sort(key=lambda x: {"critical": 3, "major": 2, "minor": 1}.get(x["priority"], 0), reverse=True)
+        
+        return recommendations
+    
+    def _determine_approval_status(self, review_result: Dict[str, Any]) -> Dict[str, Any]:
+        """确定审批状态"""
+        summary = review_result.get("review_summary", {})
+        critical_issues = summary.get("critical_issues", 0)
+        major_issues = summary.get("major_issues", 0)
+        
+        if critical_issues > 0:
+            status = "rejected"
+            reason = f"存在 {critical_issues} 个关键问题需要解决"
+        elif major_issues > 2:
+            status = "conditional_approval"
+            reason = f"存在 {major_issues} 个主要问题，建议修改后重新评审"
+        elif major_issues > 0:
+            status = "approved_with_revisions"
+            reason = f"存在 {major_issues} 个主要问题，建议修改"
+        else:
+            status = "approved"
+            reason = "文档质量良好，可以批准"
+        
+        return {
+            "status": status,
+            "reason": reason,
+            "requires_action": status in ["rejected", "conditional_approval", "approved_with_revisions"],
+            "next_review_required": status in ["rejected", "conditional_approval"]
+        }
+    
+    def _generate_next_steps(self, review_result: Dict[str, Any]) -> List[str]:
+        """生成后续步骤"""
+        approval_status = self._determine_approval_status(review_result)
+        steps = []
+        
+        if approval_status["status"] == "rejected":
+            steps.extend([
+                "解决所有关键问题",
+                "重新提交文档进行评审",
+                "考虑寻求专业帮助"
+            ])
+        elif approval_status["status"] == "conditional_approval":
+            steps.extend([
+                "解决主要问题",
+                "进行必要的修改",
+                "重新提交评审"
+            ])
+        elif approval_status["status"] == "approved_with_revisions":
+            steps.extend([
+                "根据建议进行修改",
+                "考虑实施改进建议",
+                "更新文档版本"
+            ])
+        else:  # approved
+            steps.extend([
+                "文档可以正式发布",
+                "考虑实施优化建议",
+                "记录评审结果"
+            ])
+        
+        return steps
+    
+    def _calculate_overall_score(self, comments: List[Dict[str, Any]]) -> float:
+        """计算总体评分"""
+        if not comments:
+            return 100.0
+        
+        total_score = 100.0
+        deductions = {
+            "critical": 20.0,
+            "major": 10.0,
+            "minor": 2.0
+        }
+        
+        for comment in comments:
+            priority = comment.get("priority", "minor")
+            deduction = deductions.get(priority, 0)
+            total_score -= deduction
+        
+        return max(0.0, total_score)
+    
+    def _estimate_effort(self, priority: str) -> str:
+        """估算修改工作量"""
+        effort_map = {
+            "critical": "高工作量",
+            "major": "中等工作量", 
+            "minor": "低工作量"
+        }
+        return effort_map.get(priority, "未知")
+    
+    def _analyze_writing_style(self, content: str) -> Dict[str, Any]:
+        """分析写作风格"""
+        # 简化的风格分析
+        sentences = content.split('.')
+        words = content.split()
+        
+        return {
+            "avg_sentence_length": len(words) / max(len(sentences), 1),
+            "vocabulary_diversity": len(set(words)) / max(len(words), 1),
+            "formal_tone": self._assess_formality(content),
+            "readability_level": self._assess_readability(content)
+        }
+    
+    def _analyze_document_structure(self, content: str) -> Dict[str, Any]:
+        """分析文档结构"""
+        lines = content.split('\n')
+        paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+        
+        return {
+            "paragraph_count": len(paragraphs),
+            "avg_paragraph_length": len(content) / max(len(paragraphs), 1),
+            "has_headings": any(line.strip().startswith('#') for line in lines),
+            "structure_consistency": "good"  # 简化评估
+        }
+    
+    def _analyze_content_quality(self, content: str) -> Dict[str, Any]:
+        """分析内容质量"""
+        return {
+            "completeness": self._assess_completeness(content),
+            "accuracy": "good",  # 简化评估
+            "relevance": "good",  # 简化评估
+            "clarity": self._assess_clarity(content)
+        }
+    
+    def _assess_formality(self, content: str) -> str:
+        """评估正式程度"""
+        informal_words = ['我觉得', '挺好的', '应该可以', '用了']
+        informal_count = sum(1 for word in informal_words if word in content)
+        
+        if informal_count > 5:
+            return "informal"
+        elif informal_count > 2:
+            return "semi_formal"
+        else:
+            return "formal"
+    
+    def _assess_readability(self, content: str) -> str:
+        """评估可读性"""
+        sentences = content.split('.')
+        avg_length = sum(len(s.split()) for s in sentences) / max(len(sentences), 1)
+        
+        if avg_length > 25:
+            return "complex"
+        elif avg_length > 15:
+            return "moderate"
+        else:
+            return "simple"
+    
+    def _assess_completeness(self, content: str) -> str:
+        """评估完整性"""
+        if len(content) < 100:
+            return "incomplete"
+        elif len(content) < 500:
+            return "basic"
+        else:
+            return "complete"
+    
+    def _assess_clarity(self, content: str) -> str:
+        """评估清晰度"""
+        # 简化评估
+        if len(content.split()) > 50:
+            return "clear"
+        else:
+            return "needs_improvement"
+
     def multi_reviewer_session(self, document_content: str, reviewer_roles: List[str],
-                             review_focus: str = None) -> Dict[str, Any]:
+                             review_focus: Optional[str] = None) -> Dict[str, Any]:
         """Simulate a multi-reviewer session."""
 
         try:

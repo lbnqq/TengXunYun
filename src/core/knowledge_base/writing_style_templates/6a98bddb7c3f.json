@@ -1,0 +1,12 @@
+{
+  "document_content": "这是一个测试文档，用于验证文风对齐功能。",
+  "document_name": "测试文档",
+  "style_type": "business_professional",
+  "style_features": {
+    "formality": 0.8,
+    "technicality": 0.6,
+    "objectivity": 0.7
+  },
+  "confidence_score": 0.85,
+  "template_id": "6a98bddb7c3f"
+}

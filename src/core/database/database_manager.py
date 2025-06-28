@@ -285,6 +285,43 @@ class DatabaseManager:
         if hasattr(self._local, 'connection'):
             self._local.connection.close()
             delattr(self._local, 'connection')
+    
+    def check_connection(self) -> Dict[str, Any]:
+        """检查数据库连接状态"""
+        try:
+            with self.get_connection() as conn:
+                # 执行简单查询测试连接
+                cursor = conn.execute("SELECT 1")
+                result = cursor.fetchone()
+                
+                if result:
+                    return {
+                        'status': 'healthy',
+                        'message': 'Database connection is working',
+                        'db_path': self.db_path,
+                        'tables': self._get_table_count(conn)
+                    }
+                else:
+                    return {
+                        'status': 'error',
+                        'message': 'Database query failed',
+                        'db_path': self.db_path
+                    }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Database connection failed: {str(e)}',
+                'db_path': self.db_path
+            }
+    
+    def _get_table_count(self, conn: sqlite3.Connection) -> int:
+        """获取数据库中的表数量"""
+        try:
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = cursor.fetchall()
+            return len(tables)
+        except Exception:
+            return 0
 
 
 # 全局数据库管理器实例

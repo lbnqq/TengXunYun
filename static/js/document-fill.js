@@ -34,7 +34,10 @@ class DocumentFillManager {
             });
             fillUploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
             fillUploadArea.addEventListener('drop', this.handleFileDrop.bind(this));
-            fillFileInput.addEventListener('change', this.handleFileSelect.bind(this));
+            fillFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                this.currentFile = file || null;
+            });
             console.log('Event listeners added successfully');
         } else {
             console.error('Failed to find upload elements');
@@ -52,7 +55,10 @@ class DocumentFillManager {
         
         if (materialFileInput && materialUploadArea) {
             materialUploadArea.addEventListener('click', () => materialFileInput.click());
-            materialFileInput.addEventListener('change', this.handleMaterialUpload.bind(this));
+            materialFileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => this.uploadedMaterials.push(file));
+            });
         }
 
         // 继续按钮
@@ -156,52 +162,41 @@ class DocumentFillManager {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    async startDocumentAnalysis() {
-    if (!this.currentFile) {
-        this.showError('请先上传文档');
-        return;
+    function readFileContentAsync(file, callback) {
+        const reader = new FileReader();
+        reader.onload = function(e) { callback(e.target.result); };
+        reader.onerror = function() { showMessage('文件读取失败', 'error'); callback(null); };
+        reader.readAsText(file);
     }
 
-    this.showLoading('正在分析文档结构...');
-
-    try {
-        // 读取文件内容
-        const content = await this.readFileContent(this.currentFile);
-
-        const response = await fetch('/api/document-fill/start', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                document_content: content,
-                document_name: this.currentFile.name
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.error) {
-            this.showError(result.error);
+    async function startDocumentFill() {
+        if (!this.currentFile) {
+            showMessage('请先上传主文档', 'error');
             return;
         }
-
-        this.currentSession = result;
-        this.showSupplementaryMaterialsSection();
-        this.hideLoading();
-
-    } catch (error) {
-        this.showError('文档分析失败: ' + error.message);
-        this.hideLoading();
-         }
-   }
-
-    async readFileContent(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result);
-            reader.onerror = reject;
-            reader.readAsText(file);
+        readFileContentAsync(this.currentFile, async (content) => {
+            if (!content || content.trim() === '') {
+                showMessage('主文档内容为空', 'error');
+                return;
+            }
+            try {
+                showLoading('正在分析文档结构...');
+                const response = await fetch('/api/document-fill/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ document_content: content, document_name: this.currentFile.name })
+                });
+                const result = await response.json();
+                if (result.error) {
+                    showMessage(result.error, 'error');
+                } else {
+                    // 处理AI提问等
+                }
+            } catch (err) {
+                showMessage('API调用失败: ' + err.message, 'error');
+            } finally {
+                hideLoading();
+            }
         });
     }
 

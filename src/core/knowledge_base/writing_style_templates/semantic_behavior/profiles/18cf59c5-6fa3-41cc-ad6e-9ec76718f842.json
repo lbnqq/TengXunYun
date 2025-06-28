@@ -1,0 +1,47 @@
+{
+  "session_id": "18cf59c5-6fa3-41cc-ad6e-9ec76718f842",
+  "timestamp": "2025-06-28T09:11:45.848216",
+  "original_content": "# 待调整文档\n\n## 内容分析\n我觉得这个方案挺好的，应该可以解决问题。\n\n### 方法说明\n我们用了问卷调查，然后用软件算了一下数据。\n\n### 总结\n总的来说，这个方案不错，应该能用。\n",
+  "document_name": "target.txt",
+  "style_template_id": "5c5855eeebb4",
+  "preview_data": {
+    "success": true,
+    "preview_text": "",
+    "diff": [],
+    "consistency_score": 0.0,
+    "style_changes": [],
+    "note": "未启用增强风格迁移，返回原文",
+    "template_id": "5c5855eeebb4",
+    "target_style_type": "academic_research"
+  },
+  "suggested_changes": [
+    {
+      "original_text": "我觉得这个方案挺好的，应该可以解决问题。",
+      "suggested_text": "我认为这个方案较为理想，能够解决相关问题。",
+      "status": "accepted",
+      "change_type": "vocabulary_improvement",
+      "confidence": 0.85,
+      "position": 4
+    },
+    {
+      "original_text": "我们用了问卷调查，然后用软件算了一下数据。",
+      "suggested_text": "我们采用了问卷调查，然后用软件进行了分析数据。",
+      "status": "accepted",
+      "change_type": "vocabulary_improvement",
+      "confidence": 0.85,
+      "position": 7
+    },
+    {
+      "original_text": "总的来说，这个方案不错，应该能用。",
+      "suggested_text": "综上所述，这个方案良好，具备可行性。",
+      "status": "accepted",
+      "change_type": "vocabulary_improvement",
+      "confidence": 0.85,
+      "position": 10
+    }
+  ],
+  "target_style": "business_professional",
+  "action": "accept_all",
+  "migrated_content": "# 待调整文档\n\n## 内容分析\n我认为这个方案较为理想，能够解决相关问题。\n\n### 方法说明\n我们采用了问卷调查，然后用软件进行了分析数据。\n\n### 总结\n综上所述，这个方案良好，具备可行性。\n",
+  "last_updated": "2025-06-28T09:11:45.858170"
+}

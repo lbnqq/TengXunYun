@@ -1,0 +1,12 @@
+{
+  "session_id": "1a379934-51f7-4163-a138-71c2916b19a7",
+  "session_type": "test_session",
+  "created_time": "2025-06-28T15:33:11.366541",
+  "last_updated": "2025-06-28T15:33:11.367712",
+  "data": {
+    "test": "data",
+    "timestamp": "2025-01-01",
+    "updated": true
+  },
+  "status": "active"
+}

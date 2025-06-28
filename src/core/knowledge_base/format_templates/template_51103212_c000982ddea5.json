@@ -1,0 +1,21 @@
+{
+  "document_name": "性能测试模板_2_1751103212",
+  "structure_analysis": {
+    "total_lines": 10,
+    "headings": [],
+    "paragraphs": [],
+    "lists": [],
+    "special_elements": [],
+    "estimated_format": {},
+    "analysis_confidence": 0.8
+  },
+  "format_rules": {
+    "heading_formats": {},
+    "paragraph_formats": {},
+    "list_formats": {},
+    "font_settings": {},
+    "spacing_settings": {}
+  },
+  "format_prompt": "性能测试格式提示词_2",
+  "template_id": "template_51103212_c000982ddea5"
+}

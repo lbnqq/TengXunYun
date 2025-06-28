@@ -78,19 +78,25 @@ class Dashboard {
     async fetchPerformanceStats() {
         const response = await fetch('/api/performance/stats');
         if (!response.ok) throw new Error('Failed to fetch performance stats');
-        return await response.json();
+        const data = await response.json();
+        if (!data.success) throw new Error('Failed to fetch performance stats');
+        return data;
     }
     
     async fetchApiHealth() {
         const response = await fetch('/api/performance/health');
         if (!response.ok) throw new Error('Failed to fetch API health');
-        return await response.json();
+        const data = await response.json();
+        if (!data.success) throw new Error('Failed to fetch API health');
+        return data;
     }
     
     async fetchOperationBreakdown() {
         const response = await fetch('/api/performance/operations');
         if (!response.ok) throw new Error('Failed to fetch operation breakdown');
-        return await response.json();
+        const data = await response.json();
+        if (!data.success) throw new Error('Failed to fetch operation breakdown');
+        return data;
     }
     
     updateMetricCards(stats) {
@@ -253,6 +259,8 @@ class Dashboard {
             if (!response.ok) throw new Error('Failed to fetch processing history');
             
             const data = await response.json();
+            if (!data.success) throw new Error('Failed to fetch processing history');
+            
             this.updateHistoryTable(data.records || []);
             this.updatePagination(data.total || 0);
             

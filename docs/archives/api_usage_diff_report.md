@@ -1,0 +1,61 @@
+# API接口实现与文档差异详细报告
+
+## 代码中出现但文档未覆盖的API
+- /api/analyze_style
+    - 调用位置: tests\simple_web_app.py:285
+    - 调用位置: tests\simple_web_app.py:459
+    - 调用位置: tests\test_comprehensive_integration.py:274
+    - 调用位置: tests\test_end_to_end_scenarios.py:279
+    - 建议: 补充接口文档或移除无效调用
+- /api/document/fill
+    - 调用位置: tests\test_e2e_complete_system.py:194
+    - 调用位置: tests\test_e2e_complete_system.py:305
+    - 调用位置: tests\test_server.py:210
+    - 建议: 补充接口文档或移除无效调用
+- /api/document/parse
+    - 调用位置: src\web_app.py:3243
+    - 调用位置: src\web_app.py:3259
+    - 调用位置: tests\test_e2e_complete_system.py:64
+    - 调用位置: tests\test_e2e_complete_system.py:170
+    - 调用位置: tests\test_e2e_complete_system.py:304
+    - 建议: 补充接口文档或移除无效调用
+- /api/documents
+    - 调用位置: tests\test_real_webapp.py:286
+    - 建议: 补充接口文档或移除无效调用
+- /api/format_alignment
+    - 调用位置: tests\simple_web_app.py:332
+    - 调用位置: tests\simple_web_app.py:460
+    - 调用位置: tests\test_comprehensive_integration.py:312
+    - 调用位置: tests\test_end_to_end_scenarios.py:314
+    - 建议: 补充接口文档或移除无效调用
+- /api/style/analyze
+    - 调用位置: tests\test_e2e_complete_system.py:234
+    - 调用位置: tests\test_e2e_complete_system.py:306
+    - 调用位置: tests\test_server.py:239
+    - 建议: 补充接口文档或移除无效调用
+- /api/v1/chat/completions
+    - 调用位置: src\llm_clients\multi_llm.py:51
+    - 建议: 补充接口文档或移除无效调用
+
+## 文档中有但代码未实现的API
+- /
+    - 文档说明: 系统主页入口，主流程所有页面和功能依赖此入口。
+    - 建议: 实现该接口或清理文档冗余
+- /batch
+    - 文档说明: 批量处理主流程入口，批量文档处理、任务管理等核心功能依赖此接口。
+    - 建议: 实现该接口或清理文档冗余
+- /dashboard
+    - 文档说明: 系统仪表板入口，性能监控、统计、历史记录等主流程依赖此接口。
+    - 建议: 实现该接口或清理文档冗余
+- /debug_frontend.html
+    - 文档说明: 前端调试专用页面，仅开发调试用途，非主流程用户功能。
+    - 建议: 实现该接口或清理文档冗余
+- /demo
+    - 文档说明: 系统演示与端到端测试专用页面，便于演示和自动化测试。
+    - 建议: 实现该接口或清理文档冗余
+- /examples/<filename>
+    - 文档说明: 示例文件下载与演示专用接口，前端演示和测试依赖。
+    - 建议: 实现该接口或清理文档冗余
+- /test_ai_features.html
+    - 文档说明: AI能力演示与测试专用页面，便于AI功能端到端测试。
+    - 建议: 实现该接口或清理文档冗余

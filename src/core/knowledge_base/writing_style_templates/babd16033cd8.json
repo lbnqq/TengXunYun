@@ -1,0 +1,165 @@
+{
+  "document_name": "target.docx",
+  "analysis_time": "2025-06-28T09:32:54.980338",
+  "analysis_method": "basic",
+  "document_stats": {
+    "total_characters": 12126,
+    "total_lines": 187,
+    "total_sentences": 258,
+    "total_paragraphs": 1,
+    "total_words": 807,
+    "average_sentence_length": 47.0,
+    "average_paragraph_length": 12126.0,
+    "reading_time_minutes": 4.0
+  },
+  "style_features": {
+    "sentence_structure": {
+      "average_length": 47.2,
+      "long_short_ratio": 0.642,
+      "complex_ratio": 0.484,
+      "total_sentences": 246,
+      "long_sentences": 158,
+      "short_sentences": 55
+    },
+    "vocabulary_choice": {
+      "formality_score": 6.64,
+      "technical_density": 3.54,
+      "modifier_usage": 4.61,
+      "action_verb_ratio": 4.78
+    },
+    "expression_style": {
+      "passive_active_ratio": 0.242,
+      "person_usage": {
+        "first_person": 6,
+        "second_person": 28,
+        "third_person": 21
+      },
+      "tone_strength": -0.82,
+      "passive_count": 8,
+      "active_count": 25
+    },
+    "text_organization": {
+      "paragraph_count": 4,
+      "average_paragraph_length": 3021.2,
+      "connector_density": 2.72,
+      "summary_usage": 1,
+      "enumeration_usage": 115
+    },
+    "language_habits": {
+      "colloquial_level": 0.16,
+      "formal_structure_usage": 26.06,
+      "de_structure_density": 24.49
+    },
+    "emotional_tone": {
+      "positive_ratio": 0.65,
+      "negative_ratio": 0.35,
+      "neutral_ratio": 0.0,
+      "intensity": 6.19
+    },
+    "professionalism": {
+      "domain_specificity": 4.45,
+      "authority_indicators": 4.7,
+      "precision_level": 3.71
+    },
+    "rhetorical_devices": {
+      "metaphor_usage": 1.24,
+      "parallel_structure": 4.45,
+      "question_usage": 2.14
+    }
+  },
+  "style_type": "concise_practical",
+  "confidence_score": 0.541682,
+  "style_prompt": "请采用简洁实用风格进行写作，具体特征包括：言简意赅, 直接有效, 操作性强, 易于理解。 使用较长的复合句，注重表达的完整性和逻辑性。 可以使用相对轻松、自然的表达方式。 保持客观中性的语调，注重事实陈述。 确保文本较难阅读，适合目标读者群体。",
+  "template_id": "babd16033cd8",
+  "detailed_analysis": {
+    "readability_analysis": {
+      "readability_score": 32.1,
+      "readability_level": "较难阅读",
+      "factors": {
+        "sentence_complexity": "高",
+        "vocabulary_difficulty": "低"
+      }
+    },
+    "tone_analysis": {
+      "tone_distribution": {
+        "positive_ratio": 19.2,
+        "negative_ratio": 12.8,
+        "neutral_ratio": 68.0
+      },
+      "dominant_tone": "neutral",
+      "emotional_intensity": 0,
+      "tone_consistency": "高"
+    },
+    "structure_analysis": {
+      "paragraph_structure": {
+        "paragraph_count": 4,
+        "average_length": 3021.2,
+        "length_consistency": "高"
+      },
+      "logical_flow": {
+        "connector_usage": 2.72,
+        "enumeration_usage": 115,
+        "summary_usage": 1
+      },
+      "organization_score": 100
+    },
+    "vocabulary_analysis": {
+      "vocabulary_richness": {
+        "unique_words": 694,
+        "total_words": 807,
+        "diversity_ratio": 86.0
+      },
+      "word_complexity": {
+        "technical_density": 3.54,
+        "formality_score": 6.64,
+        "modifier_usage": 4.61
+      },
+      "action_orientation": {
+        "action_verb_ratio": 4.78,
+        "passive_voice_usage": 0.58
+      }
+    },
+    "style_consistency": {
+      "consistency_score": 100,
+      "variation_level": "无法评估"
+    }
+  },
+  "writing_recommendations": [
+    "句子偏长，建议适当拆分为短句以提高可读性",
+    "可以适当增加修饰词，丰富表达层次",
+    "继续保持简洁明了，突出实用性"
+  ],
+  "style_comparison": {
+    "formal_vs_informal": {
+      "formality_level": "中",
+      "formal_score": 10.8,
+      "indicators": {
+        "formal_vocabulary": 6.64,
+        "formal_structures": 26.06,
+        "colloquial_elements": 0.16
+      }
+    },
+    "technical_vs_general": {
+      "technicality_level": "低",
+      "technical_score": 3.5,
+      "professional_score": 0,
+      "balance": "技术性强"
+    },
+    "objective_vs_subjective": {
+      "objectivity_level": "高",
+      "objectivity_score": 100,
+      "subjectivity_indicators": {
+        "emotional_intensity": 0,
+        "assertive_tone": 0
+      }
+    },
+    "concise_vs_elaborate": {
+      "conciseness_level": "低",
+      "conciseness_score": 31.0,
+      "verbosity_indicators": {
+        "sentence_length": 47.2,
+        "modifier_density": 4.61
+      }
+    }
+  }
+}

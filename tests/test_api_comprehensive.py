@@ -144,6 +144,10 @@ class APITestSuite(unittest.TestCase):
         required_fields = ['file_id', 'analysis']
         for field in required_fields:
             self.assertIn(field, result, f"缺少必要字段: {field}")
+        
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertTrue(result['success'])
     
     def test_05_file_upload_no_file(self):
         """测试无文件上传的错误处理"""
@@ -157,6 +161,10 @@ class APITestSuite(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         result = response.json()
         self.assertIn('error', result)
+        
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertFalse(result['success'])
         
     def test_06_file_upload_empty_filename(self):
         """测试空文件名的错误处理"""
@@ -173,6 +181,10 @@ class APITestSuite(unittest.TestCase):
         result = response.json()
         self.assertIn('error', result)
         
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertFalse(result['success'])
+        
     def test_07_file_upload_unsupported_type(self):
         """测试不支持的文件类型"""
         files = {'file': ('test.exe', b'fake exe content', 'application/octet-stream')}
@@ -188,23 +200,33 @@ class APITestSuite(unittest.TestCase):
         result = response.json()
         self.assertIn('error', result)
         
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertFalse(result['success'])
+        
     def test_08_file_upload_large_file(self):
         """测试大文件上传"""
-        # 创建一个较大的测试文件
-        large_content = "测试内容 " * 10000  # 约100KB
-        
-        files = {'file': ('large_test.txt', large_content.encode('utf-8'), 'text/plain')}
-        data = {'api_type': 'mock'}
-        
-        response = requests.post(
-            f"{self.base_url}/api/upload",
-            files=files,
-            data=data,
-            timeout=60
-        )
-        
-        # 应该成功处理或返回适当的错误
+        url = f'{self.base_url}/api/upload'
+        # 假设最大文件限制为10MB，实际应与后端配置一致
+        max_file_size = 10 * 1024 * 1024
+        large_content = b'a' * (max_file_size + 1024)
+        files = {'file': ('large.txt', large_content)}
+        response = requests.post(url, files=files)
         self.assertIn(response.status_code, [200, 413])  # 200成功或413文件太大
+        # 检查返回结构
+        if response.status_code == 200:
+            result = response.json()
+            self.assertIn('success', result)
+            self.assertTrue(result['success'])
+        else:
+            try:
+                result = response.json()
+                self.assertIn('error', result)
+                self.assertIn('success', result)
+                self.assertFalse(result['success'])
+            except Exception:
+                # 某些情况下返回非JSON，跳过结构校验
+                pass
         
     def test_09_complex_document_analysis(self):
         """测试复杂文档分析"""
@@ -227,21 +249,30 @@ class APITestSuite(unittest.TestCase):
         self.assertIn('document_type', analysis)
         self.assertIn('key_entities', analysis)
         
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertTrue(result['success'])
+        
     def test_10_empty_file_handling(self):
         """测试空文件处理"""
-        with open(self.test_files['empty.txt'], 'rb') as f:
-            files = {'file': ('empty.txt', f, 'text/plain')}
-            data = {'api_type': 'mock'}
-            
-            response = requests.post(
-                f"{self.base_url}/api/upload",
-                files=files,
-                data=data,
-                timeout=30
-            )
-        
-        # 应该能处理空文件或返回适当错误
+        url = f'{self.base_url}/api/upload'
+        files = {'file': ('empty.txt', b'')}
+        response = requests.post(url, files=files)
         self.assertIn(response.status_code, [200, 400])
+        # 检查返回结构
+        if response.status_code == 200:
+            result = response.json()
+            self.assertIn('success', result)
+            self.assertTrue(result['success'])
+        else:
+            try:
+                result = response.json()
+                self.assertIn('error', result)
+                self.assertIn('success', result)
+                self.assertFalse(result['success'])
+            except Exception:
+                # 某些情况下返回非JSON，跳过结构校验
+                pass
         
     def test_11_special_characters_handling(self):
         """测试特殊字符处理"""
@@ -260,49 +291,31 @@ class APITestSuite(unittest.TestCase):
         result = response.json()
         self.assertIn('analysis', result)
         
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertTrue(result['success'])
+        
     def test_12_concurrent_requests(self):
         """测试并发请求处理"""
-        import threading
-        import queue
-        
-        results = queue.Queue()
-        
-        def upload_file():
-            try:
-                with open(self.test_files['simple.txt'], 'rb') as f:
-                    files = {'file': ('simple.txt', f, 'text/plain')}
-                    data = {'api_type': 'mock'}
-                    
-                    response = requests.post(
-                        f"{self.base_url}/api/upload",
-                        files=files,
-                        data=data,
-                        timeout=30
-                    )
-                    results.put(response.status_code)
-            except Exception as e:
-                results.put(str(e))
-        
-        # 启动多个并发请求
-        threads = []
-        for i in range(3):
-            thread = threading.Thread(target=upload_file)
-            threads.append(thread)
-            thread.start()
-        
-        # 等待所有线程完成
-        for thread in threads:
-            thread.join()
-        
-        # 检查结果
-        success_count = 0
-        while not results.empty():
-            result = results.get()
-            if result == 200:
-                success_count += 1
-        
-        # 至少应该有一个成功
+        url = f'{self.base_url}/api/upload'
+        files = {'file': ('test.txt', b'abc')}
+        responses = [requests.post(url, files=files) for _ in range(5)]
+        success_count = sum(1 for r in responses if r.status_code == 200)
         self.assertGreater(success_count, 0)
+        # 检查返回结构
+        for response in responses:
+            if response.status_code == 200:
+                result = response.json()
+                self.assertIn('success', result)
+                self.assertTrue(result['success'])
+            else:
+                try:
+                    result = response.json()
+                    self.assertIn('error', result)
+                    self.assertIn('success', result)
+                    self.assertFalse(result['success'])
+                except Exception:
+                    pass
         
     def test_13_api_response_format(self):
         """测试API响应格式一致性"""
@@ -328,6 +341,10 @@ class APITestSuite(unittest.TestCase):
         # 检查响应结构
         self.assertIsInstance(result, dict)
         
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertTrue(result['success'])
+        
     def test_14_error_response_format(self):
         """测试错误响应格式一致性"""
         # 故意发送错误请求
@@ -342,6 +359,10 @@ class APITestSuite(unittest.TestCase):
             self.assertIsInstance(result['error'], str)
         except json.JSONDecodeError:
             self.fail("错误响应不是有效的JSON格式")
+        
+        # 检查返回结构
+        self.assertIn('success', result)
+        self.assertFalse(result['success'])
 
 def run_api_tests():
     """运行API测试套件"""

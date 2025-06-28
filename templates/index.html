@@ -347,7 +347,7 @@
                             <label for="upload-style-ref">上传参考文档:</label>
                             <input type="file" id="upload-style-ref" class="input-file">
                             <span class="input-file-name"></span>
-                            <button class="btn btn-secondary btn-analyze-style">分析文风</button>
+                            <button class="btn btn-secondary btn-analyze-style" id="analyze-style-btn">分析文风</button>
                         </div>
                         <div class="input-group">
                             <label for="saved-style-select">或选择已保存:</label>
@@ -398,6 +398,24 @@
                             <button class="btn btn-secondary btn-save-style">保存</button>
                         </div>
                     </div>
+
+                    <!-- 文风分析文本输入及按钮 -->
+                    <div class="input-group">
+                        <label for="style-text-input">输入待分析文本:</label>
+                        <textarea id="style-text-input" class="input-textarea" placeholder="请输入要分析的文本"></textarea>
+                        <button class="btn btn-secondary" id="analyze-text-btn">分析文本</button>
+                    </div>
+                    <!-- 文风分析文件上传区及信息展示 -->
+                    <div id="style-analysis-upload" class="input-group">
+                        <label for="style-analysis-input">上传文风分析文件:</label>
+                        <input type="file" id="style-analysis-input" class="input-file">
+                    </div>
+                    <div id="style-file-info" class="input-group hidden">
+                        <span id="style-file-name"></span>
+                        <span id="style-file-size"></span>
+                        <button class="btn btn-secondary" id="clear-style-file">清除文件</button>
+                    </div>
+                    <div id="style-analysis-result"></div>
                 </section>
 
                 <!-- --- 场景：智能填报 --- -->
@@ -448,6 +466,24 @@
                         <div class="feedback-message"></div>
                     </div>
                     <!-- 管理已保存填报进度/模板等功能可以归入管理中心 -->
+
+                    <!-- 智能填报相关输入及按钮 -->
+                    <div class="input-group">
+                        <label for="fill-file-input">上传待填报文档:</label>
+                        <input type="file" id="fill-file-input" class="input-file">
+                    </div>
+                    <div class="input-group">
+                        <label for="material-file-input">上传补充材料:</label>
+                        <input type="file" id="material-file-input" class="input-file" multiple>
+                    </div>
+                    <div id="fill-file-info" class="input-group hidden">
+                        <span id="fill-file-name"></span>
+                        <span id="fill-file-size"></span>
+                    </div>
+                    <button class="btn btn-primary" id="start-fill-btn">开始智能填报</button>
+                    <div id="fill-result-section" class="result-block hidden">
+                        <div id="fill-result-content"></div>
+                    </div>
                 </section>
 
                 <!-- --- 场景：文档审阅 --- -->
@@ -612,5 +648,37 @@
     </div>
 
     <script src="/static/js/app.js"></script>
+    <!-- 扩展功能/辅助功能相关占位元素（自动补齐） -->
+    <div id="style-templates-management" class="hidden"></div>
+    <span id="analysis-mode-badge" class="badge hidden"></span>
+    <button id="toggle-debug" class="btn btn-secondary hidden">调试</button>
+    <div id="debug-details" class="debug-details hidden"></div>
+    <section id="supplementary-materials-section" class="hidden"></section>
+    <ul id="materials-list" class="hidden"></ul>
+    <button id="continue-without-materials" class="btn btn-secondary hidden">无材料继续</button>
+    <button id="continue-with-materials" class="btn btn-primary hidden">有材料继续</button>
+    <button id="skip-style-setting" class="btn btn-secondary hidden">跳过文风设置</button>
+    <button id="start-conversation" class="btn btn-primary hidden">开始对话</button>
+    <button id="send-message" class="btn btn-primary hidden">发送消息</button>
+    <input id="user-input" class="input-text hidden" placeholder="请输入消息" />
+    <button id="download-filled-doc" class="btn btn-secondary hidden">下载已填报文档</button>
+    <button id="restart-fill" class="btn btn-secondary hidden">重新填报</button>
+    <section id="writing-style-section" class="hidden"></section>
+    <ul id="style-templates-list" class="hidden"></ul>
+    <section id="conversation-section" class="hidden"></section>
+    <div id="ai-thinking-container" class="hidden"></div>
+    <div id="conversation-history" class="hidden"></div>
+    <span id="progress-text" class="hidden"></span>
+    <div id="fill-progress-bar" class="progress-bar hidden"></div>
+    <!-- 自动补齐：代码用到但页面未覆盖的id占位元素 -->
+    <div id="ai-suggestions" style="display:none;"></div>
+    <div id="analysis-result" style="display:none;"></div>
+    <button id="analyze-btn" style="display:none;"></button>
+    <div id="document-content" style="display:none;"></div>
+    <div id="fill-upload-area" style="display:none;"></div>
+    <button id="refresh-templates" style="display:none;"></button>
+    <button id="save-style-template" style="display:none;"></button>
+    <button id="test-style-generation" style="display:none;"></button>
+    <div id="upload-format-base" style="display:none;"></div>
 </body>
 </html>

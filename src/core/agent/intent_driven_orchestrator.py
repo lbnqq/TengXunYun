@@ -12,6 +12,7 @@ import json
 import os
 from typing import Dict, Any, List, Tuple
 from datetime import datetime
+import logging
 
 from ..tools import DocumentParserTool, ComplexDocumentFiller, DocumentFormatExtractor
 from ..tools import ContentFillerTool, StyleGeneratorTool, VirtualReviewerTool
@@ -627,7 +628,25 @@ class IntentDrivenOrchestrator:
             "processing_results": [],
             "final_output": None
         }
+        
+        self.log_path = os.path.join("logs", "intent_analysis.log")
+        os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
+        logging.basicConfig(filename=self.log_path, level=logging.INFO, format='%(message)s')
     
+    def log_intent_analysis(self, document_name: str, intent_result: dict, user_feedback: dict = None):
+        import json
+        from datetime import datetime
+        log_entry = {
+            "document_name": document_name,
+            "primary_intent": intent_result.get("primary_intent"),
+            "confidence": intent_result.get("confidence"),
+            "evidence": intent_result.get("evidence"),
+            "analysis_time": intent_result.get("analysis_metadata", {}).get("analysis_time"),
+            "user_feedback": user_feedback,
+            "log_time": datetime.now().isoformat()
+        }
+        logging.info(json.dumps(log_entry, ensure_ascii=False))
+
     def process_document_end_to_end(self, file_path: str, user_context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         端到端文档处理主流程
@@ -649,6 +668,9 @@ class IntentDrivenOrchestrator:
             intent_result = self._analyze_user_intent(parse_result["content"], user_context)
             if "error" in intent_result:
                 return intent_result
+            
+            # 日志记录
+            self.log_intent_analysis(os.path.basename(file_path), intent_result)
             
             # 3. 自动处理执行
             processing_result = self._execute_intent_based_processing(intent_result)

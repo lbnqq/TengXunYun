@@ -23,3 +23,12 @@ layout_analyzer:
 
 table_parser:
   strategy: "ocr_based_rule"
+
+intent_confidence_thresholds:
+  fill_form: 0.8
+  format_cleanup: 0.7
+  content_completion: 0.6
+  style_rewrite: 0.5
+  contract_template: 0.85
+  paper_draft: 0.75
+  aigc_incomplete: 0.7

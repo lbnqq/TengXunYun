@@ -1,9 +1,10 @@
 import re
 import json
 import os
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 import hashlib
+import time
 
 class DocumentFormatExtractor:
     """
@@ -34,7 +35,7 @@ class DocumentFormatExtractor:
             "Times New Roman": "Times New Roman", "Arial": "Arial"
         }
     
-    def extract_format_from_document(self, document_content: str, document_name: str = None) -> Dict[str, Any]:
+    def extract_format_from_document(self, document_content: str, document_name: Optional[str] = None) -> Dict[str, Any]:
         """
         从文档中提取格式信息
         
@@ -53,17 +54,15 @@ class DocumentFormatExtractor:
             format_rules = self._extract_format_rules(structure_analysis)
             
             # 生成格式提示词
-            format_prompt = self._generate_format_prompt(format_rules)
-            
-            # 生成格式模板ID
-            template_id = self._generate_template_id(document_name, format_rules)
+            doc_name = document_name or "未命名文档"
+            template_id = self._generate_template_id(doc_name, format_rules)
             
             result = {
                 "template_id": template_id,
-                "document_name": document_name or "未命名文档",
+                "document_name": doc_name,
                 "structure_analysis": structure_analysis,
                 "format_rules": format_rules,
-                "format_prompt": format_prompt,
+                "format_prompt": self._generate_format_prompt(format_rules),
                 "created_time": datetime.now().isoformat(),
                 "html_template": self._generate_html_template(format_rules)
             }
@@ -78,15 +77,40 @@ class DocumentFormatExtractor:
         保存格式模板到持久化存储
         
         Args:
-            format_data: 格式数据
+            format_data: 格式数据，可以是完整的格式数据或包含template_name和template_data的结构
             
         Returns:
             保存结果
         """
         try:
+            # 支持两种参数格式：
+            # 1. 完整的格式数据对象
+            # 2. 包含template_name和template_data的结构
+            
+            if "template_name" in format_data and "template_data" in format_data:
+                # 格式2：从template_data中提取完整数据
+                template_name = format_data.get("template_name", "")
+                template_data = format_data.get("template_data", {})
+                
+                # 如果template_data中没有template_id，生成一个
+                if "template_id" not in template_data:
+                    template_data["template_id"] = self._generate_template_id(template_name, {})
+                
+                # 如果template_data中没有document_name，使用template_name
+                if "document_name" not in template_data:
+                    template_data["document_name"] = template_name
+                
+                format_data = template_data
+            
+            # 确保有template_id
             template_id = format_data.get("template_id")
             if not template_id:
-                return {"error": "缺少模板ID"}
+                template_id = self._generate_template_id(format_data.get("document_name", "未命名模板"), {})
+                format_data["template_id"] = template_id
+            
+            # 确保有document_name
+            if "document_name" not in format_data:
+                format_data["document_name"] = "未命名模板"
             
             # 保存到JSON文件
             template_file = os.path.join(self.storage_path, f"{template_id}.json")
@@ -653,9 +677,23 @@ class DocumentFormatExtractor:
     
     def _generate_template_id(self, document_name: str, format_rules: Dict[str, Any]) -> str:
         """生成模板ID"""
-        # 基于文档名和格式规则生成唯一ID
-        content = f"{document_name}_{json.dumps(format_rules, sort_keys=True)}"
-        return hashlib.md5(content.encode('utf-8')).hexdigest()[:12]
+        # 规范化输入
+        normalized_name = document_name.strip().lower()
+        
+        # 排序格式规则以确保一致性
+        sorted_rules = json.dumps(format_rules, sort_keys=True, ensure_ascii=False)
+        
+        # 生成内容哈希
+        content = f"{normalized_name}_{sorted_rules}"
+        content_hash = hashlib.md5(content.encode('utf-8')).hexdigest()
+        
+        # 添加时间戳前缀以确保唯一性
+        timestamp = str(int(time.time()))[-8:]  # 取后8位时间戳
+        
+        # 生成最终ID
+        template_id = f"template_{timestamp}_{content_hash[:12]}"
+        
+        return template_id
     
     def _generate_html_template(self, format_rules: Dict[str, Any]) -> str:
         """生成HTML模板"""

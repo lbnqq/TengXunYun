@@ -272,35 +272,6 @@ def api_upload():
     except Exception as e:
         return jsonify({'success': False, 'error': f'文件上传失败: {str(e)}'}), 500
 
-@app.route('/api/documents', methods=['GET'])
-def api_documents():
-    """获取文档列表"""
-    try:
-        # 模拟文档列表
-        documents = [
-            {
-                'id': '1',
-                'filename': 'sample1.txt',
-                'status': 'completed',
-                'created_at': datetime.now().isoformat()
-            },
-            {
-                'id': '2', 
-                'filename': 'sample2.docx',
-                'status': 'processing',
-                'created_at': datetime.now().isoformat()
-            }
-        ]
-        
-        return jsonify({
-            'success': True,
-            'documents': documents,
-            'total': len(documents)
-        })
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
 @app.route('/api/settings', methods=['GET'])
 def api_settings():
     """获取系统设置"""

@@ -1,0 +1,11 @@
+{
+  "session_id": "60fc8ae5-26b7-498e-a6e9-9be11ba77634",
+  "timestamp": "2025-06-28T09:00:03.181025",
+  "action": "accept_all",
+  "original_content": "这是一个示例文档内容，用于演示文风调整功能。",
+  "migrated_content": "这是一个示例文档内容，用于演示文风调整功能。",
+  "suggested_changes": [],
+  "style_template_id": "3b4de8533f95",
+  "target_style": "academic_research",
+  "document_name": "session_60fc8ae5-26b7-498e-a6e9-9be11ba77634"
+}

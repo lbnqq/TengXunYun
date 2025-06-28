@@ -1,0 +1,44 @@
+{
+  "document_name": "E2E测试格式模板1_1751102888",
+  "structure_analysis": {
+    "total_lines": 15,
+    "headings": [
+      {
+        "level": 1,
+        "text": "标题1",
+        "line_number": 0,
+        "confidence": 0.9
+      }
+    ],
+    "paragraphs": [
+      {
+        "text": "这是第一段正文内容",
+        "line_number": 1,
+        "confidence": 0.8
+      }
+    ],
+    "lists": [],
+    "special_elements": [],
+    "estimated_format": {},
+    "analysis_confidence": 0.85
+  },
+  "format_rules": {
+    "heading_formats": {
+      "level_1": {
+        "font_family": "黑体",
+        "font_size": "三号",
+        "line_height": "1.5"
+      }
+    },
+    "paragraph_formats": {
+      "font_family": "宋体",
+      "font_size": "小四",
+      "text_align": "左对齐"
+    },
+    "list_formats": {},
+    "font_settings": {},
+    "spacing_settings": {}
+  },
+  "format_prompt": "这是一个端到端测试的格式提示词",
+  "template_id": "template_51102888_36f15d5e2eaa"
+}
