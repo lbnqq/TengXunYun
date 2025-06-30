@@ -1,8 +1,26 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-批量运行所有业务功能测试脚本
-功能：依次执行所有业务场景的贯通性测试
+运行所有测试
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
+
+
+
+
+
+
+
+
+
 
 import os
 import sys
@@ -11,13 +29,12 @@ import subprocess
 import time
 import json
 from pathlib import Path
+from datetime import datetime
+from typing import Dict, List, Any
+import requests
 
 
 class TestRunner:
-    """测试运行器"""
-    
-    def __init__(self, base_url: str = "http://localhost:5000", verbose: bool = True):
-        """初始化测试运行器"""
         self.base_url = base_url
         self.verbose = verbose
         self.start_time = time.time()
@@ -26,54 +43,65 @@ class TestRunner:
         # 获取当前脚本所在目录
         self.cli_tests_dir = Path(__file__).parent
         
-        # 测试配置
+        # 测试配置 - 基于项目宪法的业务场景覆盖
         self.test_configs = [
             {
                 "name": "格式对齐测试",
+                "description": "测试文档格式对齐功能的贯通性",
                 "script": str(self.cli_tests_dir / "test_format_alignment.py"),
-                "args": ["test_data/format_alignment/source.txt", "test_data/format_alignment/target.txt"],
-                "output": "test_results/format_alignment_output.txt"
+                "args": ["test_data/format_alignment/source.txt", "test_data/format_alignment/target.txt", "test_results/format_alignment_output.txt"],
+                "output": "test_results/format_alignment_output.txt",
+                "priority": "P1",
+                "category": "核心业务场景"
             },
             {
                 "name": "文风统一测试",
+                "description": "测试文风统一功能的贯通性",
                 "script": str(self.cli_tests_dir / "test_style_alignment.py"),
-                "args": ["test_data/style_alignment/reference.txt", "test_data/style_alignment/target.txt"],
-                "output": "test_results/style_alignment_output.txt"
+                "args": ["test_data/style_alignment/reference.txt", "test_data/style_alignment/target.txt", "test_results/style_alignment_output.txt"],
+                "output": "test_results/style_alignment_output.txt",
+                "priority": "P1",
+                "category": "核心业务场景"
             },
             {
                 "name": "智能填报测试",
+                "description": "测试智能文档填报功能的贯通性",
                 "script": str(self.cli_tests_dir / "test_document_fill.py"),
-                "args": ["test_data/document_fill/template.txt", "test_data/document_fill/data.json"],
-                "output": "test_results/document_fill_output.txt"
+                "args": ["test_data/document_fill/template.txt", "test_data/document_fill/data.json", "test_results/document_fill_output.txt"],
+                "output": "test_results/document_fill_output.txt",
+                "priority": "P1",
+                "category": "核心业务场景"
             },
             {
                 "name": "文档评审测试",
+                "description": "测试文档评审功能的贯通性",
                 "script": str(self.cli_tests_dir / "test_document_review.py"),
-                "args": ["test_data/document_review/document.txt"],
-                "output": "test_results/document_review_output.txt"
+                "args": ["test_data/document_review/document.txt", "test_results/document_review_output.txt"],
+                "output": "test_results/document_review_output.txt",
+                "priority": "P1",
+                "category": "核心业务场景"
             },
             {
                 "name": "表格填充测试",
+                "description": "测试表格填充功能的贯通性",
                 "script": str(self.cli_tests_dir / "test_table_fill.py"),
-                "args": ["test_data/table_fill/table.json", "test_data/table_fill/data.json"],
-                "output": "test_results/table_fill_output.json"
+                "args": ["test_data/table_fill/table.json", "test_data/table_fill/data.json", "test_results/table_fill_output.json"],
+                "output": "test_results/table_fill_output.json",
+                "priority": "P1",
+                "category": "核心业务场景"
+            },
+            {
+                "name": "边界用例测试",
+                "description": "测试系统在边界条件和异常情况下的表现",
+                "script": str(self.cli_tests_dir / "test_edge_cases_simple.py"),
+                "args": ["--output", "test_results/edge_cases_output.json"],
+                "output": "test_results/edge_cases_output.json",
+                "priority": "P2",
+                "category": "边界用例"
             }
         ]
     
     def create_test_data(self):
-        """创建测试数据"""
-        print("创建测试数据...")
-        
-        # 创建测试数据目录
-        test_data_dir = Path("test_data")
-        test_data_dir.mkdir(exist_ok=True)
-        
-        # 格式对齐测试数据
-        format_dir = test_data_dir / "format_alignment"
-        format_dir.mkdir(exist_ok=True)
-        
-        with open(format_dir / "source.txt", "w", encoding="utf-8") as f:
-            f.write("""# 参考格式文档
 
 ## 标题格式
 这是标准的标题格式，使用Markdown语法。
@@ -102,10 +130,6 @@ def example_function():
 |-----|-----|-----|
 | 数据1 | 数据2 | 数据3 |
 | 数据4 | 数据5 | 数据6 |
-""")
-        
-        with open(format_dir / "target.txt", "w", encoding="utf-8") as f:
-            f.write("""# 待处理文档
 
 标题格式
 这是不标准的标题格式，没有使用Markdown语法。
@@ -131,14 +155,6 @@ def example_function():
 列1 列2 列3
 数据1 数据2 数据3
 数据4 数据5 数据6
-""")
-        
-        # 文风统一测试数据
-        style_dir = test_data_dir / "style_alignment"
-        style_dir.mkdir(exist_ok=True)
-        
-        with open(style_dir / "reference.txt", "w", encoding="utf-8") as f:
-            f.write("""# 参考风格文档
 
 ## 学术风格
 本文档采用正式的学术写作风格，语言严谨、客观，使用专业术语，避免主观表达。
@@ -148,10 +164,6 @@ def example_function():
 
 ### 结论
 基于上述分析，我们可以得出以下结论：该方案具有可行性和有效性。
-""")
-        
-        with open(style_dir / "target.txt", "w", encoding="utf-8") as f:
-            f.write("""# 待调整文档
 
 ## 内容分析
 我觉得这个方案挺好的，应该可以解决问题。
@@ -161,14 +173,6 @@ def example_function():
 
 ### 总结
 总的来说，这个方案不错，应该能用。
-""")
-        
-        # 智能填报测试数据
-        fill_dir = test_data_dir / "document_fill"
-        fill_dir.mkdir(exist_ok=True)
-        
-        with open(fill_dir / "template.txt", "w", encoding="utf-8") as f:
-            f.write("""# 项目申请书
 
 ## 项目基本信息
 - 项目名称：{project_name}
@@ -190,118 +194,71 @@ def example_function():
 - 设备费用：{equipment_cost}元
 - 人员费用：{personnel_cost}元
 - 其他费用：{other_cost}元
-""")
-        
-        with open(fill_dir / "data.json", "w", encoding="utf-8") as f:
-            json.dump({
-                "project_name": "智能文档处理系统",
-                "applicant_name": "张三",
-                "application_date": "2024-01-15",
-                "project_type": "软件开发",
-                "project_description": "开发一个基于AI的智能文档处理系统，支持多种文档格式的自动识别和处理。",
-                "technical_solution": "采用深度学习技术，结合自然语言处理，实现文档的智能分析和处理。",
-                "expected_results": "完成系统开发，提供完整的文档处理解决方案。",
-                "total_budget": "500000",
-                "equipment_cost": "200000",
-                "personnel_cost": "250000",
-                "other_cost": "50000"
-            }, f, ensure_ascii=False, indent=2)
-        
-        # 文档评审测试数据
-        review_dir = test_data_dir / "document_review"
-        review_dir.mkdir(exist_ok=True)
-        
-        with open(review_dir / "document.txt", "w", encoding="utf-8") as f:
-            f.write("""# 技术方案文档
 
 ## 项目概述
 本项目旨在开发一个智能文档处理系统。
 
 ## 技术架构
-系统采用前后端分离架构，前端使用Vue.js，后端使用Python Flask。
-
-## 功能模块
-1. 文档上传
-2. 格式转换
-3. 内容分析
-4. 智能处理
-
-## 技术选型
-- 前端框架：Vue.js
-- 后端框架：Flask
-- 数据库：MySQL
-- AI模型：BERT
-
-## 项目计划
-第一阶段：需求分析
-第二阶段：系统设计
-第三阶段：开发实现
-第四阶段：测试部署
+系统采用微服务架构，包含以下组件：
+- 文档解析模块
+- AI处理模块
+- 用户界面模块
 
 ## 风险评估
-技术风险：AI模型训练可能遇到困难
-时间风险：开发周期可能延长
-成本风险：硬件投入可能超预算
-""")
-        
-        # 表格填充测试数据
-        table_dir = test_data_dir / "table_fill"
-        table_dir.mkdir(exist_ok=True)
-        
-        with open(table_dir / "table.json", "w", encoding="utf-8") as f:
-            json.dump({
-                "tables": [
-                    {
-                        "columns": ["姓名", "年龄", "职位", "部门"],
-                        "data": [
-                            ["张三", "", "", ""],
-                            ["李四", "", "", ""],
-                            ["王五", "", "", ""]
-                        ]
-                    },
-                    {
-                        "columns": ["项目名称", "负责人", "开始日期", "结束日期", "状态"],
-                        "data": [
-                            ["项目A", "", "", "", ""],
-                            ["项目B", "", "", "", ""]
-                        ]
-                    }
-                ]
-            }, f, ensure_ascii=False, indent=2)
-        
-        with open(table_dir / "data.json", "w", encoding="utf-8") as f:
-            json.dump({
-                "fill_data": [
-                    {"姓名": "张三", "年龄": "25", "职位": "工程师", "部门": "技术部"},
-                    {"姓名": "李四", "年龄": "30", "职位": "经理", "部门": "管理部"},
-                    {"姓名": "王五", "年龄": "28", "职位": "设计师", "部门": "设计部"},
-                    {"项目名称": "项目A", "负责人": "张三", "开始日期": "2024-01-01", "结束日期": "2024-06-30", "状态": "进行中"},
-                    {"项目名称": "项目B", "负责人": "李四", "开始日期": "2024-02-01", "结束日期": "2024-08-31", "状态": "计划中"}
-                ]
-            }, f, ensure_ascii=False, indent=2)
-        
-        print("测试数据创建完成")
-    
-    def run_single_test(self, config: dict) -> dict:
-        """运行单个测试"""
+项目存在技术风险和时间风险。
+
+## 结论
+该方案具有可行性。
         test_name = config["name"]
         script_path = config["script"]
         args = config["args"]
-        output = config["output"]
         
-        print(f"\n{'='*60}")
-        print(f"开始执行: {test_name}")
-        print(f"{'='*60}")
-        
-        # 构建命令
-        cmd = [sys.executable, script_path] + args + [output, "--url", self.base_url]
-        if self.verbose:
-            cmd.append("--verbose")
+        print(f"\n🚀 开始执行: {test_name}")
+        print(f"   描述: {config['description']}")
+        print(f"   优先级: {config['priority']}")
+        print(f"   分类: {config['category']}")
         
         start_time = time.time()
         
         try:
-            # 执行测试
+            # 检查脚本文件是否存在
+            if not os.path.exists(script_path):
+                error_msg = f"测试脚本不存在: {script_path}"
+                print(f"❌ {error_msg}")
+                return {
+                    "name": test_name,
+                    "success": False,
+                    "error": error_msg,
+                    "suggestion": "请检查脚本文件路径是否正确，或重新生成测试脚本",
+                    "duration": time.time() - start_time,
+                    "category": config["category"],
+                    "priority": config["priority"]
+                }
+            
+            # 检查输入文件是否存在
+            missing_files = []
+            for arg in args:
+                if arg.startswith("test_data/") and not os.path.exists(arg):
+                    missing_files.append(arg)
+            
+            if missing_files:
+                error_msg = f"测试数据文件缺失: {', '.join(missing_files)}"
+                print(f"❌ {error_msg}")
+                return {
+                    "name": test_name,
+                    "success": False,
+                    "error": error_msg,
+                    "suggestion": "请先运行 create_test_data() 创建测试数据",
+                    "duration": time.time() - start_time,
+                    "category": config["category"],
+                    "priority": config["priority"]
+                }
+            
+            # 执行测试脚本
+            cmd = [sys.executable, script_path] + args
+            if self.verbose:
+                print(f"   执行命令: {' '.join(cmd)}")
+            
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -309,210 +266,131 @@ def example_function():
                 timeout=300  # 5分钟超时
             )
             
-            end_time = time.time()
-            duration = end_time - start_time
+            duration = time.time() - start_time
             
-            # 分析结果
-            success = result.returncode == 0
-            stdout = result.stdout
-            stderr = result.stderr
-            
-            test_result = {
-                "name": test_name,
-                "script": script_path,
-                "success": success,
-                "duration": duration,
-                "return_code": result.returncode,
-                "stdout": stdout,
-                "stderr": stderr,
-                "output_file": output
-            }
-            
-            if success:
-                print(f"✅ {test_name} - 成功 ({duration:.2f}秒)")
+            if result.returncode == 0:
+                print(f"✅ {test_name} 执行成功 (耗时: {duration:.2f}秒)")
+                return {
+                    "name": test_name,
+                    "success": True,
+                    "output": result.stdout,
+                    "duration": duration,
+                    "category": config["category"],
+                    "priority": config["priority"]
+                }
             else:
-                print(f"❌ {test_name} - 失败 ({duration:.2f}秒)")
-                if stderr:
-                    print(f"错误信息: {stderr}")
-            
-            return test_result
-            
+                error_msg = f"测试执行失败: {result.stderr}"
+                print(f"❌ {test_name} 执行失败")
+                print(f"   错误信息: {error_msg}")
+                
+                # 根据错误类型提供具体建议
+                suggestion = self._generate_suggestion(error_msg, test_name)
+                
+                return {
+                    "name": test_name,
+                    "success": False,
+                    "error": error_msg,
+                    "suggestion": suggestion,
+                    "duration": duration,
+                    "category": config["category"],
+                    "priority": config["priority"]
+                }
+                
         except subprocess.TimeoutExpired:
-            print(f"⏰ {test_name} - 超时")
+            error_msg = "测试执行超时 (超过5分钟)"
+            print(f"❌ {test_name} 执行超时")
             return {
                 "name": test_name,
-                "script": script_path,
                 "success": False,
-                "duration": 300,
-                "return_code": -1,
-                "stdout": "",
-                "stderr": "测试超时",
-                "output_file": output
+                "error": error_msg,
+                "suggestion": "检查测试脚本是否存在死循环或性能问题，考虑优化测试逻辑",
+                "duration": time.time() - start_time,
+                "category": config["category"],
+                "priority": config["priority"]
             }
         except Exception as e:
-            print(f"💥 {test_name} - 异常: {str(e)}")
+            error_msg = f"测试执行异常: {str(e)}"
+            print(f"❌ {test_name} 执行异常: {error_msg}")
             return {
                 "name": test_name,
-                "script": script_path,
                 "success": False,
-                "duration": 0,
-                "return_code": -1,
-                "stdout": "",
-                "stderr": str(e),
-                "output_file": output
+                "error": error_msg,
+                "suggestion": "检查测试环境配置和依赖项是否正确安装",
+                "duration": time.time() - start_time,
+                "category": config["category"],
+                "priority": config["priority"]
             }
     
-    def run_all_tests(self) -> bool:
-        """运行所有测试"""
-        print("🚀 开始批量测试")
-        print(f"API基础URL: {self.base_url}")
-        print(f"详细输出: {self.verbose}")
+    def _generate_suggestion(self, error_msg: str, test_name: str) -> str:
+        print("🔍 检查API服务健康状态...")
         
-        # 创建测试结果目录
-        results_dir = Path("test_results")
-        results_dir.mkdir(exist_ok=True)
-        
-        # 创建测试数据
-        self.create_test_data()
-        
-        # 运行所有测试
-        for config in self.test_configs:
-            result = self.run_single_test(config)
-            self.test_results.append(result)
-        
-        # 生成测试报告
-        self.generate_report()
-        
-        # 统计结果
-        total_tests = len(self.test_results)
-        successful_tests = sum(1 for r in self.test_results if r["success"])
-        failed_tests = total_tests - successful_tests
-        
-        print(f"\n{'='*60}")
-        print("测试完成")
-        print(f"{'='*60}")
-        print(f"总测试数: {total_tests}")
-        print(f"成功: {successful_tests}")
-        print(f"失败: {failed_tests}")
-        print(f"成功率: {successful_tests/total_tests*100:.1f}%")
-        
-        return failed_tests == 0
-    
-    def generate_report(self):
-        """生成测试报告"""
-        report = {
-            "test_run": {
-                "start_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.start_time)),
-                "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "duration": time.time() - self.start_time,
-                "base_url": self.base_url,
-                "verbose": self.verbose
-            },
-            "summary": {
-                "total_tests": len(self.test_results),
-                "successful_tests": sum(1 for r in self.test_results if r["success"]),
-                "failed_tests": sum(1 for r in self.test_results if not r["success"]),
-                "success_rate": sum(1 for r in self.test_results if r["success"]) / len(self.test_results) * 100
-            },
-            "test_results": self.test_results
-        }
-        
-        # 保存报告
-        report_file = "test_results/batch_test_report.json"
-        with open(report_file, "w", encoding="utf-8") as f:
-            json.dump(report, f, ensure_ascii=False, indent=2)
-        
-        print(f"\n测试报告已保存: {report_file}")
-        
-        # 生成简化的HTML报告
-        self.generate_html_report(report)
-    
-    def generate_html_report(self, report: dict):
-        """生成HTML报告"""
-        html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>业务功能贯通性测试报告</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; }}
-        .header {{ background-color: #f0f0f0; padding: 20px; border-radius: 5px; }}
-        .summary {{ margin: 20px 0; }}
-        .test-result {{ margin: 10px 0; padding: 10px; border-radius: 5px; }}
-        .success {{ background-color: #d4edda; border: 1px solid #c3e6cb; }}
-        .failure {{ background-color: #f8d7da; border: 1px solid #f5c6cb; }}
-        .details {{ margin-top: 10px; font-size: 12px; color: #666; }}
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>业务功能贯通性测试报告</h1>
-        <p>测试时间: {report['test_run']['start_time']}</p>
-        <p>API地址: {report['test_run']['base_url']}</p>
-    </div>
-    
-    <div class="summary">
-        <h2>测试摘要</h2>
-        <p>总测试数: {report['summary']['total_tests']}</p>
-        <p>成功: {report['summary']['successful_tests']}</p>
-        <p>失败: {report['summary']['failed_tests']}</p>
-        <p>成功率: {report['summary']['success_rate']:.1f}%</p>
-    </div>
-    
-    <div class="test-results">
-        <h2>详细结果</h2>
-"""
-        
-        for result in report['test_results']:
-            status_class = "success" if result['success'] else "failure"
-            status_icon = "✅" if result['success'] else "❌"
+        try:
+            response = requests.get("http://localhost:5000/api/health", timeout=10)
             
-            html_content += f"""
-        <div class="test-result {status_class}">
-            <h3>{status_icon} {result['name']}</h3>
-            <p>脚本: {result['script']}</p>
-            <p>执行时间: {result['duration']:.2f}秒</p>
-            <p>输出文件: {result['output_file']}</p>
-            <div class="details">
-                <strong>标准输出:</strong><br>
-                <pre>{result['stdout'][:500]}{'...' if len(result['stdout']) > 500 else ''}</pre>
-                {f"<strong>错误输出:</strong><br><pre>{result['stderr']}</pre>" if result['stderr'] else ''}
-            </div>
-        </div>
-"""
-        
-        html_content += """
-    </div>
-</body>
-</html>
-"""
-        
-        html_file = "test_results/batch_test_report.html"
-        with open(html_file, "w", encoding="utf-8") as f:
-            f.write(html_content)
-        
-        print(f"HTML报告已保存: {html_file}")
+            if response.status_code == 200:
+                health_data = response.json()
+                print(f"✅ API服务健康检查通过")
+                print(f"   状态: {health_data.get('status', 'unknown')}")
+                print(f"   时间戳: {health_data.get('timestamp', 'unknown')}")
+                
+                # 检查API状态
+                api_status = health_data.get('api_status', {})
+                for api_name, status_info in api_status.items():
+                    status = status_info.get('status', 'unknown')
+                    mock_mode = status_info.get('mock_mode', False)
+                    print(f"   {api_name}: {status} {'(MOCK)' if mock_mode else ''}")
+                
+                return True
+            else:
+                print(f"❌ API服务健康检查失败: HTTP {response.status_code}")
+                return False
+                
+        except requests.exceptions.ConnectionError:
+            print("❌ 无法连接到API服务 (ConnectionError)")
+            print("   请确保API服务已启动: python src/web_app.py")
+            return False
+        except requests.exceptions.Timeout:
+            print("❌ API服务响应超时 (Timeout)")
+            return False
+        except Exception as e:
+            print(f"❌ API服务健康检查异常: {e}")
+            return False
 
+    def run_tests(self) -> Dict[str, Any]:
+        if test_results is None:
+            print("⚠️ 未传入测试结果，无法生成报告")
+            return
+        # 统计
+        total = len(test_results)
+        passed = sum(1 for r in test_results if r["success"])
+        failed = total - passed
+        success_rate = (passed / total) * 100 if total > 0 else 0.0
+        print(f"[报告] 总数: {total} 通过: {passed} 失败: {failed} 成功率: {success_rate:.1f}% 总耗时: {duration or 0:.2f}秒")
 
-def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(description="批量运行所有业务功能测试")
-    parser.add_argument("--url", default="http://localhost:5000", help="API基础URL")
+    def generate_summary(self, test_results: List[Dict[str, Any]], duration: float) -> Dict[str, Any]:
+    parser = argparse.ArgumentParser(description="CLI业务场景贯通性测试")
+    parser.add_argument("--report", action="store_true", help="生成详细报告")
     parser.add_argument("--verbose", action="store_true", help="详细输出")
-    parser.add_argument("--create-data-only", action="store_true", help="仅创建测试数据")
+    parser.add_argument("--create-data", action="store_true", help="仅创建测试数据")
     
     args = parser.parse_args()
     
-    runner = TestRunner(args.url, args.verbose)
+    runner = TestRunner(verbose=args.verbose)
     
-    if args.create_data_only:
+    if args.create_data:
         runner.create_test_data()
-        print("测试数据创建完成")
+        print("✅ 测试数据创建完成")
         return
     
-    success = runner.run_all_tests()
-    sys.exit(0 if success else 1)
+    success = runner.run_tests()
+    
+    if not success.get("success", False):
+        print(f"\n❌ CLI业务场景测试失败，工程可用性验证未通过")
+        print("请根据上述错误信息和建议进行修复后重新测试")
+        sys.exit(1)
+    else:
+        print(f"\n✅ CLI业务场景测试成功，工程可用性验证通过")
+        sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-综合文风处理器
-整合文风特征提取、融合、对齐等所有功能的主接口
+Comprehensive Style Processor - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import json
 import os

@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-全面深入的方法实现检查工具
-扫描整个项目代码库，验证所有模块的实现状态
+综合方法检查器
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
+
+
+
+
+
+
+
+
+
 
 import os
 import sys
@@ -22,65 +39,6 @@ logger = logging.getLogger(__name__)
 
 
 class ComprehensiveMethodChecker:
-    """全面深入的方法实现检查器"""
-    
-    def __init__(self):
-        self.project_root = Path(project_root)
-        self.required_methods = {
-            'style_alignment': [
-                'generate_style_preview',
-                'save_style_template', 
-                'export_styled_document',
-                'analyze_writing_style',
-                'apply_style_changes',
-                'handle_style_change',
-                'handle_batch_style_changes'
-            ],
-            'document_fill': [
-                'generate_fill_preview',
-                'apply_fill_changes',
-                'export_filled_document',
-                'analyze_template_structure',
-                'match_data_to_template',
-                'intelligent_fill_document'
-            ],
-            'format_alignment': [
-                'analyze_format_differences',
-                'generate_alignment_preview',
-                'apply_format_changes',
-                'export_aligned_document',
-                'compare_document_formats',
-                'align_documents_format'
-            ],
-            'document_review': [
-                'generate_review_report',
-                'apply_review_suggestions',
-                'export_reviewed_document',
-                'analyze_document_quality',
-                'generate_approval_recommendations',
-                'execute'
-            ]
-        }
-        
-        # 扩展搜索范围
-        self.search_directories = [
-            'src/core/tools',
-            'src/core/analysis', 
-            'src/core/agent',
-            'src/core/database',
-            'src/core/guidance',
-            'src/core/knowledge_base',
-            'src/core/monitoring',
-            'src/llm_clients',
-            'src'
-        ]
-        
-        self.found_methods = {}
-        self.missing_methods = {}
-        self.method_locations = {}
-        
-    def scan_all_python_files(self) -> Dict[str, str]:
-        """扫描所有Python文件"""
         python_files = {}
         
         for search_dir in self.search_directories:
@@ -93,35 +51,6 @@ class ComprehensiveMethodChecker:
         return python_files
     
     def extract_methods_from_file(self, file_path: str) -> Set[str]:
-        """从文件中提取所有方法名"""
-        methods = set()
-        
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # 使用AST解析
-            tree = ast.parse(content)
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    methods.add(node.name)
-                elif isinstance(node, ast.AsyncFunctionDef):
-                    methods.add(node.name)
-                elif isinstance(node, ast.ClassDef):
-                    for class_node in ast.walk(node):
-                        if isinstance(class_node, ast.FunctionDef):
-                            methods.add(class_node.name)
-                        elif isinstance(class_node, ast.AsyncFunctionDef):
-                            methods.add(class_node.name)
-        
-        except Exception as e:
-            logger.warning(f"解析文件失败 {file_path}: {e}")
-        
-        return methods
-    
-    def find_method_implementations(self) -> Dict[str, List[Dict[str, str]]]:
-        """查找所有方法的实现位置"""
         python_files = self.scan_all_python_files()
         all_methods = {}
         
@@ -139,37 +68,6 @@ class ComprehensiveMethodChecker:
         return all_methods
     
     def check_method_coverage(self) -> Dict[str, Dict[str, Any]]:
-        """检查方法覆盖率"""
-        all_methods = self.find_method_implementations()
-        results = {}
-        
-        for module_name, required_methods in self.required_methods.items():
-            implemented = []
-            missing = []
-            found_locations = []
-            
-            for method_name in required_methods:
-                if method_name in all_methods:
-                    implemented.append(method_name)
-                    found_locations.extend(all_methods[method_name])
-                else:
-                    missing.append(method_name)
-            
-            coverage = len(implemented) / len(required_methods) if required_methods else 1.0
-            
-            results[module_name] = {
-                'implemented': implemented,
-                'missing': missing,
-                'found_locations': found_locations,
-                'coverage': coverage,
-                'total_required': len(required_methods),
-                'total_implemented': len(implemented)
-            }
-        
-        return results
-    
-    def check_api_endpoints(self) -> Dict[str, List[str]]:
-        """检查API端点实现"""
         api_endpoints = {}
         
         # 检查web_app.py中的API端点
@@ -195,33 +93,6 @@ class ComprehensiveMethodChecker:
         return api_endpoints
     
     def check_method_calls(self) -> Dict[str, List[str]]:
-        """检查方法调用关系"""
-        method_calls = {}
-        python_files = self.scan_all_python_files()
-        
-        for module_name, file_path in python_files.items():
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                
-                # 查找方法调用
-                import re
-                call_pattern = r'(\w+)\.(\w+)\('
-                matches = re.findall(call_pattern, content)
-                
-                for obj_name, method_name in matches:
-                    key = f"{obj_name}.{method_name}"
-                    if key not in method_calls:
-                        method_calls[key] = []
-                    method_calls[key].append(module_name)
-            
-            except Exception as e:
-                logger.warning(f"检查方法调用失败 {file_path}: {e}")
-        
-        return method_calls
-    
-    def generate_comprehensive_report(self) -> str:
-        """生成全面报告"""
         print("🔍 开始全面深入扫描...")
         
         # 1. 方法覆盖率检查
@@ -297,18 +168,6 @@ class ComprehensiveMethodChecker:
         return "\n".join(report)
     
     def save_detailed_report(self, output_file: str = "comprehensive_method_report.md"):
-        """保存详细报告"""
-        report_content = self.generate_comprehensive_report()
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(report_content)
-        
-        logger.info(f"详细报告已保存到: {output_file}")
-        return output_file
-
-
-def main():
-    """主函数"""
     checker = ComprehensiveMethodChecker()
     
     print("🚀 开始全面深入方法实现检查...")

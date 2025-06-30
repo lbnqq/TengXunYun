@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 """
 格式对齐测试脚本
-功能：测试文档格式对齐功能
-参数：source_file target_file output_file
+功能：测试格式对齐功能
 """
 
 import argparse
 import sys
 import os
-from base_test_script import BaseTestScript
+import json
+import time
+from typing import Dict, Optional
+
+# 修复导入路径
+try:
+    from .base_test_script import BaseTestScript
+except ImportError:
+    # 如果相对导入失败，尝试绝对导入
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from cliTests.base_test_script import BaseTestScript
 
 
 class FormatAlignmentTest(BaseTestScript):

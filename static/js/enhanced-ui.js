@@ -1,8 +1,13 @@
 /**
- * 增强版UI管理器
- * 功能：用户界面交互、文件上传、状态显示、进度管理
- * 版本：2.0.0
+ * Enhanced-Ui
+ * 
+ * @author AI Assistant (Claude)
+ * @date 2025-01-28
+ * @ai_assisted 是 - Claude 3.5 Sonnet
+ * @version v1.0
+ * @license MIT
  */
+
 
 class UIManager {
     constructor() {
@@ -13,9 +18,6 @@ class UIManager {
         this.progressCallbacks = new Map();
     }
 
-    /**
-     * 初始化用户界面
-     */
     initializeUI() {
         this.setupEventListeners();
         this.setupFileUploadAreas();
@@ -26,9 +28,6 @@ class UIManager {
         this.setupNotificationSystem();
     }
 
-    /**
-     * 设置事件监听器
-     */
     setupEventListeners() {
         // 文件上传监听
         document.querySelectorAll('.file-upload-area').forEach(area => {
@@ -54,9 +53,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置文件上传区域
-     */
     setupFileUploadAreas() {
         document.querySelectorAll('.file-upload-area').forEach(area => {
             const input = area.querySelector('input[type="file"]');
@@ -71,9 +67,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置进度指示器
-     */
     setupProgressIndicators() {
         // 创建全局进度条
         this.createGlobalProgressBar();
@@ -87,9 +80,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置步骤导航
-     */
     setupStepNavigation() {
         const stepIndicators = document.querySelectorAll('.step-indicator .step-item');
         stepIndicators.forEach((indicator, index) => {
@@ -99,25 +89,16 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置响应式设计
-     */
     setupResponsiveDesign() {
         const mediaQuery = window.matchMedia('(max-width: 768px)');
         this.handleResponsiveChange(mediaQuery);
         mediaQuery.addListener(this.handleResponsiveChange.bind(this));
     }
 
-    /**
-     * 设置全局进度条
-     */
     setupGlobalProgressBar() {
         this.createGlobalProgressBar();
     }
 
-    /**
-     * 设置通知系统
-     */
     setupNotificationSystem() {
         // 创建通知容器
         const notificationContainer = document.createElement('div');
@@ -126,9 +107,6 @@ class UIManager {
         document.body.appendChild(notificationContainer);
     }
 
-    /**
-     * 创建全局进度条
-     */
     createGlobalProgressBar() {
         const progressBar = document.createElement('div');
         progressBar.id = 'global-progress';
@@ -141,10 +119,6 @@ class UIManager {
         document.body.appendChild(progressBar);
     }
 
-    /**
-     * 处理响应式变化
-     * @param {MediaQueryList} mediaQuery - 媒体查询对象
-     */
     handleResponsiveChange(mediaQuery) {
         if (mediaQuery.matches) {
             document.body.classList.add('mobile-view');
@@ -153,28 +127,16 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理拖拽悬停
-     * @param {DragEvent} e - 拖拽事件
-     */
     handleDragOver(e) {
         e.preventDefault();
         e.currentTarget.classList.add('dragover');
     }
 
-    /**
-     * 处理拖拽离开
-     * @param {DragEvent} e - 拖拽事件
-     */
     handleDragLeave(e) {
         e.preventDefault();
         e.currentTarget.classList.remove('dragover');
     }
 
-    /**
-     * 处理文件拖放
-     * @param {DragEvent} e - 拖拽事件
-     */
     handleFileDrop(e) {
         e.preventDefault();
         e.currentTarget.classList.remove('dragover');
@@ -187,10 +149,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 处理上传点击
-     * @param {Event} e - 点击事件
-     */
     handleUploadClick(e) {
         const input = e.currentTarget.querySelector('input[type="file"]');
         if (input) {
@@ -198,11 +156,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件选择
-     * @param {Event} e - 文件选择事件
-     * @param {HTMLElement} uploadArea - 上传区域
-     */
     handleFileSelect(e, uploadArea) {
         const files = Array.from(e.target.files);
         files.forEach(file => {
@@ -210,10 +163,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 处理按钮点击
-     * @param {Event} e - 点击事件
-     */
     handleButtonClick(e) {
         const button = e.currentTarget;
         const action = button.getAttribute('data-action');
@@ -223,10 +172,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理表单提交
-     * @param {Event} e - 表单提交事件
-     */
     handleFormSubmit(e) {
         e.preventDefault();
         const form = e.currentTarget;
@@ -237,10 +182,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理场景切换
-     * @param {Event} e - 点击事件
-     */
     handleSceneSwitch(e) {
         e.preventDefault();
         const sceneId = e.currentTarget.getAttribute('data-scene');
@@ -249,11 +190,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件
-     * @param {File} file - 文件对象
-     * @param {HTMLElement} uploadArea - 上传区域
-     */
     async processFile(file, uploadArea) {
         try {
             // 验证文件
@@ -289,12 +225,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新文件显示
-     * @param {HTMLElement} uploadArea - 上传区域
-     * @param {File} file - 文件对象
-     * @param {Object} fileData - 文件数据
-     */
     updateFileDisplay(uploadArea, file, fileData) {
         const displayArea = uploadArea.querySelector('.file-display') || this.createFileDisplay(uploadArea);
         
@@ -313,11 +243,6 @@ class UIManager {
         uploadArea.classList.add('has-file');
     }
 
-    /**
-     * 创建文件显示区域
-     * @param {HTMLElement} uploadArea - 上传区域
-     * @returns {HTMLElement} 文件显示区域
-     */
     createFileDisplay(uploadArea) {
         const displayArea = document.createElement('div');
         displayArea.className = 'file-display';
@@ -325,11 +250,6 @@ class UIManager {
         return displayArea;
     }
 
-    /**
-     * 格式化文件大小
-     * @param {number} bytes - 字节数
-     * @returns {string} 格式化的大小
-     */
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -338,11 +258,6 @@ class UIManager {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    /**
-     * 显示加载状态
-     * @param {string} elementId - 元素ID
-     * @param {string} message - 加载消息
-     */
     showLoading(elementId, message = '处理中...') {
         const element = document.getElementById(elementId);
         if (element) {
@@ -355,10 +270,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 隐藏加载状态
-     * @param {string} elementId - 元素ID
-     */
     hideLoading(elementId) {
         const element = document.getElementById(elementId);
         if (element && this.loadingStates.get(elementId)) {
@@ -367,11 +278,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新进度
-     * @param {number} progress - 进度百分比
-     * @param {string} message - 进度消息
-     */
     updateProgress(progress, message = '') {
         const progressBar = document.getElementById('global-progress');
         if (progressBar) {
@@ -391,10 +297,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 导航到指定步骤
-     * @param {number} step - 步骤号
-     */
     navigateToStep(step) {
         if (step >= 1 && step <= this.totalSteps) {
             this.currentStep = step;
@@ -403,9 +305,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新步骤指示器
-     */
     updateStepIndicators() {
         const indicators = document.querySelectorAll('.step-indicator .step-item');
         indicators.forEach((indicator, index) => {
@@ -420,10 +319,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 显示步骤内容
-     * @param {number} step - 步骤号
-     */
     showStepContent(step) {
         const stepContents = document.querySelectorAll('.step-content');
         stepContents.forEach((content, index) => {
@@ -436,10 +331,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 切换场景
-     * @param {string} sceneId - 场景ID
-     */
     switchScene(sceneId) {
         const scenes = document.querySelectorAll('.scene-section');
         scenes.forEach(scene => {
@@ -456,10 +347,6 @@ class UIManager {
         window.appState.currentScene = sceneId;
     }
 
-    /**
-     * 更新活动导航项
-     * @param {string} sceneId - 场景ID
-     */
     updateActiveNavItem(sceneId) {
         const navItems = document.querySelectorAll('.nav-item');
         navItems.forEach(item => {
@@ -470,11 +357,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 执行操作
-     * @param {string} action - 操作名称
-     * @param {HTMLElement} element - 触发元素
-     */
     async executeAction(action, element) {
         try {
             this.showLoading(element.id || 'action-area', '执行中...');
@@ -514,84 +396,46 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件上传
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleFileUpload(element) {
         console.log('处理文件上传');
         // 实现文件上传逻辑
     }
 
-    /**
-     * 处理文档处理
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleDocumentProcessing(element) {
         console.log('处理文档');
         // 实现文档处理逻辑
     }
 
-    /**
-     * 处理导出
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleExport(element) {
         console.log('处理导出');
         // 实现导出逻辑
     }
 
-    /**
-     * 处理预览
-     * @param {HTMLElement} element - 触发元素
-     */
     async handlePreview(element) {
         console.log('处理预览');
         // 实现预览逻辑
     }
 
-    /**
-     * 处理格式对齐
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleFormatAlignment(element) {
         console.log('处理格式对齐');
         // 实现格式对齐逻辑
     }
 
-    /**
-     * 处理文风对齐
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleStyleAlignment(element) {
         console.log('处理文风对齐');
         // 实现文风对齐逻辑
     }
 
-    /**
-     * 处理文档填报
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleDocumentFill(element) {
         console.log('处理文档填报');
         // 实现文档填报逻辑
     }
 
-    /**
-     * 处理文档审查
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleDocumentReview(element) {
         console.log('处理文档审查');
         // 实现文档审查逻辑
     }
 
-    /**
-     * 显示通知
-     * @param {string} message - 消息内容
-     * @param {string} type - 消息类型
-     * @param {number} duration - 显示时长（毫秒）
-     */
     showNotification(message, type = 'info', duration = 5000) {
         const container = document.getElementById('notification-container');
         if (!container) return;
@@ -616,11 +460,6 @@ class UIManager {
         }, duration);
     }
 
-    /**
-     * 获取通知图标
-     * @param {string} type - 通知类型
-     * @returns {string} 图标HTML
-     */
     getNotificationIcon(type) {
         switch (type) {
             case 'error': return '❌';
@@ -631,10 +470,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 删除文件
-     * @param {string} fileName - 文件名
-     */
     removeFile(fileName) {
         // 从状态中移除文件
         for (const [fileId, fileInfo] of window.appState.uploadedFiles.entries()) {
@@ -649,10 +484,6 @@ class UIManager {
         this.showNotification('文件已删除', 'success');
     }
 
-    /**
-     * 预览文件
-     * @param {string} fileName - 文件名
-     */
     previewFile(fileName) {
         // 查找文件信息
         let fileInfo = null;
@@ -670,10 +501,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 显示文件预览
-     * @param {Object} fileInfo - 文件信息
-     */
     showFilePreview(fileInfo) {
         const modal = document.createElement('div');
         modal.className = 'file-preview-modal';
@@ -693,11 +520,6 @@ class UIManager {
         document.body.appendChild(modal);
     }
 
-    /**
-     * 格式化文件预览
-     * @param {Object} fileInfo - 文件信息
-     * @returns {string} 预览HTML
-     */
     formatFilePreview(fileInfo) {
         if (fileInfo.data && fileInfo.data.content) {
             return `<pre>${fileInfo.data.content}</pre>`;
@@ -707,10 +529,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新文件显示（删除后）
-     * @param {string} fileName - 文件名
-     */
     updateFileDisplayAfterRemoval(fileName) {
         // 查找并清除对应的文件显示
         document.querySelectorAll('.file-display').forEach(display => {

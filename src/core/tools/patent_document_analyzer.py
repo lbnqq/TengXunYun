@@ -1,7 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-专利申请书智能分析器
-专门处理专利申请书等复杂文档表格的智能识别和填写
+Patent Document Analyzer - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import re
 import json

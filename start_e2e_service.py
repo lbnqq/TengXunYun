@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-端到端服务启动脚本
-快速启动后端服务和前端界面，用于开发和测试
+Start E2E Service
 
-功能：
-1. 检查虚拟环境
-2. 启动Flask后端服务
-3. 自动打开浏览器访问前端
-4. 提供健康检查
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import os
 import sys

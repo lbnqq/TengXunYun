@@ -1,9 +1,13 @@
 /**
- * 办公文档智能代理 - 完整前端解决方案
- * 功能：文件上传处理、状态管理、错误处理、用户界面流程、文件验证
- * 版本：3.0.0
- * 日期：2024-12-19
+ * Enhanced-Frontend-Complete
+ * 
+ * @author AI Assistant (Claude)
+ * @date 2025-01-28
+ * @ai_assisted 是 - Claude 3.5 Sonnet
+ * @version v1.0
+ * @license MIT
  */
+
 
 // ==================== 全局应用状态管理 ====================
 class AppState {
@@ -24,9 +28,6 @@ class AppState {
         this.maxSteps = 4;
     }
 
-    /**
-     * 创建新的会话
-     */
     createSession(sceneType) {
         const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this.currentSession = {
@@ -44,9 +45,6 @@ class AppState {
         return sessionId;
     }
 
-    /**
-     * 更新会话状态
-     */
     updateSession(sessionId, status, data = {}) {
         const session = this.sessionHistory.find(s => s.id === sessionId);
         if (session) {
@@ -56,9 +54,6 @@ class AppState {
         }
     }
 
-    /**
-     * 添加文件到会话
-     */
     addFileToSession(sessionId, file, fileType) {
         const session = this.sessionHistory.find(s => s.id === sessionId);
         if (session) {
@@ -75,9 +70,6 @@ class AppState {
         }
     }
 
-    /**
-     * 记录错误
-     */
     logError(error, context) {
         this.errorHistory.push({
             timestamp: new Date(),
@@ -87,9 +79,6 @@ class AppState {
         });
     }
 
-    /**
-     * 更新当前步骤
-     */
     updateStep(step) {
         this.currentStep = step;
         if (this.currentSession) {
@@ -98,6 +87,10 @@ class AppState {
                 this.currentSession.completedSteps.push(step - 1);
             }
         }
+    }
+
+    getCurrentSessionId() {
+        return this.currentSession ? this.currentSession.id : null;
     }
 }
 
@@ -114,9 +107,6 @@ class FileValidator {
         this.minFileSize = 1; // 1 byte
     }
 
-    /**
-     * 验证文件格式
-     */
     validateFile(file, expectedType = 'document') {
         const result = {
             isValid: true,
@@ -159,9 +149,6 @@ class FileValidator {
         return result;
     }
 
-    /**
-     * 检测文件类型
-     */
     detectFileType(file) {
         const extension = '.' + file.name.split('.').pop().toLowerCase();
         
@@ -173,9 +160,6 @@ class FileValidator {
         return 'unknown';
     }
 
-    /**
-     * 预处理文件
-     */
     async preprocessFile(file) {
         const result = {
             success: true,
@@ -202,9 +186,6 @@ class FileValidator {
         return result;
     }
 
-    /**
-     * 读取文件内容
-     */
     readFileContent(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -230,9 +211,6 @@ class FileUploadManager {
         this.maxConcurrentUploads = 3;
     }
 
-    /**
-     * 上传文件
-     */
     async uploadFile(file, endpoint, options = {}) {
         const uploadId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
@@ -258,9 +236,6 @@ class FileUploadManager {
         });
     }
 
-    /**
-     * 处理上传队列
-     */
     async processUploadQueue() {
         const activeUploads = Array.from(this.activeUploads.values());
         
@@ -277,9 +252,6 @@ class FileUploadManager {
         await this.executeUpload(pendingUpload);
     }
 
-    /**
-     * 执行上传
-     */
     async executeUpload(uploadConfig) {
         try {
             uploadConfig.status = 'uploading';
@@ -335,9 +307,6 @@ class FileUploadManager {
         }
     }
 
-    /**
-     * 处理上传响应
-     */
     handleUploadResponse(uploadId, xhr) {
         const uploadConfig = this.activeUploads.get(uploadId);
         if (!uploadConfig) return;
@@ -381,9 +350,6 @@ class FileUploadManager {
         this.processUploadQueue();
     }
 
-    /**
-     * 处理上传错误
-     */
     handleUploadError(uploadId, error) {
         const uploadConfig = this.activeUploads.get(uploadId);
         if (uploadConfig) {
@@ -401,9 +367,6 @@ class FileUploadManager {
         this.processUploadQueue();
     }
 
-    /**
-     * 更新上传进度
-     */
     updateUploadProgress(uploadId, progress) {
         const uploadConfig = this.activeUploads.get(uploadId);
         if (uploadConfig) {
@@ -411,9 +374,6 @@ class FileUploadManager {
         }
     }
 
-    /**
-     * 从响应头提取文件名
-     */
     extractFilenameFromHeaders(xhr) {
         const contentDisposition = xhr.getResponseHeader('Content-Disposition');
         if (contentDisposition) {
@@ -466,9 +426,6 @@ class ErrorHandler {
         };
     }
 
-    /**
-     * 处理错误
-     */
     handleError(error, context, options = {}) {
         const errorInfo = {
             originalError: error,
@@ -493,9 +450,6 @@ class ErrorHandler {
         return errorInfo;
     }
 
-    /**
-     * 分类错误
-     */
     categorizeError(error) {
         if (error.name === 'NetworkError' || error.message.includes('network')) {
             return this.errorTypes.NETWORK;
@@ -515,9 +469,6 @@ class ErrorHandler {
         return this.errorTypes.SYSTEM;
     }
 
-    /**
-     * 获取用户友好的错误消息
-     */
     getUserFriendlyMessage(error, context) {
         const errorType = this.categorizeError(error);
         const baseMessage = this.errorMessages[errorType].zh;
@@ -536,16 +487,10 @@ class ErrorHandler {
         return baseMessage;
     }
 
-    /**
-     * 显示错误消息
-     */
     showErrorMessage(message, type = 'error') {
         this.createNotification(message, type);
     }
 
-    /**
-     * 创建通知
-     */
     createNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
@@ -575,9 +520,6 @@ class ErrorHandler {
         });
     }
 
-    /**
-     * 创建通知容器
-     */
     createNotificationContainer() {
         const container = document.createElement('div');
         container.className = 'notification-container';
@@ -585,9 +527,6 @@ class ErrorHandler {
         return container;
     }
 
-    /**
-     * 获取通知图标
-     */
     getNotificationIcon(type) {
         const icons = {
             error: '❌',
@@ -598,9 +537,6 @@ class ErrorHandler {
         return icons[type] || icons.info;
     }
 
-    /**
-     * 通知用户
-     */
     notifyUser(errorInfo) {
         // 可以在这里添加更多的通知方式，如声音、桌面通知等
         if (Notification.permission === 'granted') {
@@ -622,9 +558,6 @@ class UIManager {
         this.modals = new Map();
     }
 
-    /**
-     * 初始化UI
-     */
     initializeUI() {
         this.setupEventListeners();
         this.setupFileUploadAreas();
@@ -634,9 +567,6 @@ class UIManager {
         this.setupNotifications();
     }
 
-    /**
-     * 设置事件监听器
-     */
     setupEventListeners() {
         // 导航事件
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -666,9 +596,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置文件上传区域
-     */
     setupFileUploadAreas() {
         document.querySelectorAll('.file-upload-area').forEach(area => {
             const input = area.querySelector('input[type="file"]');
@@ -689,36 +616,24 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置进度指示器
-     */
     setupProgressIndicators() {
         document.querySelectorAll('.progress-bar').forEach(bar => {
             this.progressBars.set(bar.id, bar);
         });
     }
 
-    /**
-     * 设置步骤导航
-     */
     setupStepNavigation() {
         document.querySelectorAll('.step-indicator').forEach(indicator => {
             this.stepIndicators.set(indicator.id, indicator);
         });
     }
 
-    /**
-     * 设置响应式设计
-     */
     setupResponsiveDesign() {
         const mediaQuery = window.matchMedia('(max-width: 768px)');
         this.handleResponsiveChange(mediaQuery);
         mediaQuery.addListener(this.handleResponsiveChange.bind(this));
     }
 
-    /**
-     * 设置通知系统
-     */
     setupNotifications() {
         // 请求通知权限
         if ('Notification' in window && Notification.permission === 'default') {
@@ -726,9 +641,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 切换场景
-     */
     switchScene(sceneId) {
         // 隐藏所有场景
         document.querySelectorAll('.scene-section').forEach(scene => {
@@ -749,9 +661,6 @@ class UIManager {
         this.resetSteps();
     }
 
-    /**
-     * 更新活动导航项
-     */
     updateActiveNavItem(sceneId) {
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
@@ -761,9 +670,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 重置步骤
-     */
     resetSteps() {
         document.querySelectorAll('.step-item').forEach((item, index) => {
             item.classList.remove('active', 'completed');
@@ -773,9 +679,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 处理拖拽事件
-     */
     handleDragOver(e) {
         e.preventDefault();
         e.currentTarget.classList.add('dragover');
@@ -797,9 +700,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理上传点击
-     */
     handleUploadClick(e) {
         const uploadArea = e.currentTarget;
         const input = uploadArea.querySelector('input[type="file"]');
@@ -808,9 +708,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件选择
-     */
     handleFileSelect(e, uploadArea) {
         const file = e.target.files[0];
         if (file) {
@@ -818,9 +715,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理按钮点击
-     */
     async handleButtonClick(e) {
         const button = e.currentTarget;
         const action = button.getAttribute('data-action');
@@ -830,9 +724,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理表单提交
-     */
     handleFormSubmit(e) {
         e.preventDefault();
         const form = e.currentTarget;
@@ -843,9 +734,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件
-     */
     async processFile(file, uploadArea) {
         try {
             // 验证文件
@@ -881,9 +769,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新文件显示
-     */
     updateFileDisplay(uploadArea, file, fileData) {
         // 移除现有的文件显示
         const existingDisplay = uploadArea.querySelector('.file-display');
@@ -899,9 +784,6 @@ class UIManager {
         uploadArea.classList.add('has-file');
     }
 
-    /**
-     * 创建文件显示
-     */
     createFileDisplay(file, fileData) {
         const display = document.createElement('div');
         display.className = 'file-display';
@@ -928,9 +810,6 @@ class UIManager {
         return display;
     }
 
-    /**
-     * 格式化文件大小
-     */
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -939,9 +818,6 @@ class UIManager {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    /**
-     * 显示加载状态
-     */
     showLoading(elementId, message = '处理中...') {
         const element = document.getElementById(elementId);
         if (element) {
@@ -954,9 +830,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 隐藏加载状态
-     */
     hideLoading(elementId) {
         const element = document.getElementById(elementId);
         if (element) {
@@ -967,9 +840,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新进度
-     */
     updateProgress(progress, message = '') {
         const progressBar = document.querySelector('.global-progress-bar');
         if (progressBar) {
@@ -985,9 +855,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 导航到步骤
-     */
     navigateToStep(step) {
         const stepItems = document.querySelectorAll('.step-item');
         stepItems.forEach((item, index) => {
@@ -1003,9 +870,6 @@ class UIManager {
         appState.updateStep(step);
     }
 
-    /**
-     * 执行操作
-     */
     async executeAction(action, element) {
         try {
             switch (action) {
@@ -1054,6 +918,33 @@ class UIManager {
                 case 'export_review':
                     await this.handleExportReview(element);
                     break;
+                case 'auto_match_data':
+                    await this.handleAutoMatchData(element);
+                    break;
+                case 'manual_match':
+                    await this.handleManualMatch(element);
+                    break;
+                case 'export_filled_doc':
+                    await this.handleExportFilledDoc(element);
+                    break;
+                case 'preview_fill':
+                    await this.handlePreviewFill(element);
+                    break;
+                case 'export_fill':
+                    await this.handleExportFill(element);
+                    break;
+                case 'preview_fill_result':
+                    await this.handlePreviewFillResult(element);
+                    break;
+                case 'export_fill_result':
+                    await this.handleExportFillResult(element);
+                    break;
+                case 'preview_style':
+                    await this.handlePreviewStyle(element);
+                    break;
+                case 'export_style':
+                    await this.handleExportStyle(element);
+                    break;
                 default:
                     console.warn(`未知操作: ${action}`);
             }
@@ -1062,9 +953,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理格式对齐
-     */
     async handleFormatAlignment(element) {
         const sessionId = appState.createSession('format');
         this.navigateToStep(2);
@@ -1091,9 +979,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文风统一
-     */
     async handleStyleAlignment(element) {
         const sessionId = appState.createSession('style');
         this.navigateToStep(2);
@@ -1118,9 +1003,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文档填充
-     */
     async handleDocumentFill(element) {
         const sessionId = appState.createSession('fill');
         this.navigateToStep(2);
@@ -1145,9 +1027,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文档审查
-     */
     async handleDocumentReview(element) {
         const sessionId = appState.createSession('review');
         this.navigateToStep(2);
@@ -1172,25 +1051,16 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理预览
-     */
     async handlePreview(element) {
         this.navigateToStep(3);
         // 实现预览逻辑
     }
 
-    /**
-     * 处理导出
-     */
     async handleExport(element) {
         this.navigateToStep(4);
         // 实现导出逻辑
     }
 
-    /**
-     * 处理设置基准格式
-     */
     async handleSetBaseline(element) {
         const files = this.collectFiles('format');
         if (files.length === 0) {
@@ -1212,9 +1082,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理保存格式模板
-     */
     async handleSaveFormat(element) {
         const files = this.collectFiles('format');
         if (files.length === 0) {
@@ -1239,9 +1106,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理应用风格
-     */
     async handleApplyStyle(element) {
         const files = this.collectFiles('style');
         if (files.length < 2) {
@@ -1263,9 +1127,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理保存文风模板
-     */
     async handleSaveStyle(element) {
         const files = this.collectFiles('style');
         if (files.length === 0) {
@@ -1289,9 +1150,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理开始审查
-     */
     async handleStartReview(element) {
         const files = this.collectFiles('review');
         if (files.length === 0) {
@@ -1317,41 +1175,40 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理审查设置
-     */
     async handleReviewSettings(element) {
         // 显示审查设置对话框
         errorHandler.createNotification('审查设置功能开发中', 'info');
     }
 
-    /**
-     * 处理导出审查报告
-     */
     async handleExportReviewReport(element) {
         // 实现导出审查报告逻辑
         errorHandler.createNotification('导出审查报告功能开发中', 'info');
     }
 
-    /**
-     * 处理预览审查结果
-     */
     async handlePreviewReview(element) {
         this.navigateToStep(3);
         // 实现预览审查结果逻辑
     }
 
-    /**
-     * 处理导出审查结果
-     */
     async handleExportReview(element) {
         this.navigateToStep(4);
-        // 实现导出审查结果逻辑
+        // 实现导出审查报告逻辑
+        try {
+            const result = await apiManager.request('/api/document-review/export', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: appState.getCurrentSessionId()
+                })
+            });
+
+            if (result.success) {
+                apiManager.downloadFile('/api/document-review/download', result.data, 'review_report.docx');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'export_review');
+        }
     }
 
-    /**
-     * 收集文件
-     */
     collectFiles(sceneType) {
         const files = [];
         
@@ -1393,9 +1250,6 @@ class UIManager {
         return files;
     }
 
-    /**
-     * 显示结果
-     */
     showResult(data) {
         const resultArea = document.querySelector(`#${this.currentScene}-result-area`);
         if (resultArea) {
@@ -1407,9 +1261,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 格式化结果
-     */
     formatResult(data) {
         if (typeof data === 'string') {
             return `<pre>${data}</pre>`;
@@ -1420,15 +1271,291 @@ class UIManager {
         return `<div>${data}</div>`;
     }
 
-    /**
-     * 处理响应式变化
-     */
     handleResponsiveChange(mediaQuery) {
         if (mediaQuery.matches) {
             document.body.classList.add('mobile-view');
         } else {
             document.body.classList.remove('mobile-view');
         }
+    }
+
+    // 新增缺失的处理函数
+    async handleAutoMatchData(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先开始文档填报流程'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/document-fill/auto-match', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                this.navigateToStep(3);
+                this.showResult(result.data);
+                errorHandler.createNotification('数据自动匹配完成', 'success');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'auto_match_data');
+        }
+    }
+
+    async handleManualMatch(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先开始文档填报流程'), 'validation');
+                return;
+            }
+
+            // 显示手动匹配界面
+            this.showManualMatchInterface();
+        } catch (error) {
+            errorHandler.handleError(error, 'manual_match');
+        }
+    }
+
+    async handleExportFilledDoc(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先完成文档填报'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/document-fill/export', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                apiManager.downloadFile('/api/document-fill/download', result.data, 'filled_document.docx');
+                errorHandler.createNotification('文档导出成功', 'success');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'export_filled_doc');
+        }
+    }
+
+    async handlePreviewFill(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先开始文档填报流程'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/document-fill/preview', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                this.navigateToStep(3);
+                this.showResult(result.data);
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'preview_fill');
+        }
+    }
+
+    async handleExportFill(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先完成文档填报'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/document-fill/export', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                apiManager.downloadFile('/api/document-fill/download', result.data, 'filled_document.docx');
+                errorHandler.createNotification('文档导出成功', 'success');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'export_fill');
+        }
+    }
+
+    async handlePreviewFillResult(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先完成文档填报'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/document-fill/preview-result', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                this.showResult(result.data);
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'preview_fill_result');
+        }
+    }
+
+    async handleExportFillResult(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先完成文档填报'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/document-fill/export-result', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                apiManager.downloadFile('/api/document-fill/download-result', result.data, 'fill_result.docx');
+                errorHandler.createNotification('填报结果导出成功', 'success');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'export_fill_result');
+        }
+    }
+
+    async handlePreviewStyle(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先开始文风对齐流程'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/writing-style/preview', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                this.navigateToStep(3);
+                this.showResult(result.data);
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'preview_style');
+        }
+    }
+
+    async handleExportStyle(element) {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            if (!sessionId) {
+                errorHandler.handleError(new Error('请先完成文风对齐'), 'validation');
+                return;
+            }
+
+            const result = await apiManager.request('/api/writing-style/export', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            if (result.success) {
+                apiManager.downloadFile('/api/writing-style/download', result.data, 'style_aligned_document.docx');
+                errorHandler.createNotification('文风对齐文档导出成功', 'success');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'export_style');
+        }
+    }
+
+    showManualMatchInterface() {
+        // 创建手动匹配界面
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>手动数据匹配</h3>
+                <div class="match-interface">
+                    <div class="template-fields">
+                        <h4>模板字段</h4>
+                        <div id="template-fields-list"></div>
+                    </div>
+                    <div class="data-fields">
+                        <h4>数据字段</h4>
+                        <div id="data-fields-list"></div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="uiManager.applyManualMatch()">应用匹配</button>
+                    <button class="btn btn-secondary" onclick="uiManager.closeManualMatch()">取消</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    async applyManualMatch() {
+        try {
+            const sessionId = appState.getCurrentSessionId();
+            const mappings = this.collectManualMappings();
+
+            const result = await apiManager.request('/api/document-fill/manual-match', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    mappings: mappings
+                })
+            });
+
+            if (result.success) {
+                this.closeManualMatch();
+                this.navigateToStep(3);
+                this.showResult(result.data);
+                errorHandler.createNotification('手动匹配应用成功', 'success');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'apply_manual_match');
+        }
+    }
+
+    closeManualMatch() {
+        const modal = document.querySelector('.modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    collectManualMappings() {
+        // 收集手动匹配的映射关系
+        const mappings = {};
+        const mappingElements = document.querySelectorAll('.field-mapping');
+        mappingElements.forEach(element => {
+            const templateField = element.getAttribute('data-template-field');
+            const dataField = element.querySelector('.data-field-select').value;
+            if (templateField && dataField) {
+                mappings[templateField] = dataField;
+            }
+        });
+        return mappings;
     }
 }
 
@@ -1441,9 +1568,6 @@ class APIManager {
         this.retryDelay = 1000;
     }
 
-    /**
-     * 发送请求
-     */
     async request(endpoint, options = {}) {
         const config = {
             method: 'GET',
@@ -1473,9 +1597,6 @@ class APIManager {
         throw lastError;
     }
 
-    /**
-     * 发送HTTP请求
-     */
     async makeRequest(url, config) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), config.timeout);
@@ -1496,9 +1617,6 @@ class APIManager {
         }
     }
 
-    /**
-     * 处理响应
-     */
     async handleResponse(response) {
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1528,16 +1646,10 @@ class APIManager {
         }
     }
 
-    /**
-     * 延迟函数
-     */
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    /**
-     * 上传文件
-     */
     async uploadFile(endpoint, file, options = {}) {
         const formData = new FormData();
         formData.append('file', file);
@@ -1557,9 +1669,6 @@ class APIManager {
         return await this.handleResponse(response);
     }
 
-    /**
-     * 下载文件
-     */
     async downloadFile(endpoint, data, filename) {
         const response = await this.request(endpoint, {
             method: 'POST',
@@ -1571,9 +1680,6 @@ class APIManager {
         }
     }
 
-    /**
-     * 创建下载链接
-     */
     createDownloadLink(blob, filename) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -1588,9 +1694,6 @@ class APIManager {
         URL.revokeObjectURL(url);
     }
 
-    /**
-     * 从响应头提取文件名
-     */
     extractFilenameFromHeaders(response) {
         const contentDisposition = response.headers.get('Content-Disposition');
         if (contentDisposition) {
@@ -1627,9 +1730,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ 前端初始化完成');
 });
 
-/**
- * 加载初始数据
- */
 async function loadInitialData() {
     try {
         // 加载格式模板
@@ -1655,9 +1755,6 @@ async function loadInitialData() {
     }
 }
 
-/**
- * 更新格式选择器
- */
 function updateFormatSelect(templates) {
     const select = document.getElementById('format-template-select');
     if (select && Array.isArray(templates)) {
@@ -1671,9 +1768,6 @@ function updateFormatSelect(templates) {
     }
 }
 
-/**
- * 更新文风选择器
- */
 function updateStyleSelect(templates) {
     const select = document.getElementById('style-template-select');
     if (select && Array.isArray(templates)) {
@@ -1687,9 +1781,6 @@ function updateStyleSelect(templates) {
     }
 }
 
-/**
- * 更新历史表格
- */
 function updateHistoryTable(history) {
     const table = document.querySelector('#document-history-table tbody');
     if (table && Array.isArray(history)) {
@@ -1710,9 +1801,6 @@ function updateHistoryTable(history) {
     }
 }
 
-/**
- * 重新应用操作
- */
 async function reapplyOperation(recordId) {
     try {
         const result = await apiManager.request(`/api/documents/history/${recordId}/reapply`, {

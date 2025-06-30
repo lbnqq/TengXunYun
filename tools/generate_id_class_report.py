@@ -1,3 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ID/Class报告生成工具
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
+
+
+
+
+
+
+
+
+
 import os
 import re
 
@@ -28,4 +51,4 @@ with open(REPORT_PATH, 'w', encoding='utf-8') as f:
     for cls in sorted(class_set):
         f.write(f'- {cls}\n')
 
-print(f'已生成 {REPORT_PATH}') 
+print(f'已生成 {REPORT_PATH}')

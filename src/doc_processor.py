@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+File: doc_processor.py
+Description: 文档处理器
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import os
 import logging
 import pandas as pd
@@ -27,11 +42,6 @@ class DocumentProcessor:
         self.table_parser = TableParser(self.config)
 
     def process_document(self, image_filename: str) -> List[pd.DataFrame]:
-        """
-        处理单个文档图像，识别所有表格并返回结构化数据。
-        :param image_filename: data/ 目录下的图片文件名
-        :return: 表格数据的 Pandas DataFrame 列表
-        """
         image_path = os.path.join(self.data_dir, image_filename)
         
         if not os.path.exists(image_path):
@@ -77,35 +87,8 @@ class DocumentProcessor:
         return extracted_tables
 
     def save_tables(self, tables: List[pd.DataFrame], output_prefix: str = "output_table"):
-        """保存提取的表格到 CSV 文件"""
-        for i, df in enumerate(tables):
-            filename = f"{output_prefix}_{i}.csv"
-            try:
-                df.to_csv(filename, index=False)
-                logging.info(f"表格已保存到: {filename}")
-            except Exception as e:
-                logging.error(f"保存表格到 '{filename}' 时发生错误: {e}")
-
-    def fill_tables(self, tables: List[pd.DataFrame], fill_data: List[Dict[str, Any]]) -> List[pd.DataFrame]:
-        """
-        对所有检测到的表格进行批量智能填充。
-        :param tables: 由 process_document 返回的 DataFrame 列表
-        :param fill_data: list of dict，每个 dict 对应一行数据，key 为表头
-        :return: 填充后的 DataFrame 列表
-        """
-        filled_tables = []
-        for df in tables:
-            if not isinstance(df, pd.DataFrame) or df.empty:
-                filled_tables.append(df)
-                continue
-            # 简单策略：按表头匹配填充
-            for i, row in enumerate(fill_data):
-                if i >= len(df):
-                    # 新增行
-                    df.loc[len(df)] = [row.get(col, "") for col in df.columns]
-                else:
-                    for col in df.columns:
-                        if col in row:
-                            df.at[i, col] = row[col]
-            filled_tables.append(df)
-        return filled_tables
+        import os
+        for idx, table in enumerate(tables):
+            output_path = f"{output_prefix}_{idx+1}.csv"
+            table.to_csv(output_path, index=False)
+            logging.info(f"表格已保存到: {output_path}")

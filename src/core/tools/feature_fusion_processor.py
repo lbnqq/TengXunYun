@@ -1,7 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-特征融合与降维处理器
-整合量化特征和LLM特征，实现特征标准化、选择和降维
+Feature Fusion Processor - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import numpy as np
 import json

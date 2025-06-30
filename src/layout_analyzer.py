@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+File: layout_analyzer.py
+Description: 布局分析器
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import os
 import cv2
 import logging
@@ -15,53 +29,22 @@ class LayoutAnalyzer:
         self.detection_threshold = self.layout_config.get("detection_threshold", 0.3)
 
         if not self.hf_model_id:
-            raise ValueError("Layout Analyzer 模型 ID (hf_model_id) 未在配置中指定。")
+            raise ValueError("Layout Analyzer model ID (hf_model_id) not specified in config.")
         if not self.cache_dir:
-            raise ValueError("Layout Analyzer 缓存目录 (cache_dir) 未在配置中指定。")
+            raise ValueError("Layout Analyzer cache directory (cache_dir) not specified in config.")
 
         os.makedirs(self.cache_dir, exist_ok=True)
-        logging.info(f"LayoutAnalyzer: 模型 '{self.hf_model_id}' 将使用缓存目录 '{self.cache_dir}'")
+        logging.info(f"LayoutAnalyzer: Model '{self.hf_model_id}' will use cache dir '{self.cache_dir}'")
 
         self.model = self._load_model()
 
     def _load_model(self):
-        """加载模型，优先使用本地缓存"""
-        from utils import load_hf_model
-        model = load_hf_model(
-            hf_model_id=self.hf_model_id,
-            cache_dir=self.cache_dir,
-            model_type=self.model_type,
+        model = lp.Detectron2LayoutModel(
+            self.hf_model_id,
+            extra_config=None,
             label_map=self.label_map,
-            threshold=self.detection_threshold
+            enforce_cpu=False,
+            config_path=None,
+            cache_dir=self.cache_dir,
         )
-        if model is None:
-            raise RuntimeError("Layout Analyzer 模型加载失败。请检查配置和日志。")
         return model
-
-    def analyze(self, image_path: str) -> lp.Layout:
-        """
-        分析图像版面，返回包含检测到的元素（包括表格）的 Layout 对象。
-        """
-        if not os.path.exists(image_path):
-            logging.error(f"LayoutAnalyzer 错误: 文件 '{image_path}' 不存在。")
-            return lp.Layout()
-
-        try:
-            image = cv2.imread(image_path)
-            if image is None:
-                logging.error(f"LayoutAnalyzer 错误: 无法读取图像文件 '{image_path}'。")
-                return lp.Layout()
-
-            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-            # 使用 Tagger 进行推断
-            layout = self.model.detect(image_rgb)
-            
-            # 筛选出表格类型的块
-            table_blocks = lp.Layout([b for b in layout if b.type == 'Table'])
-            logging.info(f"LayoutAnalyzer: 在 '{image_path}' 中检测到 {len(table_blocks)} 个表格区域。")
-            return table_blocks
-
-        except Exception as e:
-            logging.error(f"LayoutAnalyzer 分析过程中发生错误: {e}")
-            return lp.Layout()

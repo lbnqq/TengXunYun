@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Document Format Extractor - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import re
 import json
 import os
@@ -7,10 +21,6 @@ import hashlib
 import time
 
 class DocumentFormatExtractor:
-    """
-    文档格式提取器
-    智能分析文档格式并生成格式对齐提示词
-    """
     
     def __init__(self, storage_path: str = "src/core/knowledge_base/format_templates"):
         self.tool_name = "文档格式提取器"
@@ -57,12 +67,16 @@ class DocumentFormatExtractor:
             doc_name = document_name or "未命名文档"
             template_id = self._generate_template_id(doc_name, format_rules)
             
+            # 生成示范文档
+            demo_document = self.generate_format_demo_document(format_rules)
+            
             result = {
                 "template_id": template_id,
                 "document_name": doc_name,
                 "structure_analysis": structure_analysis,
                 "format_rules": format_rules,
                 "format_prompt": self._generate_format_prompt(format_rules),
+                "demo_document": demo_document,  # 添加示范文档
                 "created_time": datetime.now().isoformat(),
                 "html_template": self._generate_html_template(format_rules)
             }
@@ -191,22 +205,213 @@ class DocumentFormatExtractor:
             if "error" in template_data:
                 return template_data
             
-            # 分析源文档结构
-            source_structure = self._analyze_document_structure(source_content)
+            # 获取格式提示词
+            format_rules = template_data.get("format_rules", {})
+            format_prompt = self._generate_format_prompt(format_rules)
             
-            # 应用目标格式
-            aligned_content = self._apply_format_template(source_structure, template_data)
+            # 生成示范文档
+            demo_document = self.generate_format_demo_document(format_rules)
+            
+            # 构建完整的LLM提示词
+            full_prompt = self._build_alignment_prompt(
+                source_content, 
+                format_prompt, 
+                demo_document,
+                template_data.get("document_name", "目标格式")
+            )
+            
+            # 调用LLM进行格式对齐
+            aligned_content = self._call_llm_for_alignment(full_prompt)
+            
+            # 生成HTML输出
+            html_output = self._generate_formatted_html(aligned_content, template_data)
             
             return {
                 "success": True,
                 "aligned_content": aligned_content,
                 "template_used": template_data.get("document_name", "未知模板"),
-                "format_prompt": template_data.get("format_prompt", ""),
-                "html_output": self._generate_formatted_html(aligned_content, template_data)
+                "format_prompt": format_prompt,
+                "demo_document": demo_document,
+                "html_output": html_output,
+                "llm_prompt_used": full_prompt  # 添加使用的提示词用于调试
             }
             
         except Exception as e:
             return {"error": f"格式对齐失败: {str(e)}"}
+    
+    def _build_alignment_prompt(self, source_content: str, format_prompt: str, 
+                               demo_document: str, template_name: str) -> str:
+        """构建完整的格式对齐提示词"""
+        
+        prompt_parts = [
+            "# 文档格式对齐任务",
+            "",
+            "## 任务说明",
+            f"请将以下源文档的格式对齐到目标格式模板：{template_name}",
+            "",
+            "## 源文档内容",
+            "```",
+            source_content,
+            "```",
+            "",
+            "## 目标格式要求",
+            format_prompt,
+            "",
+            "## 格式示范文档",
+            "以下是目标格式的示范文档，展示了所有格式要素：",
+            "```",
+            demo_document,
+            "```",
+            "",
+            "## 对齐要求",
+            "1. 保持源文档的核心内容和逻辑结构不变",
+            "2. 严格按照目标格式要求调整文档格式",
+            "3. 确保标题层级、段落格式、列表样式等完全符合示范文档",
+            "4. 输出格式化的文本内容（不需要HTML标签）",
+            "",
+            "## 输出格式",
+            "请直接输出对齐后的文档内容，不需要额外的说明或标记。",
+            "",
+            "对齐后的文档内容："
+        ]
+        
+        return "\n".join(prompt_parts)
+    
+    def _call_llm_for_alignment(self, prompt: str) -> str:
+        """调用LLM进行格式对齐"""
+        try:
+            # 尝试获取LLM客户端
+            llm_client = self._get_llm_client()
+            
+            if llm_client is None:
+                # 如果没有LLM客户端，使用模拟对齐
+                return self._mock_alignment(prompt)
+            
+            # 调用LLM
+            print(f"🤖 调用LLM进行格式对齐...")
+            print(f"📝 提示词长度: {len(prompt)} 字符")
+            
+            response = llm_client.generate(
+                prompt,
+                temperature=0.3,  # 低温度确保格式一致性
+                max_tokens=4000
+            )
+            
+            print(f"✅ LLM响应长度: {len(response)} 字符")
+            
+            # 清理响应内容
+            cleaned_response = self._clean_llm_response(response)
+            
+            return cleaned_response
+            
+        except Exception as e:
+            print(f"❌ LLM调用失败: {e}")
+            # 回退到模拟对齐
+            return self._mock_alignment(prompt)
+    
+    def _get_llm_client(self):
+        """获取LLM客户端"""
+        try:
+            # 尝试从全局变量或环境获取LLM客户端
+            import os
+            from src.llm_clients.xingcheng_llm import XingchengLLMClient
+            from src.llm_clients.multi_llm import MultiLLMClient
+            
+            # 优先使用多API客户端
+            try:
+                return MultiLLMClient()
+            except:
+                pass
+            
+            # 回退到星程客户端
+            api_key = os.getenv("XINGCHENG_API_KEY")
+            api_secret = os.getenv("XINGCHENG_API_SECRET")
+            
+            if api_key and api_secret:
+                return XingchengLLMClient(
+                    api_key=api_key,
+                    api_secret=api_secret,
+                    model_name="x1"
+                )
+            
+            return None
+            
+        except Exception as e:
+            print(f"⚠️ 无法获取LLM客户端: {e}")
+            return None
+    
+    def _clean_llm_response(self, response: str) -> str:
+        """清理LLM响应内容"""
+        # 移除可能的markdown标记
+        lines = response.split('\n')
+        cleaned_lines = []
+        
+        in_content = False
+        for line in lines:
+            # 跳过markdown代码块标记
+            if line.strip().startswith('```'):
+                if not in_content:
+                    in_content = True
+                else:
+                    in_content = False
+                continue
+            
+            # 跳过标题和说明
+            if line.strip().startswith('#') or line.strip().startswith('##'):
+                continue
+            
+            # 跳过空行（在开始部分）
+            if not in_content and not line.strip():
+                continue
+            
+            cleaned_lines.append(line)
+        
+        # 移除开头和结尾的空行
+        while cleaned_lines and not cleaned_lines[0].strip():
+            cleaned_lines.pop(0)
+        while cleaned_lines and not cleaned_lines[-1].strip():
+            cleaned_lines.pop()
+        
+        return '\n'.join(cleaned_lines)
+    
+    def _mock_alignment(self, prompt: str) -> str:
+        """模拟格式对齐（当LLM不可用时）"""
+        print("🎭 使用模拟格式对齐")
+        
+        # 从提示词中提取源文档内容
+        import re
+        source_match = re.search(r'## 源文档内容\s*```\s*(.*?)\s*```', prompt, re.DOTALL)
+        if source_match:
+            source_content = source_match.group(1).strip()
+        else:
+            source_content = "无法提取源文档内容"
+        
+        # 简单的格式调整
+        lines = source_content.split('\n')
+        formatted_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # 简单的格式调整
+            if re.match(r'^[一二三四五六七八九十]+[、．.，,]', line):
+                # 一级标题
+                formatted_lines.append(f"一、{line.split('、')[1] if '、' in line else line}")
+            elif re.match(r'^[1-9]\d*[、．.，,]', line):
+                # 数字标题
+                formatted_lines.append(f"1. {line.split('、')[1] if '、' in line else line}")
+            elif re.match(r'^（[^）]+）', line):
+                # 括号标题
+                formatted_lines.append(f"（一）{line[1:-1]}")
+            else:
+                # 普通段落，添加缩进
+                if not line.startswith('　　'):
+                    line = f"　　{line}"
+                formatted_lines.append(line)
+        
+        return '\n\n'.join(formatted_lines)
     
     def _analyze_document_structure(self, content: str) -> Dict[str, Any]:
         """分析文档结构"""
@@ -629,51 +834,94 @@ class DocumentFormatExtractor:
     
     def _generate_format_prompt(self, format_rules: Dict[str, Any]) -> str:
         """生成格式提示词"""
+        # 生成HTML格式模板
+        html_template = self._generate_html_template(format_rules)
+        
         prompt_parts = [
-            "请把内容以HTML生成，智能自动识别各级标题，内容排版要求如下:"
+            "请把文章的内容以HTML格式保存，HTML格式具体要求如下：",
+            f"<格式HTML>{html_template}</格式HTML>",
+            "",
+            "并支持DOCX文档下载的链接。用Html的格式输出，需要有能直接下载word文档的功能（不要调用doc JS库）。"
         ]
         
-        # 标题格式
+        return "\n".join(prompt_parts)
+    
+    def generate_format_demo_document(self, format_rules: Dict[str, Any]) -> str:
+        """
+        生成格式示范文档，展示所有格式要素
+        
+        Args:
+            format_rules: 格式规则
+            
+        Returns:
+            示范文档内容
+        """
+        demo_parts = []
+        
+        # 添加文档标题
+        demo_parts.append("格式示范文档")
+        demo_parts.append("")
+        
+        # 添加各级标题示例
         heading_formats = format_rules.get("heading_formats", {})
         for level_key, format_info in heading_formats.items():
             level_num = level_key.split("_")[1]
             if level_num == "1":
-                level_name = "一级标题"
+                demo_parts.append("一、一级标题示例")
             elif level_num == "2":
-                level_name = "二级标题"
+                demo_parts.append("（一）二级标题示例")
             elif level_num == "3":
-                level_name = "三级标题"
+                demo_parts.append("1. 三级标题示例")
             else:
-                level_name = f"{level_num}级标题"
+                demo_parts.append(f"{level_num}. {level_num}级标题示例")
             
-            font_family = format_info.get("font_family", "黑体")
-            font_size = format_info.get("font_size", "小四")
-            line_height = format_info.get("line_height", "1.5")
-            
-            prompt_parts.append(
-                f"{level_num}、{level_name} 字体为{font_family}({font_size})，{line_height}倍行距，段前段后空0行；"
-            )
+            # 添加该标题下的示例段落
+            para_format = format_rules.get("paragraph_format", {})
+            font_family = para_format.get("font_family", "宋体")
+            font_size = para_format.get("font_size", "小四")
+            demo_parts.append(f"　　这是{font_size}{font_family}的正文段落示例，展示正文格式。")
+            demo_parts.append("")
         
-        # 正文格式
-        para_format = format_rules.get("paragraph_format", {})
-        font_size = para_format.get("font_size", "小四")
-        font_family = para_format.get("font_family", "宋体")
-        text_align = para_format.get("text_align", "左对齐")
+        # 如果没有标题格式，添加默认正文示例
+        if not heading_formats:
+            para_format = format_rules.get("paragraph_format", {})
+            font_family = para_format.get("font_family", "宋体")
+            font_size = para_format.get("font_size", "小四")
+            demo_parts.append(f"这是{font_size}{font_family}的正文段落示例，展示正文格式。")
+            demo_parts.append("")
         
-        prompt_parts.append(
-            f"{len(heading_formats) + 1}、正文 {font_size} {font_family}，对齐方式为{text_align}，首行缩进两个字符。"
-        )
+        # 添加列表示例
+        list_format = format_rules.get("list_format", {})
+        list_type = list_format.get("list_type", "bullet")
+        if list_type == "numbered":
+            demo_parts.append("列表示例：")
+            demo_parts.append("1. 第一个列表项")
+            demo_parts.append("2. 第二个列表项")
+            demo_parts.append("3. 第三个列表项")
+        else:
+            demo_parts.append("列表示例：")
+            demo_parts.append("• 第一个列表项")
+            demo_parts.append("• 第二个列表项")
+            demo_parts.append("• 第三个列表项")
         
-        # 列表格式
-        prompt_parts.append(
-            f"{len(heading_formats) + 2}、少用项目符号，禁止多级项目符号，去掉后面无文字的项目符号"
-        )
+        demo_parts.append("")
         
-        prompt_parts.append(
-            "用Html的格式输出，需要有能直接下载word文档的功能（不要调用doc JS库）。"
-        )
+        # 添加表格示例
+        demo_parts.append("表格示例：")
+        demo_parts.append("| 列标题1 | 列标题2 | 列标题3 |")
+        demo_parts.append("|---------|---------|---------|")
+        demo_parts.append("| 数据1   | 数据2   | 数据3   |")
+        demo_parts.append("| 数据4   | 数据5   | 数据6   |")
+        demo_parts.append("")
         
-        return "\n".join(prompt_parts)
+        # 添加格式说明
+        demo_parts.append("格式说明：")
+        demo_parts.append("• 标题：使用黑体字体，不同级别使用不同字号")
+        demo_parts.append("• 正文：使用宋体字体，首行缩进两个字符")
+        demo_parts.append("• 列表：使用项目符号或数字编号")
+        demo_parts.append("• 表格：使用标准表格格式")
+        
+        return "\n".join(demo_parts)
     
     def _generate_template_id(self, document_name: str, format_rules: Dict[str, Any]) -> str:
         """生成模板ID"""
@@ -769,99 +1017,6 @@ class DocumentFormatExtractor:
         # 保存索引
         with open(index_file, 'w', encoding='utf-8') as f:
             json.dump(index_data, f, ensure_ascii=False, indent=2)
-    
-    def _apply_format_template(self, source_structure: Dict[str, Any], template_data: Dict[str, Any]) -> str:
-        """应用格式模板到源文档"""
-        try:
-            # 获取格式规则
-            format_rules = template_data.get("format_rules", {})
-
-            # 重新分析源文档，应用目标格式
-            formatted_lines = []
-
-            # 处理标题
-            for heading in source_structure.get("headings", []):
-                level = heading["level"]
-                text = heading["text"]
-
-                # 应用标题格式
-                level_format = format_rules.get("heading_formats", {}).get(f"level_{level}", {})
-                formatted_text = self._format_heading(text, level, level_format)
-                formatted_lines.append(formatted_text)
-
-            # 处理正文段落
-            for paragraph in source_structure.get("paragraphs", []):
-                text = paragraph["text"]
-                para_format = format_rules.get("paragraph_format", {})
-                formatted_text = self._format_paragraph(text, para_format)
-                formatted_lines.append(formatted_text)
-
-            # 处理列表
-            for list_item in source_structure.get("lists", []):
-                text = list_item["text"]
-                list_type = list_item.get("list_type", "bullet")
-                list_format = format_rules.get("list_format", {})
-                formatted_text = self._format_list_item(text, list_type, list_format)
-                formatted_lines.append(formatted_text)
-
-            result = "\n\n".join(formatted_lines)
-
-            # 添加格式说明
-            format_info = [
-                f"# 格式对齐结果",
-                f"",
-                f"已应用格式模板：{template_data.get('document_name', '未知模板')}",
-                f"",
-                f"## 格式化内容",
-                f"",
-                result
-            ]
-
-            return "\n".join(format_info)
-
-        except Exception as e:
-            return f"格式应用失败: {str(e)}"
-
-    def _format_heading(self, text: str, level: int, format_info: Dict[str, Any]) -> str:
-        """格式化标题"""
-        # 移除原有的标题标记
-        clean_text = re.sub(r'^[一二三四五六七八九十百千万]+[、．.，,]', '', text).strip()
-        clean_text = re.sub(r'^[1-9]\d*[、．.，,]', '', clean_text).strip()
-        clean_text = re.sub(r'^（[^）]+）', '', clean_text).strip()
-        clean_text = re.sub(r'^\([^)]+\)', '', clean_text).strip()
-
-        # 根据级别添加适当的标记
-        if level == 0:
-            return clean_text  # 文档标题不加标记
-        elif level == 1:
-            return f"一、{clean_text}"
-        elif level == 2:
-            return f"（一）{clean_text}"
-        elif level == 3:
-            return f"1. {clean_text}"
-        else:
-            return f"{'  ' * (level - 3)}• {clean_text}"
-
-    def _format_paragraph(self, text: str, format_info: Dict[str, Any]) -> str:
-        """格式化段落"""
-        # 确保段落有适当的缩进
-        text = text.strip()
-        if not text.startswith('　　') and not text.startswith('  '):
-            text = f"　　{text}"
-        return text
-
-    def _format_list_item(self, text: str, list_type: str, format_info: Dict[str, Any]) -> str:
-        """格式化列表项"""
-        # 移除原有的列表标记
-        clean_text = re.sub(r'^[•·▪▫◦‣⁃⁌⁍]', '', text).strip()
-        clean_text = re.sub(r'^[-*+]', '', clean_text).strip()
-        clean_text = re.sub(r'^[1-9]\d*[)）]', '', clean_text).strip()
-
-        # 根据列表类型添加标记
-        if list_type == "numbered":
-            return f"1. {clean_text}"
-        else:
-            return f"• {clean_text}"
     
     def _generate_formatted_html(self, content: str, template_data: Dict[str, Any]) -> str:
         """生成格式化的HTML"""

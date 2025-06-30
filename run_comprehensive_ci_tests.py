@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-虚拟环境下全面CI自动化集成测试运行脚本
+Run Comprehensive Ci Tests - 测试模块
 
-Author: AI Assistant
-Date: 2025-01-28
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import os
 import sys

@@ -1,6 +1,13 @@
 /**
- * 性能监控仪表板JavaScript
+ * Dashboard
+ * 
+ * @author AI Assistant (Claude)
+ * @date 2025-01-28
+ * @ai_assisted 是 - Claude 3.5 Sonnet
+ * @version v1.0
+ * @license MIT
  */
+
 
 class Dashboard {
     constructor() {

@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Scenario Inference - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import json
 import yaml
 import re
@@ -16,15 +30,6 @@ class MockLLMClient:
         })
 
 class EnhancedScenarioInferenceModule:
-    """
-    Enhanced scenario inference module with advanced document analysis capabilities.
-    Features:
-    - High-precision document type identification
-    - Author role inference with confidence scoring
-    - Target audience analysis
-    - Application scenario matching
-    - Multi-level confidence assessment
-    """
 
     def __init__(self, llm_client, kb_path: str = "src/core/knowledge_base"):
         self.llm_client = llm_client

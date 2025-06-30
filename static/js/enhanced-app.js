@@ -1,10 +1,13 @@
 /**
- * 增强版办公文档智能代理前端应用
- * 功能：完整的状态管理、文件上传处理、错误处理、用户界面流程和文件验证
- * 作者：AI Assistant
- * 版本：2.0.0
- * 日期：2024-12-19
+ * Enhanced-App
+ * 
+ * @author AI Assistant (Claude)
+ * @date 2025-01-28
+ * @ai_assisted 是 - Claude 3.5 Sonnet
+ * @version v1.0
+ * @license MIT
  */
+
 
 // 全局应用状态管理
 class AppState {
@@ -22,11 +25,6 @@ class AppState {
         this.sessionHistory = [];
     }
 
-    /**
-     * 创建新的会话
-     * @param {string} sceneType - 场景类型
-     * @returns {string} 会话ID
-     */
     createSession(sceneType) {
         const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this.currentSession = {
@@ -42,12 +40,6 @@ class AppState {
         return sessionId;
     }
 
-    /**
-     * 更新会话状态
-     * @param {string} sessionId - 会话ID
-     * @param {string} status - 新状态
-     * @param {Object} data - 附加数据
-     */
     updateSession(sessionId, status, data = {}) {
         const session = this.sessionHistory.find(s => s.id === sessionId);
         if (session) {
@@ -57,12 +49,6 @@ class AppState {
         }
     }
 
-    /**
-     * 添加文件到会话
-     * @param {string} sessionId - 会话ID
-     * @param {File} file - 文件对象
-     * @param {string} fileType - 文件类型
-     */
     addFileToSession(sessionId, file, fileType) {
         const session = this.sessionHistory.find(s => s.id === sessionId);
         if (session) {
@@ -77,11 +63,6 @@ class AppState {
         }
     }
 
-    /**
-     * 记录错误
-     * @param {Error} error - 错误对象
-     * @param {string} context - 错误上下文
-     */
     logError(error, context) {
         this.errorHistory.push({
             timestamp: new Date(),
@@ -103,12 +84,6 @@ class FileValidator {
         this.maxFileSize = 50 * 1024 * 1024; // 50MB
     }
 
-    /**
-     * 验证文件格式
-     * @param {File} file - 文件对象
-     * @param {string} expectedType - 期望的文件类型
-     * @returns {Object} 验证结果
-     */
     validateFile(file, expectedType = 'document') {
         const result = {
             isValid: true,
@@ -145,11 +120,6 @@ class FileValidator {
         return result;
     }
 
-    /**
-     * 预处理文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 预处理结果
-     */
     async preprocessFile(file) {
         const result = {
             success: true,
@@ -175,11 +145,6 @@ class FileValidator {
         return result;
     }
 
-    /**
-     * 读取文件内容
-     * @param {File} file - 文件对象
-     * @returns {Promise<string>} 文件内容
-     */
     readFileContent(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -198,13 +163,6 @@ class FileUploadManager {
         this.uploadCallbacks = new Map();
     }
 
-    /**
-     * 上传文件
-     * @param {File} file - 文件对象
-     * @param {string} endpoint - 上传端点
-     * @param {Object} options - 上传选项
-     * @returns {Promise<Object>} 上传结果
-     */
     async uploadFile(file, endpoint, options = {}) {
         const uploadId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
@@ -257,11 +215,6 @@ class FileUploadManager {
         });
     }
 
-    /**
-     * 更新上传进度
-     * @param {string} uploadId - 上传ID
-     * @param {number} progress - 进度百分比
-     */
     updateUploadProgress(uploadId, progress) {
         const callback = this.uploadCallbacks.get(uploadId);
         if (callback && callback.onProgress) {
@@ -282,12 +235,6 @@ class ErrorHandler {
         };
     }
 
-    /**
-     * 处理错误
-     * @param {Error} error - 错误对象
-     * @param {string} context - 错误上下文
-     * @param {Object} options - 处理选项
-     */
     handleError(error, context, options = {}) {
         const errorInfo = {
             type: this.categorizeError(error),
@@ -311,11 +258,6 @@ class ErrorHandler {
         return errorInfo;
     }
 
-    /**
-     * 分类错误
-     * @param {Error} error - 错误对象
-     * @returns {string} 错误类型
-     */
     categorizeError(error) {
         if (error.name === 'NetworkError' || error.message.includes('fetch')) {
             return this.errorTypes.NETWORK;
@@ -330,12 +272,6 @@ class ErrorHandler {
         }
     }
 
-    /**
-     * 获取用户友好的错误消息
-     * @param {Error} error - 错误对象
-     * @param {string} context - 错误上下文
-     * @returns {string} 用户友好的消息
-     */
     getUserFriendlyMessage(error, context) {
         const errorType = this.categorizeError(error);
         
@@ -353,11 +289,6 @@ class ErrorHandler {
         }
     }
 
-    /**
-     * 显示错误消息
-     * @param {string} message - 错误消息
-     * @param {string} type - 错误类型
-     */
     showErrorMessage(message, type) {
         const notification = this.createNotification(message, 'error');
         document.body.appendChild(notification);
@@ -369,12 +300,6 @@ class ErrorHandler {
         }, 5000);
     }
 
-    /**
-     * 创建通知元素
-     * @param {string} message - 消息内容
-     * @param {string} type - 消息类型
-     * @returns {HTMLElement} 通知元素
-     */
     createNotification(message, type) {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
@@ -388,11 +313,6 @@ class ErrorHandler {
         return notification;
     }
 
-    /**
-     * 获取通知图标
-     * @param {string} type - 通知类型
-     * @returns {string} 图标HTML
-     */
     getNotificationIcon(type) {
         switch (type) {
             case 'error': return '❌';
@@ -403,10 +323,6 @@ class ErrorHandler {
         }
     }
 
-    /**
-     * 通知用户
-     * @param {Object} errorInfo - 错误信息
-     */
     notifyUser(errorInfo) {
         if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('文档处理错误', {
@@ -425,9 +341,6 @@ class UIManager {
         this.loadingStates = new Map();
     }
 
-    /**
-     * 初始化用户界面
-     */
     initializeUI() {
         this.setupEventListeners();
         this.setupFileUploadAreas();
@@ -436,9 +349,6 @@ class UIManager {
         this.setupResponsiveDesign();
     }
 
-    /**
-     * 设置事件监听器
-     */
     setupEventListeners() {
         // 文件上传监听
         document.querySelectorAll('.file-upload-area').forEach(area => {
@@ -459,9 +369,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置文件上传区域
-     */
     setupFileUploadAreas() {
         document.querySelectorAll('.file-upload-area').forEach(area => {
             const input = area.querySelector('input[type="file"]');
@@ -473,9 +380,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置进度指示器
-     */
     setupProgressIndicators() {
         // 创建全局进度条
         const progressBar = document.createElement('div');
@@ -488,9 +392,6 @@ class UIManager {
         document.body.appendChild(progressBar);
     }
 
-    /**
-     * 设置步骤导航
-     */
     setupStepNavigation() {
         const stepIndicators = document.querySelectorAll('.step-indicator .step-item');
         stepIndicators.forEach((indicator, index) => {
@@ -500,19 +401,12 @@ class UIManager {
         });
     }
 
-    /**
-     * 设置响应式设计
-     */
     setupResponsiveDesign() {
         const mediaQuery = window.matchMedia('(max-width: 768px)');
         this.handleResponsiveChange(mediaQuery);
         mediaQuery.addListener(this.handleResponsiveChange.bind(this));
     }
 
-    /**
-     * 处理响应式变化
-     * @param {MediaQueryList} mediaQuery - 媒体查询对象
-     */
     handleResponsiveChange(mediaQuery) {
         if (mediaQuery.matches) {
             document.body.classList.add('mobile-view');
@@ -521,28 +415,16 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理拖拽悬停
-     * @param {DragEvent} e - 拖拽事件
-     */
     handleDragOver(e) {
         e.preventDefault();
         e.currentTarget.classList.add('dragover');
     }
 
-    /**
-     * 处理拖拽离开
-     * @param {DragEvent} e - 拖拽事件
-     */
     handleDragLeave(e) {
         e.preventDefault();
         e.currentTarget.classList.remove('dragover');
     }
 
-    /**
-     * 处理文件拖放
-     * @param {DragEvent} e - 拖拽事件
-     */
     handleFileDrop(e) {
         e.preventDefault();
         e.currentTarget.classList.remove('dragover');
@@ -555,10 +437,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 处理上传点击
-     * @param {Event} e - 点击事件
-     */
     handleUploadClick(e) {
         const input = e.currentTarget.querySelector('input[type="file"]');
         if (input) {
@@ -566,11 +444,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件选择
-     * @param {Event} e - 文件选择事件
-     * @param {HTMLElement} uploadArea - 上传区域
-     */
     handleFileSelect(e, uploadArea) {
         const files = Array.from(e.target.files);
         files.forEach(file => {
@@ -578,10 +451,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 处理按钮点击
-     * @param {Event} e - 点击事件
-     */
     handleButtonClick(e) {
         const button = e.currentTarget;
         const action = button.getAttribute('data-action');
@@ -591,10 +460,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理表单提交
-     * @param {Event} e - 表单提交事件
-     */
     handleFormSubmit(e) {
         e.preventDefault();
         const form = e.currentTarget;
@@ -605,11 +470,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件
-     * @param {File} file - 文件对象
-     * @param {HTMLElement} uploadArea - 上传区域
-     */
     async processFile(file, uploadArea) {
         try {
             // 验证文件
@@ -642,12 +502,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新文件显示
-     * @param {HTMLElement} uploadArea - 上传区域
-     * @param {File} file - 文件对象
-     * @param {Object} fileData - 文件数据
-     */
     updateFileDisplay(uploadArea, file, fileData) {
         const displayArea = uploadArea.querySelector('.file-display') || this.createFileDisplay(uploadArea);
         
@@ -666,11 +520,6 @@ class UIManager {
         uploadArea.classList.add('has-file');
     }
 
-    /**
-     * 创建文件显示区域
-     * @param {HTMLElement} uploadArea - 上传区域
-     * @returns {HTMLElement} 文件显示区域
-     */
     createFileDisplay(uploadArea) {
         const displayArea = document.createElement('div');
         displayArea.className = 'file-display';
@@ -678,11 +527,6 @@ class UIManager {
         return displayArea;
     }
 
-    /**
-     * 格式化文件大小
-     * @param {number} bytes - 字节数
-     * @returns {string} 格式化的大小
-     */
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -691,11 +535,6 @@ class UIManager {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    /**
-     * 显示加载状态
-     * @param {string} elementId - 元素ID
-     * @param {string} message - 加载消息
-     */
     showLoading(elementId, message = '处理中...') {
         const element = document.getElementById(elementId);
         if (element) {
@@ -708,10 +547,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 隐藏加载状态
-     * @param {string} elementId - 元素ID
-     */
     hideLoading(elementId) {
         const element = document.getElementById(elementId);
         if (element && this.loadingStates.get(elementId)) {
@@ -720,11 +555,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新进度
-     * @param {number} progress - 进度百分比
-     * @param {string} message - 进度消息
-     */
     updateProgress(progress, message = '') {
         const progressBar = document.getElementById('global-progress');
         if (progressBar) {
@@ -744,10 +574,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 导航到指定步骤
-     * @param {number} step - 步骤号
-     */
     navigateToStep(step) {
         if (step >= 1 && step <= this.totalSteps) {
             this.currentStep = step;
@@ -756,9 +582,6 @@ class UIManager {
         }
     }
 
-    /**
-     * 更新步骤指示器
-     */
     updateStepIndicators() {
         const indicators = document.querySelectorAll('.step-indicator .step-item');
         indicators.forEach((indicator, index) => {
@@ -773,10 +596,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 显示步骤内容
-     * @param {number} step - 步骤号
-     */
     showStepContent(step) {
         const stepContents = document.querySelectorAll('.step-content');
         stepContents.forEach((content, index) => {
@@ -789,11 +608,6 @@ class UIManager {
         });
     }
 
-    /**
-     * 执行操作
-     * @param {string} action - 操作名称
-     * @param {HTMLElement} element - 触发元素
-     */
     async executeAction(action, element) {
         try {
             this.showLoading(element.id || 'action-area', '执行中...');
@@ -821,37 +635,21 @@ class UIManager {
         }
     }
 
-    /**
-     * 处理文件上传
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleFileUpload(element) {
         // 实现文件上传逻辑
         console.log('处理文件上传');
     }
 
-    /**
-     * 处理文档处理
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleDocumentProcessing(element) {
         // 实现文档处理逻辑
         console.log('处理文档');
     }
 
-    /**
-     * 处理导出
-     * @param {HTMLElement} element - 触发元素
-     */
     async handleExport(element) {
         // 实现导出逻辑
         console.log('处理导出');
     }
 
-    /**
-     * 处理预览
-     * @param {HTMLElement} element - 触发元素
-     */
     async handlePreview(element) {
         // 实现预览逻辑
         console.log('处理预览');
@@ -866,12 +664,6 @@ class APIManager {
         this.retryAttempts = 3;
     }
 
-    /**
-     * 发送API请求
-     * @param {string} endpoint - API端点
-     * @param {Object} options - 请求选项
-     * @returns {Promise<Object>} 响应结果
-     */
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
         const config = {
@@ -901,12 +693,6 @@ class APIManager {
         throw lastError;
     }
 
-    /**
-     * 发送请求
-     * @param {string} url - 请求URL
-     * @param {Object} config - 请求配置
-     * @returns {Promise<Response>} 响应对象
-     */
     async makeRequest(url, config) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), config.timeout);
@@ -924,11 +710,6 @@ class APIManager {
         }
     }
 
-    /**
-     * 处理响应
-     * @param {Response} response - 响应对象
-     * @returns {Promise<Object>} 处理后的响应
-     */
     async handleResponse(response) {
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -945,22 +726,10 @@ class APIManager {
         }
     }
 
-    /**
-     * 延迟函数
-     * @param {number} ms - 延迟毫秒数
-     * @returns {Promise} 延迟Promise
-     */
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    /**
-     * 上传文件
-     * @param {string} endpoint - 上传端点
-     * @param {File} file - 文件对象
-     * @param {Object} options - 上传选项
-     * @returns {Promise<Object>} 上传结果
-     */
     async uploadFile(endpoint, file, options = {}) {
         const formData = new FormData();
         formData.append('file', file);
@@ -978,12 +747,6 @@ class APIManager {
         });
     }
 
-    /**
-     * 下载文件
-     * @param {string} endpoint - 下载端点
-     * @param {Object} data - 请求数据
-     * @param {string} filename - 文件名
-     */
     async downloadFile(endpoint, data, filename) {
         try {
             const response = await this.request(endpoint, {
@@ -1004,11 +767,6 @@ class APIManager {
         }
     }
 
-    /**
-     * 创建下载链接
-     * @param {Blob} blob - 文件blob
-     * @param {string} filename - 文件名
-     */
     createDownloadLink(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

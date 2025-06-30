@@ -1,3 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ID使用与报告比对工具
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
+
+
+
+
+
+
+
+
+
 import os
 import re
 
@@ -12,7 +35,7 @@ for base in CODE_DIRS:
     for root, _, files in os.walk(base):
         for file in files:
             if file.endswith('.py') or file.endswith('.js'):
-                with open(os.path.join(root, file), encoding='utf-8', errors='ignore') as f:
+                with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as f:
                     for i, line in enumerate(f, 1):
                         for m in ID_PATTERN.findall(line):
                             for id_ in m:
@@ -21,7 +44,7 @@ for base in CODE_DIRS:
 
 # 提取对照表中所有id
 id_report = set()
-with open(ID_REPORT_PATH, encoding='utf-8') as f:
+with open(ID_REPORT_PATH, 'r', encoding='utf-8') as f:
     in_id = False
     for line in f:
         if line.strip() == '## id 列表':
@@ -48,4 +71,4 @@ with open(REPORT_PATH, 'w', encoding='utf-8') as f:
         f.write(f'- {id_}\n')
         f.write('    - 建议: 清理冗余页面元素或补充相关逻辑\n')
 
-print(f'已生成 {REPORT_PATH}') 
+print(f'已生成 {REPORT_PATH}')

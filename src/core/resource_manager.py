@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-资源管理统一机制
-管理模板、session、文件等资源的创建、查找、清理
+File: resource_manager.py
+Description: 资源管理器
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
 
 import os
@@ -17,34 +24,15 @@ logger = logging.getLogger(__name__)
 
 
 class ResourceManager:
-    """资源管理器"""
-    
-    def __init__(self, base_path: str = "src/core/knowledge_base"):
-        self.base_path = base_path
-        self.template_path = os.path.join(base_path, "writing_style_templates")
-        self.session_path = os.path.join(base_path, "writing_style_templates/semantic_behavior/profiles")
-        self.backup_path = os.path.join(base_path, "backups")
-        
-        # 确保目录存在
-        self._ensure_directories()
-    
-    def _ensure_directories(self):
-        """确保必要的目录存在"""
+    def __init__(self, template_path: str, session_path: str, backup_path: str):
+        self.template_path = template_path
+        self.session_path = session_path
+        self.backup_path = backup_path
         directories = [self.template_path, self.session_path, self.backup_path]
         for directory in directories:
             os.makedirs(directory, exist_ok=True)
-    
+
     def create_template(self, template_id: str, content: Dict[str, Any]) -> bool:
-        """
-        创建模板
-        
-        Args:
-            template_id: 模板ID
-            content: 模板内容
-            
-        Returns:
-            bool: 是否创建成功
-        """
         try:
             template_file = os.path.join(self.template_path, f"{template_id}.json")
             
@@ -65,17 +53,8 @@ class ResourceManager:
         except Exception as e:
             logger.error(f"模板创建失败 {template_id}: {e}")
             return False
-    
+
     def find_template(self, template_id: str) -> Optional[Dict[str, Any]]:
-        """
-        查找模板，包含回退策略
-        
-        Args:
-            template_id: 模板ID
-            
-        Returns:
-            Optional[Dict]: 模板数据，如果不存在返回None
-        """
         # 策略1: 直接查找
         template_file = os.path.join(self.template_path, f"{template_id}.json")
         if os.path.exists(template_file):
@@ -99,30 +78,8 @@ class ResourceManager:
         
         logger.warning(f"未找到模板: {template_id}")
         return None
-    
+
     def _find_similar_template(self, template_id: str) -> Optional[Dict[str, Any]]:
-        """查找相似模板"""
-        try:
-            # 获取所有模板文件
-            template_files = [f for f in os.listdir(self.template_path) 
-                            if f.endswith('.json')]
-            
-            # 简单的相似性检查（可以根据需要改进）
-            for file_name in template_files:
-                file_path = os.path.join(self.template_path, file_name)
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    template_data = json.load(f)
-                    # 这里可以添加更复杂的相似性判断逻辑
-                    if template_data.get('content', {}).get('style_type'):
-                        return template_data
-            
-        except Exception as e:
-            logger.error(f"查找相似模板失败: {e}")
-        
-        return None
-    
-    def _get_default_template(self) -> Optional[Dict[str, Any]]:
-        """获取默认模板"""
         default_template = {
             'id': 'default_template',
             'created_at': datetime.now().isoformat(),
@@ -134,18 +91,8 @@ class ResourceManager:
             'version': '1.0'
         }
         return default_template
-    
+
     def save_session(self, session_id: str, session_data: Dict[str, Any]) -> bool:
-        """
-        保存会话数据
-        
-        Args:
-            session_id: 会话ID
-            session_data: 会话数据
-            
-        Returns:
-            bool: 是否保存成功
-        """
         try:
             session_file = os.path.join(self.session_path, f"{session_id}.json")
             
@@ -163,17 +110,8 @@ class ResourceManager:
         except Exception as e:
             logger.error(f"会话保存失败 {session_id}: {e}")
             return False
-    
+
     def load_session(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """
-        加载会话数据
-        
-        Args:
-            session_id: 会话ID
-            
-        Returns:
-            Optional[Dict]: 会话数据
-        """
         session_file = os.path.join(self.session_path, f"{session_id}.json")
         
         if os.path.exists(session_file):
@@ -193,16 +131,6 @@ class ResourceManager:
         return None
     
     def cleanup_resources(self, session_id: str, cleanup_type: str = 'session') -> bool:
-        """
-        清理资源
-        
-        Args:
-            session_id: 会话ID
-            cleanup_type: 清理类型 ('session', 'template', 'all')
-            
-        Returns:
-            bool: 是否清理成功
-        """
         try:
             if cleanup_type in ['session', 'all']:
                 # 清理会话文件
@@ -227,15 +155,6 @@ class ResourceManager:
             return False
     
     def cleanup_old_sessions(self, max_age_days: int = 7) -> int:
-        """
-        清理过期会话
-        
-        Args:
-            max_age_days: 最大保留天数
-            
-        Returns:
-            int: 清理的会话数量
-        """
         cleaned_count = 0
         cutoff_time = datetime.now() - timedelta(days=max_age_days)
         
@@ -271,12 +190,6 @@ class ResourceManager:
         return cleaned_count
     
     def get_session_stats(self) -> Dict[str, Any]:
-        """
-        获取会话统计信息
-        
-        Returns:
-            Dict: 统计信息
-        """
         try:
             session_files = [f for f in os.listdir(self.session_path) 
                            if f.endswith('.json')]
@@ -312,15 +225,6 @@ class ResourceManager:
             return {}
     
     def backup_resources(self, backup_name: Optional[str] = None) -> str:
-        """
-        备份资源
-        
-        Args:
-            backup_name: 备份名称
-            
-        Returns:
-            str: 备份路径
-        """
         if not backup_name:
             backup_name = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
@@ -345,16 +249,6 @@ class ResourceManager:
             return ""
     
     def cleanup_test_resources(self, test_session_id: Optional[str] = None, cleanup_type: str = 'all') -> Dict[str, Any]:
-        """
-        清理测试资源
-        
-        Args:
-            test_session_id: 测试会话ID
-            cleanup_type: 清理类型 ('session', 'template', 'all')
-            
-        Returns:
-            Dict[str, Any]: 清理结果
-        """
         try:
             cleaned_items = {
                 'temp_files': 0,
@@ -435,25 +329,28 @@ resource_manager = ResourceManager()
 
 
 def create_template(template_id: str, content: Dict[str, Any]) -> bool:
-    """便捷函数：创建模板"""
-    return resource_manager.create_template(template_id, content)
-
-
-def find_template(template_id: str) -> Optional[Dict[str, Any]]:
-    """便捷函数：查找模板"""
     return resource_manager.find_template(template_id)
 
 
 def save_session(session_id: str, session_data: Dict[str, Any]) -> bool:
-    """便捷函数：保存会话"""
-    return resource_manager.save_session(session_id, session_data)
-
-
-def load_session(session_id: str) -> Optional[Dict[str, Any]]:
-    """便捷函数：加载会话"""
     return resource_manager.load_session(session_id)
 
 
 def cleanup_resources(session_id: str, cleanup_type: str = 'session') -> bool:
-    """便捷函数：清理资源"""
-    return resource_manager.cleanup_resources(session_id, cleanup_type) 
+    return resource_manager.cleanup_resources(session_id, cleanup_type)
+
+
+def cleanup_old_sessions(max_age_days: int = 7) -> int:
+    return resource_manager.cleanup_old_sessions(max_age_days)
+
+
+def get_session_stats() -> Dict[str, Any]:
+    return resource_manager.get_session_stats()
+
+
+def backup_resources(backup_name: Optional[str] = None) -> str:
+    return resource_manager.backup_resources(backup_name)
+
+
+def cleanup_test_resources(test_session_id: Optional[str] = None, cleanup_type: str = 'all') -> Dict[str, Any]:
+    return resource_manager.cleanup_test_resources(test_session_id, cleanup_type)

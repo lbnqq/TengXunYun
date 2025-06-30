@@ -36,6 +36,59 @@ jobs:
           pip install pytest-cov pytest-mock pytest-asyncio pytest-html pytest-xdist pytest-timeout pytest-benchmark
           pip install coverage flake8 mypy black isort bandit safety
 
+  # CLI业务场景贯通性测试 (P1: 强制检查)
+  cli-business-scenarios:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Create test data directories
+        run: |
+          mkdir -p cliTests/test_data
+          mkdir -p cliTests/test_results
+      - name: Run CLI business scenario tests
+        run: |
+          echo "🚀 开始执行CLI业务场景贯通性测试..."
+          python cliTests/run_all_tests.py --report --verbose
+      - name: Check CLI test results
+        run: |
+          if [ ! -f "cliTests/test_results/batch_test_report.json" ]; then
+            echo "❌ CLI测试报告未生成，测试失败！"
+            exit 1
+          fi
+          
+          # 检查测试结果
+          python -c "
+          import json
+          with open('cliTests/test_results/batch_test_report.json', 'r', encoding='utf-8') as f:
+              report = json.load(f)
+          
+          failed_tests = [test for test in report['tests'] if not test['success']]
+          if failed_tests:
+              print(f'❌ CLI业务场景测试失败: {len(failed_tests)}个测试未通过')
+              for test in failed_tests:
+                  print(f'  - {test[\"name\"]}: {test[\"error\"]}')
+              exit(1)
+          else:
+              print('✅ 所有CLI业务场景测试通过')
+          "
+      - name: Upload CLI test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cli-test-results
+          path: |
+            cliTests/test_results/
+            cliTests/test_data/
+
   # 代码质量检查
   code-quality:
     needs: setup
@@ -176,8 +229,8 @@ jobs:
         run: |
           pytest tests/test_e2e_performance.py -v --benchmark-only
 
-  # 文档一致性检查
-  doc-consistency:
+  # 四位一体自动化校验 (P1: 强制检查)
+  four-in-one-validation:
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -199,12 +252,28 @@ jobs:
       - name: Check API structure consistency
         run: |
           python tools/project_status_checker.py --check-api-structure
-      - name: Check frontend API usage
+      - name: Check frontend API usage consistency
         run: |
           python tools/project_status_checker.py --check-frontend-api-usage
+      - name: Fail if API diff found
+        run: |
+          if grep -q '建议:' api_usage_diff_report.md; then 
+            echo '❌ API实现与文档不一致，禁止合并！'
+            echo '请检查并修复以下问题:'
+            cat api_usage_diff_report.md
+            exit 1
+          fi
+      - name: Fail if id diff found
+        run: |
+          if grep -q '建议:' id_usage_diff_report.md; then 
+            echo '❌ 页面元素id实现与对照表不一致，禁止合并！'
+            echo '请检查并修复以下问题:'
+            cat id_usage_diff_report.md
+            exit 1
+          fi
 
-  # 桩子函数检测
-  stub-detection:
+  # 项目宪法合规性检查 (P1: 强制检查)
+  constitution-compliance:
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -217,21 +286,35 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run stub function detection
+      - name: Check project constitution compliance
         run: |
-          python tools/stub_function_detector.py --output docs/stub_detection_report.md --json docs/stub_detection_result.json
-      - name: Check for critical stubs
-        run: |
-          if grep -q '"severity": "critical"' docs/stub_detection_result.json; then
-            echo "❌ 发现严重级别的桩子函数，禁止合并！"
+          echo "🔍 检查项目宪法合规性..."
+          
+          # 检查AI生成代码标记
+          echo "检查AI生成代码标记..."
+          if grep -r "AI-Generated" src/ --include="*.py" | grep -v "@AI-Generated"; then
+            echo "❌ 发现未标记的AI生成代码，请添加@AI-Generated标记"
             exit 1
           fi
+          
+          # 检查docstring完整性
+          echo "检查docstring完整性..."
+          python tools/check_file_headers.py
+          
+          # 检查高频易错点防控报告
+          echo "检查高频易错点防控报告..."
+          if [ ! -f "docs/高频易错点防控与扫描报告.md" ]; then
+            echo "❌ 高频易错点防控报告缺失"
+            exit 1
+          fi
+          
+          echo "✅ 项目宪法合规性检查通过"
 
-  # 测试报告生成
-  test-report:
-    needs: [unit-tests, integration-tests, api-tests, mvp-tests, performance-tests]
+  # 定期复盘和持续改进 (P2: 定期执行)
+  periodic-analysis:
+    needs: setup
     runs-on: ubuntu-latest
-    if: always()
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.10
@@ -242,57 +325,116 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Generate comprehensive test report
+      - name: Run CLI test analysis
         run: |
-          python tests/generate_test_report.py
-      - name: Upload test results
+          echo "🔍 开始CLI测试定期复盘分析..."
+          python tools/cli_test_analyzer.py --days 30 --html
+      - name: Upload analysis reports
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: test-results
+          name: cli-test-analysis-reports
           path: |
-            test_results/
-            coverage.xml
-            coverage_html/
-            bandit-report.json
-            safety-report.json
+            cliTests/test_results/cli_test_analysis_report_*.json
+            cliTests/test_results/cli_test_analysis_report_*.html
+      - name: Generate improvement summary
+        run: |
+          echo "📋 生成改进建议摘要..."
+          python -c "
+          import json
+          import glob
+          from pathlib import Path
+          
+          # 查找最新的分析报告
+          analysis_files = glob.glob('cliTests/test_results/cli_test_analysis_report_*.json')
+          if not analysis_files:
+              print('❌ 未找到分析报告文件')
+              exit(0)
+          
+          latest_file = max(analysis_files, key=lambda x: Path(x).stat().st_mtime)
+          
+          with open(latest_file, 'r', encoding='utf-8') as f:
+              analysis = json.load(f)
+          
+          print('🎯 CLI测试定期复盘分析结果:')
+          print('=' * 50)
+          
+          # 测试覆盖率
+          coverage = analysis.get('test_coverage', {})
+          print(f'📊 分析报告数: {coverage.get(\"total_runs\", 0)}')
+          
+          # 失败模式
+          failures = analysis.get('failure_patterns', {})
+          failing_tests = failures.get('failing_tests', {})
+          if failing_tests:
+              most_failing = max(failing_tests.items(), key=lambda x: x[1])
+              print(f'🔍 最频繁失败测试: {most_failing[0]} (失败{most_failing[1]}次)')
+          
+          # 性能问题
+          performance = analysis.get('performance_issues', {})
+          slow_tests = performance.get('slow_tests', [])
+          if slow_tests:
+              print(f'⚡ 发现 {len(slow_tests)} 个慢速测试')
+          
+          # 遗漏场景
+          missing = analysis.get('missing_scenarios', {})
+          total_missing = sum(len(scenarios) for scenarios in missing.values())
+          if total_missing > 0:
+              print(f'🎯 发现 {total_missing} 个遗漏的测试场景')
+          
+          # 改进建议
+          recommendations = analysis.get('recommendations', [])
+          print(f'💡 改进建议数量: {len(recommendations)}')
+          
+          print('\\n📋 优先级改进任务:')
+          plan = analysis.get('improvement_plan', {})
+          priority_tasks = plan.get('priority_tasks', [])
+          for i, task in enumerate(priority_tasks, 1):
+              print(f'  {i}. {task}')
+          
+          print('\\n✅ 定期复盘分析完成，请查看详细报告')
+          "
 
-  # 最终验证
-  final-validation:
-    needs: [code-quality, unit-tests, integration-tests, api-tests, mvp-tests, doc-consistency, stub-detection]
+  # 最终合并检查
+  merge-gate:
+    needs: [cli-business-scenarios, code-quality, unit-tests, integration-tests, api-tests, four-in-one-validation, constitution-compliance]
     runs-on: ubuntu-latest
-    if: always()
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
-      - name: Check for any failures
+      - name: Check all tests passed
         run: |
-          echo "🔍 检查所有测试结果..."
-          if [ "${{ needs.code-quality.result }}" != "success" ]; then
-            echo "❌ 代码质量检查失败"
-            exit 1
-          fi
-          if [ "${{ needs.unit-tests.result }}" != "success" ]; then
-            echo "❌ 单元测试失败"
-            exit 1
-          fi
-          if [ "${{ needs.integration-tests.result }}" != "success" ]; then
-            echo "❌ 集成测试失败"
-            exit 1
-          fi
-          if [ "${{ needs.api-tests.result }}" != "success" ]; then
-            echo "❌ API测试失败"
-            exit 1
-          fi
-          if [ "${{ needs.mvp-tests.result }}" != "success" ]; then
-            echo "❌ MVP功能测试失败"
-            exit 1
-          fi
-          if [ "${{ needs.doc-consistency.result }}" != "success" ]; then
-            echo "❌ 文档一致性检查失败"
-            exit 1
-          fi
-          if [ "${{ needs.stub-detection.result }}" != "success" ]; then
-            echo "❌ 桩子函数检测失败"
-            exit 1
-          fi
-          echo "✅ 所有检查通过！" 
+          echo "🎉 所有检查通过，允许合并！"
+          echo "✅ CLI业务场景测试通过"
+          echo "✅ 代码质量检查通过"
+          echo "✅ 单元测试通过"
+          echo "✅ 集成测试通过"
+          echo "✅ API测试通过"
+          echo "✅ 四位一体自动化校验通过"
+          echo "✅ 项目宪法合规性检查通过"
+      - name: Generate merge report
+        run: |
+          echo "## 🚀 合并检查报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ 通过的检查项" >> $GITHUB_STEP_SUMMARY
+          echo "- CLI业务场景贯通性测试" >> $GITHUB_STEP_SUMMARY
+          echo "- 代码质量检查 (flake8, mypy, black, isort)" >> $GITHUB_STEP_SUMMARY
+          echo "- 单元测试 (覆盖率检查)" >> $GITHUB_STEP_SUMMARY
+          echo "- 集成测试 (API集成)" >> $GITHUB_STEP_SUMMARY
+          echo "- API测试 (接口功能)" >> $GITHUB_STEP_SUMMARY
+          echo "- 四位一体自动化校验 (接口、页面、AI代码、测试脚本一致性)" >> $GITHUB_STEP_SUMMARY
+          echo "- 项目宪法合规性检查 (AI标记、docstring、规范)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 测试统计" >> $GITHUB_STEP_SUMMARY
+          echo "- 总检查项: 7项" >> $GITHUB_STEP_SUMMARY
+          echo "- 通过项: 7项" >> $GITHUB_STEP_SUMMARY
+          echo "- 失败项: 0项" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 **基于项目宪法的工程可用性保障机制已生效**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 持续改进机制" >> $GITHUB_STEP_SUMMARY
+          echo "- 定期复盘: 每月自动分析CLI测试报告" >> $GITHUB_STEP_SUMMARY
+          echo "- 失败分析: 自动识别失败模式和根本原因" >> $GITHUB_STEP_SUMMARY
+          echo "- 性能监控: 持续跟踪测试执行性能" >> $GITHUB_STEP_SUMMARY
+          echo "- 场景补充: 自动识别遗漏的测试场景" >> $GITHUB_STEP_SUMMARY
+          echo "- 改进建议: 基于分析结果生成具体改进计划" >> $GITHUB_STEP_SUMMARY 

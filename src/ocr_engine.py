@@ -1,3 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+OCR引擎
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
+
+
+
+
+
+
+
+
+
 import os
 import cv2
 import logging
@@ -10,10 +33,6 @@ class PaddleOCRWrapper:
         logging.info(f"PaddleOCR initialized with lang='{lang}', use_gpu={use_gpu}")
 
     def recognize(self, image_path: str) -> List[Dict[str, Any]]:
-        """
-        识别图像中的文本，返回文本列表及位置信息。
-        返回格式: [ {'text': text, 'box': [x1,y1,x2,y1,x2,y2,x1,y2], 'confidence': score} ]
-        """
         if not os.path.exists(image_path):
             logging.error(f"OCR 错误: 文件 '{image_path}' 不存在。")
             return []

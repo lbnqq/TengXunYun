@@ -1,3 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+表格解析器
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
+
+
+
+
+
+
+
+
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -17,13 +40,6 @@ class TableParser:
             logging.warning(f"TableParser: 未知的解析策略 '{self.strategy}'，将尝试默认行为。")
 
     def parse(self, image_path: str, table_bbox: Tuple[int, int, int, int], ocr_results: List[Dict[str, Any]]) -> pd.DataFrame:
-        """
-        解析指定边界框内的表格，并从 OCR 结果中提取单元格内容。
-        :param image_path: 原始图像路径
-        :param table_bbox: 表格的边界框 [x1, y1, x2, y2]
-        :param ocr_results: 图像的 OCR 结果列表，每个元素包含 'text', 'box', 'confidence'
-        :return: Pandas DataFrame 或 None 如果解析失败
-        """
         if self.strategy == "ocr_based_rule":
             return self._parse_ocr_based(image_path, table_bbox, ocr_results)
         else:

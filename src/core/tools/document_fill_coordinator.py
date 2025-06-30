@@ -1,20 +1,30 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Document Fill Coordinator - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import json
 import os
 from typing import Dict, Any, List, Optional
-from .complex_document_filler import ComplexDocumentFiller
+from .enhanced_document_filler import EnhancedDocumentFiller
 from .writing_style_analyzer import WritingStyleAnalyzer
 
 class DocumentFillCoordinator:
-    """
-    文档填充协调器
-    管理复杂文档填充的多轮对话流程
-    """
     
     def __init__(self, llm_client=None):
         self.tool_name = "文档填充协调器"
         self.description = "协调复杂文档填充的多轮对话流程"
         self.llm_client = llm_client
-        self.document_filler = ComplexDocumentFiller(llm_client)
+        self.document_filler = EnhancedDocumentFiller(llm_client)
         self.style_analyzer = WritingStyleAnalyzer()
         
         # 会话状态
@@ -63,8 +73,8 @@ class DocumentFillCoordinator:
             
             self.session_state["analysis_result"] = analysis_result
             
-            # 生成填写问题
-            questions = self.document_filler.generate_fill_questions(analysis_result)
+            # 生成填写问题 - 使用增强填充器的方法
+            questions = self._generate_fill_questions_from_analysis(analysis_result)
             self.session_state["questions"] = questions
             self.session_state["fill_stage"] = "questioning"
             
@@ -379,7 +389,11 @@ class DocumentFillCoordinator:
         
         # 执行文档填充
         analysis_result = self.session_state["analysis_result"]
-        fill_result = self.document_filler.fill_document(analysis_result, fill_data)
+        fill_result = self.document_filler.intelligent_fill_document(
+            analysis_result, 
+            fill_data, 
+            self.session_state["supplementary_materials"]
+        )
         
         if "error" in fill_result:
             return fill_result
@@ -964,3 +978,109 @@ class DocumentFillCoordinator:
             confidence += 0.3
         
         return min(1.0, confidence)
+
+    def _generate_fill_questions_from_analysis(self, analysis_result: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """从分析结果生成填写问题"""
+        questions = []
+        
+        # 按类别组织字段
+        fields_by_category = {}
+        for field in analysis_result.get("fill_fields", []):
+            category = field["category"]
+            if category not in fields_by_category:
+                fields_by_category[category] = []
+            fields_by_category[category].append(field)
+        
+        # 为每个类别生成问题
+        question_id = 1
+        for category, fields in fields_by_category.items():
+            question = {
+                "question_id": f"q_{question_id}",
+                "category": category,
+                "question_text": self._generate_category_question(category, fields),
+                "fields": [field["field_id"] for field in fields],
+                "required_info": list(set(info for field in fields for info in field["required_info"])),
+                "input_type": self._determine_input_type(category),
+                "validation_rules": self._get_validation_rules(category),
+                "examples": self._get_examples(category),
+                "answered": False,
+                "answer": None
+            }
+            questions.append(question)
+            question_id += 1
+        
+        # 为表格生成问题
+        for table in analysis_result.get("tables", []):
+            if table.get("fill_required"):
+                question = {
+                    "question_id": f"q_{question_id}",
+                    "category": "表格数据",
+                    "question_text": f"请填写表格\"{table.get('header', '未命名表格')}\"中的空白单元格",
+                    "table_id": table["table_id"],
+                    "table_info": table,
+                    "input_type": "table",
+                    "answered": False,
+                    "answer": None
+                }
+                questions.append(question)
+                question_id += 1
+        
+        return questions
+    
+    def _generate_category_question(self, category: str, fields: List[Dict]) -> str:
+        """为字段类别生成问题"""
+        question_templates = {
+            "个人信息": f"请提供您的个人信息，我发现文档中需要填写{len(fields)}个个人信息字段",
+            "日期时间": f"请提供相关的日期信息，文档中有{len(fields)}个日期字段需要填写",
+            "金额数字": f"请提供相关的数值信息，文档中有{len(fields)}个数值字段需要填写",
+            "机构信息": f"请提供机构或公司相关信息，文档中有{len(fields)}个机构字段需要填写",
+            "描述文本": f"请提供相关的描述或说明，文档中有{len(fields)}个描述字段需要填写"
+        }
+        
+        return question_templates.get(category, f"请提供{category}相关信息")
+    
+    def _determine_input_type(self, category: str) -> str:
+        """确定输入类型"""
+        input_types = {
+            "个人信息": "form",
+            "日期时间": "date",
+            "金额数字": "number",
+            "机构信息": "text",
+            "描述文本": "textarea"
+        }
+        
+        return input_types.get(category, "text")
+    
+    def _get_validation_rules(self, category: str) -> Dict[str, Any]:
+        """获取验证规则"""
+        validation_rules = {
+            "个人信息": {
+                "姓名": {"required": True, "min_length": 2, "max_length": 10},
+                "身份证号": {"required": True, "pattern": r"^\d{18}$"},
+                "电话": {"required": True, "pattern": r"^1[3-9]\d{9}$"},
+                "邮箱": {"pattern": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"}
+            },
+            "日期时间": {
+                "format": "YYYY年MM月DD日",
+                "required": True
+            },
+            "金额数字": {
+                "type": "number",
+                "min": 0,
+                "required": True
+            }
+        }
+        
+        return validation_rules.get(category, {})
+    
+    def _get_examples(self, category: str) -> List[str]:
+        """获取示例"""
+        examples = {
+            "个人信息": ["张三", "男", "25", "北京市朝阳区xxx街道xxx号"],
+            "日期时间": ["2024年1月15日", "2024-01-15"],
+            "金额数字": ["1000元", "50万", "3.5%"],
+            "机构信息": ["北京科技有限公司", "清华大学", "国家发改委"],
+            "描述文本": ["详细说明项目背景和目标", "列举主要工作内容"]
+        }
+        
+        return examples.get(category, [])

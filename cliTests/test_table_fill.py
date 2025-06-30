@@ -10,7 +10,15 @@ import sys
 import os
 import json
 import time
-from base_test_script import BaseTestScript
+from typing import Dict, Optional
+
+# 修复导入路径
+try:
+    from .base_test_script import BaseTestScript
+except ImportError:
+    # 如果相对导入失败，尝试绝对导入
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from cliTests.base_test_script import BaseTestScript
 
 
 class TableFillTest(BaseTestScript):

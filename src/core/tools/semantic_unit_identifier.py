@@ -1,7 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-语义单元识别器
-使用讯飞大模型作为语义分析助手，识别文本中的核心概念、实体、关键词汇等语义单元
+Semantic Unit Identifier - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import json
 import re

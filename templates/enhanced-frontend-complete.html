@@ -10,7 +10,7 @@
 </head>
 <body>
     <!-- 全局进度条 -->
-    <div class="global-progress-bar" id="global-progress">
+    <div class="global-progress-bar" id="global-progress" role="progressbar" aria-label="全局进度">
         <div class="progress-fill" id="progress-fill"></div>
     </div>
 
@@ -19,13 +19,13 @@
         <header class="app-header">
             <h1 class="main-title">📄 办公文档智能代理</h1>
             <div class="logo">📄 办公文档智能代理</div>
-            <nav class="main-nav">
-                <a href="#" class="nav-item active" data-scene="format">格式对齐</a>
-                <a href="#" class="nav-item" data-scene="style">文风统一</a>
-                <a href="#" class="nav-item" data-scene="fill">智能填报</a>
-                <a href="#" class="nav-item" data-scene="review">文档审查</a>
-                <a href="#" class="nav-item" data-scene="management">管理中心</a>
-                <a href="/dashboard" class="nav-item dashboard-link" target="_blank">📊 性能监控</a>
+            <nav class="main-nav" role="navigation" aria-label="主导航">
+                <a href="#" class="nav-item active" data-scene="format" aria-label="格式对齐功能">格式对齐</a>
+                <a href="#" class="nav-item" data-scene="style" aria-label="文风统一功能">文风统一</a>
+                <a href="#" class="nav-item" data-scene="fill" aria-label="智能填报功能">智能填报</a>
+                <a href="#" class="nav-item" data-scene="review" aria-label="文档审查功能">文档审查</a>
+                <a href="#" class="nav-item" data-scene="management" aria-label="管理中心功能">管理中心</a>
+                <a href="/dashboard" class="nav-item dashboard-link" target="_blank" aria-label="性能监控面板">📊 性能监控</a>
             </nav>
         </header>
 
@@ -35,7 +35,7 @@
             <p class="scene-description">将文档格式统一到参考模板的标准，确保文档风格一致</p>
             
             <!-- 步骤指示器 -->
-            <div class="step-indicator">
+            <div class="step-indicator" role="progressbar" aria-label="格式对齐进度">
                 <div class="step-item active">
                     <div class="step-number">1</div>
                     <span>上传文件</span>
@@ -62,26 +62,29 @@
                 <h3 class="workflow-title">文件上传</h3>
                 
                 <div class="input-group">
-                    <label>参考格式文件:</label>
+                    <label for="upload-format-base">参考格式文件:</label>
                     <div class="file-upload-area" id="format-base-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-base">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-base" 
+                               title="选择参考格式文件" aria-label="上传参考格式文件">
                         <div class="file-upload-text">点击或拖拽上传参考格式文件</div>
                         <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label>待处理文档:</label>
+                    <label for="upload-format-target">待处理文档:</label>
                     <div class="file-upload-area" id="format-target-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-target">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-target" 
+                               title="选择待处理文档" aria-label="上传待处理文档">
                         <div class="file-upload-text">点击或拖拽上传待处理文档</div>
                         <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label>格式模板:</label>
-                    <select class="input-select" id="format-template-select">
+                    <label for="format-template-select">格式模板:</label>
+                    <select class="input-select" id="format-template-select" 
+                            title="选择格式模板" aria-label="选择格式模板">
                         <option value="">选择格式模板</option>
                     </select>
                 </div>
@@ -91,29 +94,34 @@
             <div class="action-block">
                 <h3 class="workflow-title">操作控制</h3>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="format_alignment">
+                    <button class="btn btn-primary" data-action="format_alignment" 
+                            aria-label="应用格式对齐功能">
                         <span>🔄</span> 应用格式对齐
                     </button>
-                    <button class="btn btn-secondary" data-action="set_baseline">
+                    <button class="btn btn-secondary" data-action="set_baseline" 
+                            aria-label="设置基准格式">
                         <span>📌</span> 设置基准格式
                     </button>
-                    <button class="btn btn-success" data-action="save_format">
+                    <button class="btn btn-success" data-action="save_format" 
+                            aria-label="保存格式模板">
                         <span>💾</span> 保存格式模板
                     </button>
                 </div>
                 
-                <div class="feedback-message" id="format-feedback"></div>
+                <div class="feedback-message" id="format-feedback" role="status" aria-live="polite"></div>
             </div>
 
             <!-- 结果预览区域 -->
             <div class="workflow-block" id="format-result-area" style="display: none;">
                 <h3 class="workflow-title">处理结果</h3>
-                <div id="format-preview-content"></div>
+                <div id="format-preview-content" role="region" aria-label="格式对齐结果预览"></div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="preview_result">
+                    <button class="btn btn-primary" data-action="preview_result" 
+                            aria-label="预览格式对齐结果">
                         <span>👁️</span> 预览结果
                     </button>
-                    <button class="btn btn-success" data-action="export_result">
+                    <button class="btn btn-success" data-action="export_result" 
+                            aria-label="导出格式对齐后的文档">
                         <span>📥</span> 导出文档
                     </button>
                 </div>
@@ -126,7 +134,7 @@
             <p class="scene-description">分析参考文档的写作风格，并将其应用到目标文档中</p>
             
             <!-- 步骤指示器 -->
-            <div class="step-indicator">
+            <div class="step-indicator" role="progressbar" aria-label="文风统一进度">
                 <div class="step-item active">
                     <div class="step-number">1</div>
                     <span>上传文件</span>
@@ -153,26 +161,29 @@
                 <h3 class="workflow-title">文件上传</h3>
                 
                 <div class="input-group">
-                    <label>参考文风文档:</label>
+                    <label for="upload-style-ref">参考文风文档:</label>
                     <div class="file-upload-area" id="style-ref-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-style-ref">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-style-ref" 
+                               title="选择参考文风文档" aria-label="上传参考文风文档">
                         <div class="file-upload-text">点击或拖拽上传参考文风文档</div>
                         <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label>目标文档:</label>
+                    <label for="upload-style-target">目标文档:</label>
                     <div class="file-upload-area" id="style-target-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-style-target">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-style-target" 
+                               title="选择目标文档" aria-label="上传目标文档">
                         <div class="file-upload-text">点击或拖拽上传目标文档</div>
                         <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label>文风模板:</label>
-                    <select class="input-select" id="style-template-select">
+                    <label for="style-template-select">文风模板:</label>
+                    <select class="input-select" id="style-template-select" 
+                            title="选择文风模板" aria-label="选择文风模板">
                         <option value="">选择文风模板</option>
                     </select>
                 </div>
@@ -182,29 +193,34 @@
             <div class="action-block">
                 <h3 class="workflow-title">操作控制</h3>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="style_alignment">
+                    <button class="btn btn-primary" data-action="style_alignment" 
+                            aria-label="分析文风功能">
                         <span>🎨</span> 分析文风
                     </button>
-                    <button class="btn btn-secondary" data-action="apply_style">
+                    <button class="btn btn-secondary" data-action="apply_style" 
+                            aria-label="应用风格功能">
                         <span>✨</span> 应用风格
                     </button>
-                    <button class="btn btn-success" data-action="save_style">
+                    <button class="btn btn-success" data-action="save_style" 
+                            aria-label="保存文风模板">
                         <span>💾</span> 保存文风模板
                     </button>
                 </div>
                 
-                <div class="feedback-message" id="style-feedback"></div>
+                <div class="feedback-message" id="style-feedback" role="status" aria-live="polite"></div>
             </div>
 
             <!-- 结果预览区域 -->
             <div class="workflow-block" id="style-result-area" style="display: none;">
                 <h3 class="workflow-title">风格分析结果</h3>
-                <div id="style-preview-content"></div>
+                <div id="style-preview-content" role="region" aria-label="文风分析结果预览"></div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="preview_style">
+                    <button class="btn btn-primary" data-action="preview_style" 
+                            aria-label="预览文风修改结果">
                         <span>👁️</span> 预览修改
                     </button>
-                    <button class="btn btn-success" data-action="export_style">
+                    <button class="btn btn-success" data-action="export_style" 
+                            aria-label="导出文风统一后的文档">
                         <span>📥</span> 导出文档
                     </button>
                 </div>
@@ -217,7 +233,7 @@
             <p class="scene-description">智能识别文档字段，自动匹配数据源，快速完成文档填写</p>
             
             <!-- 步骤指示器 -->
-            <div class="step-indicator">
+            <div class="step-indicator" role="progressbar" aria-label="智能填报进度">
                 <div class="step-item active">
                     <div class="step-number">1</div>
                     <span>上传文档</span>
@@ -244,26 +260,23 @@
                 <h3 class="workflow-title">文件上传</h3>
                 
                 <div class="input-group">
-                    <label>文档模板:</label>
+                    <label for="upload-fill-template">文档模板:</label>
                     <div class="file-upload-area" id="fill-template-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-fill-template">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-fill-template" 
+                               title="选择文档模板" aria-label="上传文档模板">
                         <div class="file-upload-text">点击或拖拽上传文档模板</div>
                         <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label>数据源文件:</label>
+                    <label for="upload-fill-data">数据源文件:</label>
                     <div class="file-upload-area" id="fill-data-upload">
-                        <input type="file" accept=".json,.csv,.xlsx,.xls,.txt" id="upload-fill-data">
+                        <input type="file" accept=".json,.csv,.xlsx,.xls,.txt" id="upload-fill-data" 
+                               title="选择数据源文件" aria-label="上传数据源文件">
                         <div class="file-upload-text">点击或拖拽上传数据源文件</div>
                         <div class="file-upload-hint">支持 .json, .csv, .xlsx, .xls, .txt 格式</div>
                     </div>
-                </div>
-
-                <div class="input-group">
-                    <label>填写规则:</label>
-                    <textarea class="input-textarea" id="fill-rules" placeholder="请输入填写规则和约束条件..."></textarea>
                 </div>
             </div>
 
@@ -271,29 +284,46 @@
             <div class="action-block">
                 <h3 class="workflow-title">操作控制</h3>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="auto_match_data">
-                        <span>🔍</span> 自动匹配数据
+                    <button class="btn btn-primary" data-action="document_fill" 
+                            aria-label="开始智能填报">
+                        <span>🤖</span> 开始填报
                     </button>
-                    <button class="btn btn-secondary" data-action="manual_match">
-                        <span>✏️</span> 手动匹配
+                    <button class="btn btn-secondary" data-action="auto_match_data" 
+                            aria-label="自动匹配数据">
+                        <span>🔗</span> 自动匹配
                     </button>
-                    <button class="btn btn-success" data-action="export_filled_doc">
-                        <span>📥</span> 导出填写文档
+                    <button class="btn btn-secondary" data-action="manual_match" 
+                            aria-label="手动匹配数据">
+                        <span>✋</span> 手动匹配
+                    </button>
+                    <button class="btn btn-secondary" data-action="preview_fill" 
+                            aria-label="预览填报结果">
+                        <span>👁️</span> 预览结果
+                    </button>
+                    <button class="btn btn-success" data-action="export_fill" 
+                            aria-label="导出填报后的文档">
+                        <span>📥</span> 导出文档
+                    </button>
+                    <button class="btn btn-success" data-action="export_filled_doc" 
+                            aria-label="导出填充后的文档">
+                        <span>📄</span> 导出填充文档
                     </button>
                 </div>
                 
-                <div class="feedback-message" id="fill-feedback"></div>
+                <div class="feedback-message" id="fill-feedback" role="status" aria-live="polite"></div>
             </div>
 
             <!-- 结果预览区域 -->
             <div class="workflow-block" id="fill-result-area" style="display: none;">
-                <h3 class="workflow-title">填写结果</h3>
-                <div id="fill-preview-content"></div>
+                <h3 class="workflow-title">填报结果</h3>
+                <div id="fill-preview-content" role="region" aria-label="智能填报结果预览"></div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="preview_fill">
+                    <button class="btn btn-primary" data-action="preview_fill_result" 
+                            aria-label="预览填报结果">
                         <span>👁️</span> 预览结果
                     </button>
-                    <button class="btn btn-success" data-action="export_fill">
+                    <button class="btn btn-success" data-action="export_fill_result" 
+                            aria-label="导出填报后的文档">
                         <span>📥</span> 导出文档
                     </button>
                 </div>
@@ -306,7 +336,7 @@
             <p class="scene-description">智能审查文档内容，发现潜在问题并提供改进建议</p>
             
             <!-- 步骤指示器 -->
-            <div class="step-indicator">
+            <div class="step-indicator" role="progressbar" aria-label="文档审查进度">
                 <div class="step-item active">
                     <div class="step-number">1</div>
                     <span>上传文档</span>
@@ -333,17 +363,19 @@
                 <h3 class="workflow-title">文件上传</h3>
                 
                 <div class="input-group">
-                    <label>待审查文档:</label>
+                    <label for="upload-review-doc">待审查文档:</label>
                     <div class="file-upload-area" id="review-doc-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-review-doc">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-review-doc" 
+                               title="选择待审查文档" aria-label="上传待审查文档">
                         <div class="file-upload-text">点击或拖拽上传待审查文档</div>
                         <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label>审查标准:</label>
-                    <select class="input-select" id="review-standard-select">
+                    <label for="review-standard-select">审查标准:</label>
+                    <select class="input-select" id="review-standard-select" 
+                            title="选择审查标准" aria-label="选择审查标准">
                         <option value="">选择审查标准</option>
                         <option value="grammar">语法检查</option>
                         <option value="style">格式规范</option>
@@ -353,8 +385,10 @@
                 </div>
 
                 <div class="input-group">
-                    <label>审查要求:</label>
-                    <textarea class="input-textarea" id="review-requirements" placeholder="请输入特定的审查要求..."></textarea>
+                    <label for="review-requirements">审查要求:</label>
+                    <textarea class="input-textarea" id="review-requirements" 
+                              placeholder="请输入特定的审查要求..." 
+                              title="输入审查要求" aria-label="输入审查要求"></textarea>
                 </div>
             </div>
 
@@ -362,29 +396,34 @@
             <div class="action-block">
                 <h3 class="workflow-title">操作控制</h3>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="start_review">
+                    <button class="btn btn-primary" data-action="start_review" 
+                            aria-label="开始文档审查">
                         <span>🔍</span> 开始审查
                     </button>
-                    <button class="btn btn-secondary" data-action="review_settings">
+                    <button class="btn btn-secondary" data-action="review_settings" 
+                            aria-label="审查设置">
                         <span>⚙️</span> 审查设置
                     </button>
-                    <button class="btn btn-success" data-action="export_review_report">
+                    <button class="btn btn-success" data-action="export_review_report" 
+                            aria-label="导出审查报告">
                         <span>📊</span> 导出报告
                     </button>
                 </div>
                 
-                <div class="feedback-message" id="review-feedback"></div>
+                <div class="feedback-message" id="review-feedback" role="status" aria-live="polite"></div>
             </div>
 
             <!-- 结果预览区域 -->
             <div class="workflow-block" id="review-result-area" style="display: none;">
                 <h3 class="workflow-title">审查结果</h3>
-                <div id="review-preview-content"></div>
+                <div id="review-preview-content" role="region" aria-label="文档审查结果预览"></div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="preview_review">
+                    <button class="btn btn-primary" data-action="preview_review" 
+                            aria-label="预览审查报告">
                         <span>👁️</span> 预览报告
                     </button>
-                    <button class="btn btn-success" data-action="export_review">
+                    <button class="btn btn-success" data-action="export_review" 
+                            aria-label="导出审查报告">
                         <span>📥</span> 导出报告
                     </button>
                 </div>
@@ -397,26 +436,30 @@
             <p class="scene-description">管理文档历史、模板库、系统设置和性能监控</p>
             
             <!-- 管理标签页 -->
-            <div class="management-tabs">
-                <button class="btn btn-tab active" data-tab="history">📋 文档历史</button>
-                <button class="btn btn-tab" data-tab="templates">📚 模板库</button>
-                <button class="btn btn-tab" data-tab="settings">⚙️ 系统设置</button>
-                <button class="btn btn-tab" data-tab="performance">📊 性能监控</button>
+            <div class="management-tabs" role="tablist" aria-label="管理中心标签页">
+                <button class="btn btn-tab active" data-tab="history" role="tab" 
+                        aria-selected="true" aria-controls="history-content">📋 文档历史</button>
+                <button class="btn btn-tab" data-tab="templates" role="tab" 
+                        aria-selected="false" aria-controls="templates-content">📚 模板库</button>
+                <button class="btn btn-tab" data-tab="settings" role="tab" 
+                        aria-selected="false" aria-controls="settings-content">⚙️ 系统设置</button>
+                <button class="btn btn-tab" data-tab="performance" role="tab" 
+                        aria-selected="false" aria-controls="performance-content">📊 性能监控</button>
             </div>
 
             <!-- 文档历史标签页 -->
-            <div class="tab-content active" data-tab-content="history">
+            <div class="tab-content active" data-tab-content="history" id="history-content" role="tabpanel" aria-labelledby="history-tab">
                 <div class="workflow-block">
                     <h3 class="workflow-title">文档处理历史</h3>
                     <div class="history-table-container">
-                        <table class="history-table">
+                        <table class="history-table" role="table" aria-label="文档处理历史记录">
                             <thead>
                                 <tr>
-                                    <th>时间</th>
-                                    <th>操作类型</th>
-                                    <th>文件名</th>
-                                    <th>状态</th>
-                                    <th>操作</th>
+                                    <th scope="col">时间</th>
+                                    <th scope="col">操作类型</th>
+                                    <th scope="col">文件名</th>
+                                    <th scope="col">状态</th>
+                                    <th scope="col">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="history-table-body">
@@ -428,35 +471,39 @@
             </div>
 
             <!-- 模板库标签页 -->
-            <div class="tab-content" data-tab-content="templates">
+            <div class="tab-content" data-tab-content="templates" id="templates-content" role="tabpanel" aria-labelledby="templates-tab">
                 <div class="workflow-block">
                     <h3 class="workflow-title">模板管理</h3>
-                    <div class="template-grid" id="template-grid">
+                    <div class="template-grid" id="template-grid" role="grid" aria-label="模板库">
                         <!-- 动态填充 -->
                     </div>
                 </div>
             </div>
 
             <!-- 系统设置标签页 -->
-            <div class="tab-content" data-tab-content="settings">
+            <div class="tab-content" data-tab-content="settings" id="settings-content" role="tabpanel" aria-labelledby="settings-tab">
                 <div class="workflow-block">
                     <h3 class="workflow-title">系统设置</h3>
                     <div class="settings-form">
                         <div class="input-group">
-                            <label>自动保存:</label>
-                            <input type="checkbox" id="auto-save-setting" checked>
+                            <label for="auto-save-setting">自动保存:</label>
+                            <input type="checkbox" id="auto-save-setting" checked 
+                                   title="启用自动保存功能" aria-label="启用自动保存功能">
                         </div>
                         <div class="input-group">
-                            <label>显示预览:</label>
-                            <input type="checkbox" id="show-preview-setting" checked>
+                            <label for="show-preview-setting">显示预览:</label>
+                            <input type="checkbox" id="show-preview-setting" checked 
+                                   title="启用预览功能" aria-label="启用预览功能">
                         </div>
                         <div class="input-group">
-                            <label>启用通知:</label>
-                            <input type="checkbox" id="enable-notifications-setting" checked>
+                            <label for="enable-notifications-setting">启用通知:</label>
+                            <input type="checkbox" id="enable-notifications-setting" checked 
+                                   title="启用通知功能" aria-label="启用通知功能">
                         </div>
                         <div class="input-group">
-                            <label>语言设置:</label>
-                            <select class="input-select" id="language-setting">
+                            <label for="language-setting">语言设置:</label>
+                            <select class="input-select" id="language-setting" 
+                                    title="选择界面语言" aria-label="选择界面语言">
                                 <option value="zh-CN">中文</option>
                                 <option value="en-US">English</option>
                             </select>
@@ -466,21 +513,21 @@
             </div>
 
             <!-- 性能监控标签页 -->
-            <div class="tab-content" data-tab-content="performance">
+            <div class="tab-content" data-tab-content="performance" id="performance-content" role="tabpanel" aria-labelledby="performance-tab">
                 <div class="workflow-block">
                     <h3 class="workflow-title">性能统计</h3>
-                    <div class="performance-stats">
+                    <div class="performance-stats" role="region" aria-label="性能统计数据">
                         <div class="stat-card">
                             <h4>处理文档数</h4>
-                            <div class="stat-value" id="total-documents">0</div>
+                            <div class="stat-value" id="total-documents" aria-live="polite">0</div>
                         </div>
                         <div class="stat-card">
                             <h4>平均处理时间</h4>
-                            <div class="stat-value" id="avg-processing-time">0s</div>
+                            <div class="stat-value" id="avg-processing-time" aria-live="polite">0s</div>
                         </div>
                         <div class="stat-card">
                             <h4>成功率</h4>
-                            <div class="stat-value" id="success-rate">0%</div>
+                            <div class="stat-value" id="success-rate" aria-live="polite">0%</div>
                         </div>
                     </div>
                 </div>
@@ -489,10 +536,10 @@
     </div>
 
     <!-- 通知容器 -->
-    <div class="notification-container" id="notification-container"></div>
+    <div class="notification-container" id="notification-container" role="status" aria-live="polite" aria-label="通知消息"></div>
 
     <!-- 加载状态 -->
-    <div class="loading" id="global-loading" style="display: none;">
+    <div class="loading" id="global-loading" style="display: none;" role="status" aria-live="polite" aria-label="加载状态">
         <div class="loading-spinner"></div>
         <div class="loading-message" id="loading-message">处理中...</div>
     </div>

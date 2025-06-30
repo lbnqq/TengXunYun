@@ -1,8 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-语义空间行为算法引擎
-整合所有语义分析组件，实现完整的语义空间行为算法
-讯飞大模型作为语义分析助手和风格评估员
+Semantic Space Behavior Engine - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import json
 import os

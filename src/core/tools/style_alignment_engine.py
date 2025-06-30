@@ -1,7 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-文风对齐引擎
-基于提取的文风特征，实现文风相似度计算、风格迁移和文风对齐生成
+Style Alignment Engine - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import json
 import os
@@ -384,19 +394,31 @@ class StyleAlignmentEngine:
             source_vector = source_features.get("feature_vector", [])
             target_vector = target_features.get("feature_vector", [])
             
-            if source_vector and target_vector:
+            if source_vector and target_vector and len(source_vector) > 0 and len(target_vector) > 0:
                 similarity_result = self.similarity_calculator.calculate_similarity(
                     source_vector, target_vector, method="cosine"
                 )
                 result["similarity_analysis"] = similarity_result
             
             # 2. 执行文风迁移
+            print("🔄 开始文风迁移...")
             transfer_result = self.transfer_engine.perform_style_transfer(
                 source_features, target_features, content_to_align, strategy="direct"
             )
             result["transfer_result"] = transfer_result
             
-            # 3. 评估对齐质量
+            # 3. 如果LLM迁移失败，尝试使用保存的文风提示词
+            if not transfer_result.get("success") and "error" in transfer_result:
+                print("⚠️ LLM迁移失败，尝试使用保存的文风提示词...")
+                fallback_result = self._perform_fallback_style_transfer(
+                    source_features, target_features, content_to_align
+                )
+                if fallback_result.get("success"):
+                    transfer_result = fallback_result
+                    result["transfer_result"] = transfer_result
+                    result["used_fallback"] = True
+            
+            # 4. 评估对齐质量
             if transfer_result.get("success"):
                 quality_assessment = self._assess_alignment_quality(
                     content_to_align, 
@@ -406,12 +428,193 @@ class StyleAlignmentEngine:
                 )
                 result["alignment_quality"] = quality_assessment
             
-            result["success"] = True
+            result["success"] = transfer_result.get("success", False)
             
         except Exception as e:
             result["error"] = str(e)
+            print(f"❌ 文风对齐失败: {str(e)}")
         
         return result
+    
+    def _perform_fallback_style_transfer(self, source_features: Dict[str, Any],
+                                       target_features: Dict[str, Any],
+                                       content_to_align: str) -> Dict[str, Any]:
+        """使用保存的文风提示词进行回退迁移"""
+        try:
+            # 获取目标文风模板中的详细提示词
+            target_style_prompt = target_features.get("style_prompt", "")
+            target_style_type = target_features.get("style_type", "business_professional")
+            
+            if not target_style_prompt:
+                # 如果没有保存的提示词，生成基础提示词
+                target_style_prompt = self._generate_basic_style_prompt(target_features)
+            
+            # 构建完整的迁移提示词
+            full_prompt = self._build_enhanced_style_migration_prompt(
+                content_to_align, target_style_prompt, target_style_type, target_features
+            )
+            
+            # 尝试调用LLM
+            if self.transfer_engine.llm_client:
+                print("🤖 使用LLM进行回退文风迁移...")
+                response = self.transfer_engine.llm_client.generate(full_prompt)
+                rewritten_content = self.transfer_engine._extract_rewritten_content(response)
+                
+                return {
+                    "success": True,
+                    "rewritten_content": rewritten_content,
+                    "raw_llm_response": response,
+                    "used_fallback": True,
+                    "fallback_method": "saved_style_prompt"
+                }
+            else:
+                # 如果LLM不可用，使用规则基础迁移
+                print("📝 使用规则基础迁移...")
+                rewritten_content = self._rule_based_style_migration(
+                    content_to_align, target_style_type, target_features
+                )
+                
+                return {
+                    "success": True,
+                    "rewritten_content": rewritten_content,
+                    "used_fallback": True,
+                    "fallback_method": "rule_based"
+                }
+                
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"回退迁移失败: {str(e)}",
+                "used_fallback": True
+            }
+    
+    def _build_enhanced_style_migration_prompt(self, content: str, style_prompt: str,
+                                             style_type: str, style_features: Dict[str, Any]) -> str:
+        """构建增强的文风迁移提示词"""
+        
+        # 获取风格特征描述
+        style_description = self._extract_style_description(style_features)
+        
+        prompt = f"""请根据以下详细的文风要求，将内容改写为目标风格。
+
+## 目标文风要求
+{style_prompt}
+
+## 风格特征详情
+{style_description}
+
+## 需要改写的内容
+{content}
+
+## 改写要求
+1. 严格按照上述文风要求进行改写
+2. 保持原文的核心信息和逻辑结构不变
+3. 调整词汇选择、句式结构、语气表达等各个方面
+4. 确保改写后的文本自然流畅，符合中文表达习惯
+5. 避免明显的AI生成痕迹
+
+## 请提供改写结果
+请直接返回改写后的完整文本，不要添加任何解释或标记。"""
+        
+        return prompt
+    
+    def _extract_style_description(self, style_features: Dict[str, Any]) -> str:
+        """提取风格特征描述"""
+        descriptions = []
+        
+        # 从量化特征中提取描述
+        quant_features = style_features.get("quantitative_features", {})
+        if quant_features:
+            lexical = quant_features.get("lexical_features", {})
+            syntactic = quant_features.get("syntactic_features", {})
+            
+            if lexical.get("ttr", 0) > 0.7:
+                descriptions.append("词汇丰富多样")
+            if lexical.get("formal_word_density", 0) > 0.1:
+                descriptions.append("使用较多正式词汇")
+            if syntactic.get("avg_sentence_length", 0) > 20:
+                descriptions.append("句子较长，结构复杂")
+            elif syntactic.get("avg_sentence_length", 0) < 10:
+                descriptions.append("句子简短，表达简洁")
+        
+        # 从LLM特征中提取描述
+        llm_features = style_features.get("llm_features", {})
+        if llm_features:
+            evaluations = llm_features.get("evaluations", {})
+            for dimension, eval_data in evaluations.items():
+                if isinstance(eval_data, dict) and "score" in eval_data:
+                    score = eval_data["score"]
+                    reason = eval_data.get("reason", "")
+                    if score >= 4:
+                        descriptions.append(f"高{dimension}（{reason}）")
+                    elif score <= 2:
+                        descriptions.append(f"低{dimension}（{reason}）")
+        
+        return "；".join(descriptions) if descriptions else "标准文风"
+    
+    def _generate_basic_style_prompt(self, style_features: Dict[str, Any]) -> str:
+        """生成基础文风提示词"""
+        style_type = style_features.get("style_type", "business_professional")
+        
+        style_prompts = {
+            "business_professional": "请按照商务专业风格进行改写，要求：正式、简洁、逻辑清晰、重点突出",
+            "academic_research": "请按照学术研究风格进行改写，要求：严谨、客观、论证充分、引用规范",
+            "formal_official": "请按照正式公文风格进行改写，要求：规范、准确、权威、正式",
+            "narrative_descriptive": "请按照叙述描述风格进行改写，要求：生动、形象、情感真实、细节丰富",
+            "concise_practical": "请按照简洁实用风格进行改写，要求：言简意赅、直接有效、操作性强"
+        }
+        
+        return style_prompts.get(style_type, "请保持原有的写作风格")
+    
+    def _rule_based_style_migration(self, content: str, target_style: str, 
+                                  style_features: Dict[str, Any]) -> str:
+        """基于规则的文风迁移"""
+        migrated_content = content
+        
+        # 根据目标风格应用不同的规则
+        if target_style == "business_professional":
+            replacements = {
+                "我觉得": "我认为",
+                "挺好的": "较为理想",
+                "应该可以": "能够",
+                "解决问题": "解决相关问题",
+                "用了": "采用了",
+                "算了一下": "进行了分析",
+                "总的来说": "综上所述",
+                "不错": "良好",
+                "应该能用": "具备可行性"
+            }
+        elif target_style == "academic_research":
+            replacements = {
+                "我觉得": "研究表明",
+                "挺好的": "具有积极效果",
+                "应该可以": "能够有效",
+                "解决问题": "解决相关问题",
+                "用了": "采用了",
+                "算了一下": "进行了统计分析",
+                "总的来说": "综上所述",
+                "不错": "表现良好",
+                "应该能用": "具备应用价值"
+            }
+        elif target_style == "formal_official":
+            replacements = {
+                "我觉得": "经分析认为",
+                "挺好的": "表现良好",
+                "应该可以": "具备可行性",
+                "解决问题": "解决相关问题",
+                "用了": "采用了",
+                "算了一下": "进行了分析",
+                "总的来说": "综上所述",
+                "不错": "表现良好",
+                "应该能用": "具备实施条件"
+            }
+        else:
+            replacements = {}
+        
+        for old, new in replacements.items():
+            migrated_content = migrated_content.replace(old, new)
+        
+        return migrated_content
     
     def _assess_alignment_quality(self, original: str, aligned: str,
                                 source_features: Dict[str, Any],

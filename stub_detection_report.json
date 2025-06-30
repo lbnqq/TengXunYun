@@ -1,0 +1,1302 @@
+{
+  "summary": {
+    "total_issues": 80,
+    "high_severity": 22,
+    "medium_severity": 58,
+    "low_severity": 0
+  },
+  "issues_by_type": {
+    "not_implemented": [
+      {
+        "type": "not_implemented",
+        "file": "cliTests\\base_test_script.py",
+        "line": 386,
+        "content": "raise NotImplementedError(\"子类必须实现run_test方法\")",
+        "description": "NotImplementedError: raise NotImplementedError(\"子类必须实现run_test方法\")",
+        "severity": "high"
+      },
+      {
+        "type": "not_implemented",
+        "file": "tools\\stub_detector.py",
+        "line": 31,
+        "content": "- 检测NotImplementedError",
+        "description": "NotImplementedError: - 检测NotImplementedError",
+        "severity": "high"
+      },
+      {
+        "type": "not_implemented",
+        "file": "tools\\stub_detector.py",
+        "line": 156,
+        "content": "\"\"\"检测NotImplementedError\"\"\"",
+        "description": "NotImplementedError: \"\"\"检测NotImplementedError\"\"\"",
+        "severity": "high"
+      },
+      {
+        "type": "not_implemented",
+        "file": "tools\\stub_detector.py",
+        "line": 159,
+        "content": "if 'NotImplementedError' in line:",
+        "description": "NotImplementedError: if 'NotImplementedError' in line:",
+        "severity": "high"
+      },
+      {
+        "type": "not_implemented",
+        "file": "tools\\stub_detector.py",
+        "line": 165,
+        "content": "'description': f'NotImplementedError: {line.strip()}',",
+        "description": "NotImplementedError: 'description': f'NotImplementedError: {line.strip()}',",
+        "severity": "high"
+      },
+      {
+        "type": "not_implemented",
+        "file": "tools\\stub_function_detector.py",
+        "line": 48,
+        "content": "\"not_implemented\": r\"raise\\s+NotImplementedError\",",
+        "description": "NotImplementedError: \"not_implemented\": r\"raise\\s+NotImplementedError\",",
+        "severity": "high"
+      }
+    ],
+    "mock_data": [
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 232,
+        "content": "return {\"name\": \"并发处理测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"并发处理测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 235,
+        "content": "return {\"name\": \"并发处理测试\", \"success\": False, \"error\": errors, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"并发处理测试\", \"success\": False, \"error\": errors, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 255,
+        "content": "return {\"name\": \"内存限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 258,
+        "content": "return {\"name\": \"内存限制测试\", \"success\": False, \"error\": f\"峰值内存过高: {peak}\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": False, \"error\": f\"峰值内存过高: {peak}\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 262,
+        "content": "return {\"name\": \"内存限制测试\", \"success\": False, \"error\": \"MemoryError\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": False, \"error\": \"MemoryError\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 266,
+        "content": "return {\"name\": \"内存限制测试\", \"success\": False, \"error\": str(e), \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": False, \"error\": str(e), \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 285,
+        "content": "return {\"name\": \"磁盘空间限制测试\", \"success\": False, \"error\": \"未触发写入异常\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"磁盘空间限制测试\", \"success\": False, \"error\": \"未触发写入异常\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 288,
+        "content": "return {\"name\": \"磁盘空间限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"磁盘空间限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 317,
+        "content": "return {\"name\": \"多模块集成测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"多模块集成测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 320,
+        "content": "return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": \"部分模块返回异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": \"部分模块返回异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 323,
+        "content": "return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 351,
+        "content": "return {\"name\": \"端到端流程测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"端到端流程测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 354,
+        "content": "return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": \"流程执行异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": \"流程执行异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 357,
+        "content": "return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 377,
+        "content": "return {\"name\": \"数据流完整性测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 380,
+        "content": "return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"数据丢失\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"数据丢失\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 383,
+        "content": "return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 386,
+        "content": "return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 407,
+        "content": "return {\"name\": \"状态一致性测试\", \"success\": True, \"category\": \"状态验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"状态一致性测试\", \"success\": True, \"category\": \"状态验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 410,
+        "content": "return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": \"状态不一致\", \"category\": \"状态验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": \"状态不一致\", \"category\": \"状态验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 413,
+        "content": "return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": str(e), \"category\": \"状态验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": str(e), \"category\": \"状态验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 435,
+        "content": "return {\"name\": \"错误恢复测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"错误恢复测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 438,
+        "content": "return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": \"无法从错误中恢复\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": \"无法从错误中恢复\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 441,
+        "content": "return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 460,
+        "content": "return {\"name\": \"日志记录测试\", \"success\": True, \"category\": \"日志验证\", \"priority\": \"P2\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"日志记录测试\", \"success\": True, \"category\": \"日志验证\", \"priority\": \"P2\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 463,
+        "content": "return {\"name\": \"日志记录测试\", \"success\": False, \"error\": str(e), \"category\": \"日志验证\", \"priority\": \"P2\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"日志记录测试\", \"success\": False, \"error\": str(e), \"category\": \"日志验证\", \"priority\": \"P2\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 479,
+        "content": "return {\"name\": \"错误报告测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"错误报告测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 482,
+        "content": "return {\"name\": \"错误报告测试\", \"success\": False, \"error\": \"未正确报告错误\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"错误报告测试\", \"success\": False, \"error\": \"未正确报告错误\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 485,
+        "content": "return {\"name\": \"错误报告测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"错误报告测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 511,
+        "content": "return {\"name\": \"数据格式验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据格式验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 514,
+        "content": "return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": \"所有格式验证失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": \"所有格式验证失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 517,
+        "content": "return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 536,
+        "content": "return {\"name\": \"数据完整性检查测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 539,
+        "content": "return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"输出内容为空\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"输出内容为空\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 542,
+        "content": "return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 545,
+        "content": "return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 567,
+        "content": "return {\"name\": \"数据一致性验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据一致性验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 570,
+        "content": "return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": \"结果不一致\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": \"结果不一致\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 573,
+        "content": "return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 593,
+        "content": "return {\"name\": \"数据安全性检查测试\", \"success\": True, \"warning\": \"可能包含敏感信息\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": True, \"warning\": \"可能包含敏感信息\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 596,
+        "content": "return {\"name\": \"数据安全性检查测试\", \"success\": True, \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": True, \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 599,
+        "content": "return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "cliTests\\test_edge_cases.py",
+        "line": 602,
+        "content": "return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"安全验证\", \"priority\": \"P1\"}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "src\\core\\analysis\\precise_format_extractor.py",
+        "line": 306,
+        "content": "return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+        "description": "硬编码模拟数据: return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+        "severity": "medium"
+      },
+      {
+        "type": "mock_data",
+        "file": "src\\core\\analysis\\precise_format_extractor.py",
+        "line": 318,
+        "content": "return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+        "description": "硬编码模拟数据: return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+        "severity": "medium"
+      }
+    ],
+    "empty_function": [
+      {
+        "type": "empty_function",
+        "file": "src\\main.py",
+        "line": 30,
+        "name": "main",
+        "description": "空函数定义: main",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "tools\\stub_function_detector.py",
+        "line": 199,
+        "name": "export_json",
+        "description": "空函数定义: export_json",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\llm_clients\\base_llm.py",
+        "line": 28,
+        "name": "generate",
+        "description": "空函数定义: generate",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\llm_clients\\multi_llm_new.py",
+        "line": 538,
+        "name": "_record_performance_metrics",
+        "description": "空函数定义: _record_performance_metrics",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\agent\\intent_driven_orchestrator.py",
+        "line": 284,
+        "name": "_generate_user_message",
+        "description": "空函数定义: _generate_user_message",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\efficient_format_aligner.py",
+        "line": 222,
+        "name": "_extract_format_from_content",
+        "description": "空函数定义: _extract_format_from_content",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\efficient_format_aligner.py",
+        "line": 225,
+        "name": "_parse_custom_format_rules",
+        "description": "空函数定义: _parse_custom_format_rules",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\efficient_format_aligner.py",
+        "line": 228,
+        "name": "_assess_alignment_quality",
+        "description": "空函数定义: _assess_alignment_quality",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 340,
+        "name": "_apply_table_cell_style",
+        "description": "空函数定义: _apply_table_cell_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 343,
+        "name": "_apply_paragraph_style",
+        "description": "空函数定义: _apply_paragraph_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 346,
+        "name": "_apply_character_style",
+        "description": "空函数定义: _apply_character_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 349,
+        "name": "_apply_list_style",
+        "description": "空函数定义: _apply_list_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 352,
+        "name": "_apply_table_style_v2",
+        "description": "空函数定义: _apply_table_style_v2",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\tools\\base_tool.py",
+        "line": 18,
+        "name": "__init__",
+        "description": "空函数定义: __init__",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\tools\\base_tool.py",
+        "line": 22,
+        "name": "execute",
+        "description": "空函数定义: execute",
+        "severity": "high"
+      }
+    ],
+    "todo_comment": [
+      {
+        "type": "todo_comment",
+        "file": "tools\\code_template_generator.py",
+        "line": 293,
+        "content": "# TODO: 实现方法逻辑 - {self.author_name} {self.current_date}",
+        "description": "TODO标记: # TODO: 实现方法逻辑 - {self.author_name} {self.current_date}",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "tools\\code_template_generator.py",
+        "line": 556,
+        "content": "# TODO: 导入要测试的模块 - {self.author_name} {self.current_date}",
+        "description": "TODO标记: # TODO: 导入要测试的模块 - {self.author_name} {self.current_date}",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "tools\\code_template_generator.py",
+        "line": 580,
+        "content": "# TODO: 初始化测试对象和数据 - {self.author_name} {self.current_date}",
+        "description": "TODO标记: # TODO: 初始化测试对象和数据 - {self.author_name} {self.current_date}",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "tools\\code_template_generator.py",
+        "line": 593,
+        "content": "# TODO: 清理测试数据和资源 - {self.author_name} {self.current_date}",
+        "description": "TODO标记: # TODO: 清理测试数据和资源 - {self.author_name} {self.current_date}",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "tools\\code_template_generator.py",
+        "line": 611,
+        "content": "# TODO: 调用被测试的函数 - {self.author_name} {self.current_date}",
+        "description": "TODO标记: # TODO: 调用被测试的函数 - {self.author_name} {self.current_date}",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "tools\\code_template_generator.py",
+        "line": 632,
+        "content": "# TODO: 测试空输入、None值、异常情况等 - {self.author_name} {self.current_date}",
+        "description": "TODO标记: # TODO: 测试空输入、None值、异常情况等 - {self.author_name} {self.current_date}",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "tools\\code_template_generator.py",
+        "line": 652,
+        "content": "# TODO: 执行测试并验证Mock调用 - {self.author_name} {self.current_date}",
+        "description": "TODO标记: # TODO: 执行测试并验证Mock调用 - {self.author_name} {self.current_date}",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "src\\core\\agent\\intent_driven_orchestrator.py",
+        "line": 285,
+        "content": "pass  # TODO: 实现用户消息生成逻辑",
+        "description": "TODO标记: pass  # TODO: 实现用户消息生成逻辑",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 209,
+        "content": "# TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
+        "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 253,
+        "content": "# TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
+        "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 258,
+        "content": "# TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
+        "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 278,
+        "content": "# TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
+        "description": "TODO标记: # TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
+        "severity": "medium"
+      },
+      {
+        "type": "todo_comment",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 283,
+        "content": "# TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
+        "description": "TODO标记: # TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
+        "severity": "medium"
+      }
+    ],
+    "empty_class": [
+      {
+        "type": "empty_class",
+        "file": "src\\llm_clients\\multi_llm_backup.py",
+        "line": 475,
+        "name": "MultiLLMClient",
+        "description": "空类定义: MultiLLMClient",
+        "severity": "high"
+      }
+    ]
+  },
+  "issues": [
+    {
+      "type": "not_implemented",
+      "file": "cliTests\\base_test_script.py",
+      "line": 386,
+      "content": "raise NotImplementedError(\"子类必须实现run_test方法\")",
+      "description": "NotImplementedError: raise NotImplementedError(\"子类必须实现run_test方法\")",
+      "severity": "high"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 232,
+      "content": "return {\"name\": \"并发处理测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"并发处理测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 235,
+      "content": "return {\"name\": \"并发处理测试\", \"success\": False, \"error\": errors, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"并发处理测试\", \"success\": False, \"error\": errors, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 255,
+      "content": "return {\"name\": \"内存限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 258,
+      "content": "return {\"name\": \"内存限制测试\", \"success\": False, \"error\": f\"峰值内存过高: {peak}\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": False, \"error\": f\"峰值内存过高: {peak}\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 262,
+      "content": "return {\"name\": \"内存限制测试\", \"success\": False, \"error\": \"MemoryError\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": False, \"error\": \"MemoryError\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 266,
+      "content": "return {\"name\": \"内存限制测试\", \"success\": False, \"error\": str(e), \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"内存限制测试\", \"success\": False, \"error\": str(e), \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 285,
+      "content": "return {\"name\": \"磁盘空间限制测试\", \"success\": False, \"error\": \"未触发写入异常\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"磁盘空间限制测试\", \"success\": False, \"error\": \"未触发写入异常\", \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 288,
+      "content": "return {\"name\": \"磁盘空间限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"磁盘空间限制测试\", \"success\": True, \"category\": \"边界用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 317,
+      "content": "return {\"name\": \"多模块集成测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"多模块集成测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 320,
+      "content": "return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": \"部分模块返回异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": \"部分模块返回异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 323,
+      "content": "return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"多模块集成测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 351,
+      "content": "return {\"name\": \"端到端流程测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"端到端流程测试\", \"success\": True, \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 354,
+      "content": "return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": \"流程执行异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": \"流程执行异常\", \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 357,
+      "content": "return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"端到端流程测试\", \"success\": False, \"error\": str(e), \"category\": \"集成用例\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 377,
+      "content": "return {\"name\": \"数据流完整性测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 380,
+      "content": "return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"数据丢失\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"数据丢失\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 383,
+      "content": "return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 386,
+      "content": "return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据流完整性测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 407,
+      "content": "return {\"name\": \"状态一致性测试\", \"success\": True, \"category\": \"状态验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"状态一致性测试\", \"success\": True, \"category\": \"状态验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 410,
+      "content": "return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": \"状态不一致\", \"category\": \"状态验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": \"状态不一致\", \"category\": \"状态验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 413,
+      "content": "return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": str(e), \"category\": \"状态验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"状态一致性测试\", \"success\": False, \"error\": str(e), \"category\": \"状态验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 435,
+      "content": "return {\"name\": \"错误恢复测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"错误恢复测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 438,
+      "content": "return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": \"无法从错误中恢复\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": \"无法从错误中恢复\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 441,
+      "content": "return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"错误恢复测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 460,
+      "content": "return {\"name\": \"日志记录测试\", \"success\": True, \"category\": \"日志验证\", \"priority\": \"P2\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"日志记录测试\", \"success\": True, \"category\": \"日志验证\", \"priority\": \"P2\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 463,
+      "content": "return {\"name\": \"日志记录测试\", \"success\": False, \"error\": str(e), \"category\": \"日志验证\", \"priority\": \"P2\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"日志记录测试\", \"success\": False, \"error\": str(e), \"category\": \"日志验证\", \"priority\": \"P2\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 479,
+      "content": "return {\"name\": \"错误报告测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"错误报告测试\", \"success\": True, \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 482,
+      "content": "return {\"name\": \"错误报告测试\", \"success\": False, \"error\": \"未正确报告错误\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"错误报告测试\", \"success\": False, \"error\": \"未正确报告错误\", \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 485,
+      "content": "return {\"name\": \"错误报告测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"错误报告测试\", \"success\": False, \"error\": str(e), \"category\": \"错误处理\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 511,
+      "content": "return {\"name\": \"数据格式验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据格式验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 514,
+      "content": "return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": \"所有格式验证失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": \"所有格式验证失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 517,
+      "content": "return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据格式验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 536,
+      "content": "return {\"name\": \"数据完整性检查测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 539,
+      "content": "return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"输出内容为空\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"输出内容为空\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 542,
+      "content": "return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 545,
+      "content": "return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据完整性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 567,
+      "content": "return {\"name\": \"数据一致性验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据一致性验证测试\", \"success\": True, \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 570,
+      "content": "return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": \"结果不一致\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": \"结果不一致\", \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 573,
+      "content": "return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据一致性验证测试\", \"success\": False, \"error\": str(e), \"category\": \"数据验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 593,
+      "content": "return {\"name\": \"数据安全性检查测试\", \"success\": True, \"warning\": \"可能包含敏感信息\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": True, \"warning\": \"可能包含敏感信息\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 596,
+      "content": "return {\"name\": \"数据安全性检查测试\", \"success\": True, \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": True, \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 599,
+      "content": "return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": \"处理失败\", \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "cliTests\\test_edge_cases.py",
+      "line": 602,
+      "content": "return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "description": "硬编码模拟数据: return {\"name\": \"数据安全性检查测试\", \"success\": False, \"error\": str(e), \"category\": \"安全验证\", \"priority\": \"P1\"}",
+      "severity": "medium"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\main.py",
+      "line": 30,
+      "name": "main",
+      "description": "空函数定义: main",
+      "severity": "high"
+    },
+    {
+      "type": "todo_comment",
+      "file": "tools\\code_template_generator.py",
+      "line": 293,
+      "content": "# TODO: 实现方法逻辑 - {self.author_name} {self.current_date}",
+      "description": "TODO标记: # TODO: 实现方法逻辑 - {self.author_name} {self.current_date}",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "tools\\code_template_generator.py",
+      "line": 556,
+      "content": "# TODO: 导入要测试的模块 - {self.author_name} {self.current_date}",
+      "description": "TODO标记: # TODO: 导入要测试的模块 - {self.author_name} {self.current_date}",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "tools\\code_template_generator.py",
+      "line": 580,
+      "content": "# TODO: 初始化测试对象和数据 - {self.author_name} {self.current_date}",
+      "description": "TODO标记: # TODO: 初始化测试对象和数据 - {self.author_name} {self.current_date}",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "tools\\code_template_generator.py",
+      "line": 593,
+      "content": "# TODO: 清理测试数据和资源 - {self.author_name} {self.current_date}",
+      "description": "TODO标记: # TODO: 清理测试数据和资源 - {self.author_name} {self.current_date}",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "tools\\code_template_generator.py",
+      "line": 611,
+      "content": "# TODO: 调用被测试的函数 - {self.author_name} {self.current_date}",
+      "description": "TODO标记: # TODO: 调用被测试的函数 - {self.author_name} {self.current_date}",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "tools\\code_template_generator.py",
+      "line": 632,
+      "content": "# TODO: 测试空输入、None值、异常情况等 - {self.author_name} {self.current_date}",
+      "description": "TODO标记: # TODO: 测试空输入、None值、异常情况等 - {self.author_name} {self.current_date}",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "tools\\code_template_generator.py",
+      "line": 652,
+      "content": "# TODO: 执行测试并验证Mock调用 - {self.author_name} {self.current_date}",
+      "description": "TODO标记: # TODO: 执行测试并验证Mock调用 - {self.author_name} {self.current_date}",
+      "severity": "medium"
+    },
+    {
+      "type": "not_implemented",
+      "file": "tools\\stub_detector.py",
+      "line": 31,
+      "content": "- 检测NotImplementedError",
+      "description": "NotImplementedError: - 检测NotImplementedError",
+      "severity": "high"
+    },
+    {
+      "type": "not_implemented",
+      "file": "tools\\stub_detector.py",
+      "line": 156,
+      "content": "\"\"\"检测NotImplementedError\"\"\"",
+      "description": "NotImplementedError: \"\"\"检测NotImplementedError\"\"\"",
+      "severity": "high"
+    },
+    {
+      "type": "not_implemented",
+      "file": "tools\\stub_detector.py",
+      "line": 159,
+      "content": "if 'NotImplementedError' in line:",
+      "description": "NotImplementedError: if 'NotImplementedError' in line:",
+      "severity": "high"
+    },
+    {
+      "type": "not_implemented",
+      "file": "tools\\stub_detector.py",
+      "line": 165,
+      "content": "'description': f'NotImplementedError: {line.strip()}',",
+      "description": "NotImplementedError: 'description': f'NotImplementedError: {line.strip()}',",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "tools\\stub_function_detector.py",
+      "line": 199,
+      "name": "export_json",
+      "description": "空函数定义: export_json",
+      "severity": "high"
+    },
+    {
+      "type": "not_implemented",
+      "file": "tools\\stub_function_detector.py",
+      "line": 48,
+      "content": "\"not_implemented\": r\"raise\\s+NotImplementedError\",",
+      "description": "NotImplementedError: \"not_implemented\": r\"raise\\s+NotImplementedError\",",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\llm_clients\\base_llm.py",
+      "line": 28,
+      "name": "generate",
+      "description": "空函数定义: generate",
+      "severity": "high"
+    },
+    {
+      "type": "empty_class",
+      "file": "src\\llm_clients\\multi_llm_backup.py",
+      "line": 475,
+      "name": "MultiLLMClient",
+      "description": "空类定义: MultiLLMClient",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\llm_clients\\multi_llm_new.py",
+      "line": 538,
+      "name": "_record_performance_metrics",
+      "description": "空函数定义: _record_performance_metrics",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\agent\\intent_driven_orchestrator.py",
+      "line": 284,
+      "name": "_generate_user_message",
+      "description": "空函数定义: _generate_user_message",
+      "severity": "high"
+    },
+    {
+      "type": "todo_comment",
+      "file": "src\\core\\agent\\intent_driven_orchestrator.py",
+      "line": 285,
+      "content": "pass  # TODO: 实现用户消息生成逻辑",
+      "description": "TODO标记: pass  # TODO: 实现用户消息生成逻辑",
+      "severity": "medium"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\efficient_format_aligner.py",
+      "line": 222,
+      "name": "_extract_format_from_content",
+      "description": "空函数定义: _extract_format_from_content",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\efficient_format_aligner.py",
+      "line": 225,
+      "name": "_parse_custom_format_rules",
+      "description": "空函数定义: _parse_custom_format_rules",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\efficient_format_aligner.py",
+      "line": 228,
+      "name": "_assess_alignment_quality",
+      "description": "空函数定义: _assess_alignment_quality",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 340,
+      "name": "_apply_table_cell_style",
+      "description": "空函数定义: _apply_table_cell_style",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 343,
+      "name": "_apply_paragraph_style",
+      "description": "空函数定义: _apply_paragraph_style",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 346,
+      "name": "_apply_character_style",
+      "description": "空函数定义: _apply_character_style",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 349,
+      "name": "_apply_list_style",
+      "description": "空函数定义: _apply_list_style",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 352,
+      "name": "_apply_table_style_v2",
+      "description": "空函数定义: _apply_table_style_v2",
+      "severity": "high"
+    },
+    {
+      "type": "todo_comment",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 209,
+      "content": "# TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
+      "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 253,
+      "content": "# TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
+      "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 258,
+      "content": "# TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
+      "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 278,
+      "content": "# TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
+      "description": "TODO标记: # TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
+      "severity": "medium"
+    },
+    {
+      "type": "todo_comment",
+      "file": "src\\core\\analysis\\precise_format_applier.py",
+      "line": 283,
+      "content": "# TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
+      "description": "TODO标记: # TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "src\\core\\analysis\\precise_format_extractor.py",
+      "line": 306,
+      "content": "return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+      "description": "硬编码模拟数据: return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+      "severity": "medium"
+    },
+    {
+      "type": "mock_data",
+      "file": "src\\core\\analysis\\precise_format_extractor.py",
+      "line": 318,
+      "content": "return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+      "description": "硬编码模拟数据: return {\"name\": \"宋体\", \"size\": 12.0, \"bold\": False, \"italic\": False}",
+      "severity": "medium"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\tools\\base_tool.py",
+      "line": 18,
+      "name": "__init__",
+      "description": "空函数定义: __init__",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "src\\core\\tools\\base_tool.py",
+      "line": 22,
+      "name": "execute",
+      "description": "空函数定义: execute",
+      "severity": "high"
+    }
+  ]
+}

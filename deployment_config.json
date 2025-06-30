@@ -1,0 +1,25 @@
+{
+  "deployment_info": {
+    "version": "1.0.0",
+    "deployment_time": "2025-06-29T14:55:25.123496",
+    "modules": [
+      "iflytek_spark_optimizer",
+      "user_feedback_manager",
+      "scenario_template_manager",
+      "enhanced_prompt_engineer",
+      "single_model_optimization"
+    ]
+  },
+  "configuration": {
+    "optimization_level": "advanced",
+    "cache_enabled": true,
+    "cache_ttl": 3600,
+    "max_retries": 3,
+    "quality_threshold": 0.8
+  },
+  "monitoring": {
+    "performance_tracking": true,
+    "error_logging": true,
+    "user_feedback_collection": true
+  }
+}

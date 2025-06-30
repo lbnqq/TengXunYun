@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Complex Document Filler - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import re
 import json
 import os
@@ -6,10 +20,6 @@ from datetime import datetime
 import hashlib
 
 class ComplexDocumentFiller:
-    """
-    复杂文档智能填充工具
-    识别文档中的待填写区域，通过多轮对话获取信息，智能填充文档
-    """
     
     def __init__(self, llm_client=None):
         self.tool_name = "复杂文档智能填充工具"
@@ -284,7 +294,29 @@ class ComplexDocumentFiller:
         context = field["context"]["current"]
         field_type = field["field_type"]
         
-        # 基于上下文和字段类型推断含义
+        # 如果有LLM客户端，使用AI推断
+        if self.llm_client is not None:
+            try:
+                prompt = f"""
+请分析以下文档字段的含义和填写要求：
+
+字段上下文：{context}
+字段类型：{field_type}
+字段类别：{field['category']}
+
+请推断这个字段的具体含义和用户需要填写什么信息。返回格式：
+含义：[字段的具体含义]
+要求：[填写要求]
+示例：[填写示例]
+"""
+                
+                response = self.llm_client.generate(prompt, temperature=0.3, max_tokens=200)
+                if response and isinstance(response, str) and len(response.strip()) > 10:
+                    return response.strip()
+            except Exception as e:
+                print(f"LLM推断字段含义失败: {e}")
+        
+        # 回退到规则推断
         if field_type == "personal_info":
             if "姓名" in context:
                 return "请填写完整姓名"

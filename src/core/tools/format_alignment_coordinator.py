@@ -1,13 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Format Alignment Coordinator - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import os
 import json
 from typing import Dict, Any, List, Tuple, Optional
 from .document_format_extractor import DocumentFormatExtractor
 
 class FormatAlignmentCoordinator:
-    """
-    文档格式对齐协调器
-    处理用户的自然语言格式对齐请求，协调多个文档的格式处理
-    """
     
     def __init__(self, llm_client=None):
         self.tool_name = "文档格式对齐协调器"

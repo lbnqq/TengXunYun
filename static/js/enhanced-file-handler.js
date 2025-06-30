@@ -1,8 +1,13 @@
 /**
- * 增强版文件处理器
- * 功能：文件上传、验证、预处理、下载和二进制响应处理
- * 版本：2.0.0
+ * Enhanced-File-Handler
+ * 
+ * @author AI Assistant (Claude)
+ * @date 2025-01-28
+ * @ai_assisted 是 - Claude 3.5 Sonnet
+ * @version v1.0
+ * @license MIT
  */
+
 
 class EnhancedFileHandler {
     constructor() {
@@ -18,12 +23,6 @@ class EnhancedFileHandler {
         this.downloadCallbacks = new Map();
     }
 
-    /**
-     * 验证文件
-     * @param {File} file - 文件对象
-     * @param {string} expectedType - 期望的文件类型
-     * @returns {Object} 验证结果
-     */
     validateFile(file, expectedType = 'document') {
         const result = {
             isValid: true,
@@ -69,11 +68,6 @@ class EnhancedFileHandler {
         return result;
     }
 
-    /**
-     * 检测文件类型
-     * @param {File} file - 文件对象
-     * @returns {string} 文件类型
-     */
     detectFileType(file) {
         const extension = '.' + file.name.split('.').pop().toLowerCase();
         
@@ -86,11 +80,6 @@ class EnhancedFileHandler {
         return 'unknown';
     }
 
-    /**
-     * 预处理文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 预处理结果
-     */
     async preprocessFile(file) {
         const result = {
             success: true,
@@ -131,11 +120,6 @@ class EnhancedFileHandler {
         return result;
     }
 
-    /**
-     * 预处理文档文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 预处理结果
-     */
     async preprocessDocument(file) {
         const extension = '.' + file.name.split('.').pop().toLowerCase();
         
@@ -150,11 +134,6 @@ class EnhancedFileHandler {
         return { content: null, error: '不支持的文档格式' };
     }
 
-    /**
-     * 预处理图片文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 预处理结果
-     */
     async preprocessImage(file) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -183,11 +162,6 @@ class EnhancedFileHandler {
         });
     }
 
-    /**
-     * 预处理电子表格文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 预处理结果
-     */
     async preprocessSpreadsheet(file) {
         // 对于Excel文件，我们只能获取基本信息
         return {
@@ -198,11 +172,6 @@ class EnhancedFileHandler {
         };
     }
 
-    /**
-     * 预处理演示文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 预处理结果
-     */
     async preprocessPresentation(file) {
         // 对于PPT文件，我们只能获取基本信息
         return {
@@ -213,11 +182,6 @@ class EnhancedFileHandler {
         };
     }
 
-    /**
-     * 预处理通用文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 预处理结果
-     */
     async preprocessGenericFile(file) {
         return {
             type: 'generic',
@@ -226,11 +190,6 @@ class EnhancedFileHandler {
         };
     }
 
-    /**
-     * 读取文本文件
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 读取结果
-     */
     readTextFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -246,11 +205,6 @@ class EnhancedFileHandler {
         });
     }
 
-    /**
-     * 读取Word文档
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 读取结果
-     */
     async readWordDocument(file) {
         // 对于Word文档，我们返回基本信息
         return {
@@ -260,11 +214,6 @@ class EnhancedFileHandler {
         };
     }
 
-    /**
-     * 读取PDF文档
-     * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 读取结果
-     */
     async readPDFDocument(file) {
         // 对于PDF文档，我们返回基本信息
         return {
@@ -274,13 +223,6 @@ class EnhancedFileHandler {
         };
     }
 
-    /**
-     * 上传文件
-     * @param {File} file - 文件对象
-     * @param {string} endpoint - 上传端点
-     * @param {Object} options - 上传选项
-     * @returns {Promise<Object>} 上传结果
-     */
     async uploadFile(file, endpoint, options = {}) {
         const uploadId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
@@ -333,11 +275,6 @@ class EnhancedFileHandler {
         });
     }
 
-    /**
-     * 解析响应
-     * @param {XMLHttpRequest} xhr - XHR对象
-     * @returns {Object} 解析后的响应
-     */
     parseResponse(xhr) {
         const contentType = xhr.getResponseHeader('content-type');
         
@@ -361,11 +298,6 @@ class EnhancedFileHandler {
         }
     }
 
-    /**
-     * 更新上传进度
-     * @param {string} uploadId - 上传ID
-     * @param {number} progress - 进度百分比
-     */
     updateUploadProgress(uploadId, progress) {
         const callback = this.downloadCallbacks.get(uploadId);
         if (callback && callback.onProgress) {
@@ -373,13 +305,6 @@ class EnhancedFileHandler {
         }
     }
 
-    /**
-     * 下载文件
-     * @param {string} endpoint - 下载端点
-     * @param {Object} data - 请求数据
-     * @param {string} filename - 文件名
-     * @param {Object} options - 下载选项
-     */
     async downloadFile(endpoint, data, filename, options = {}) {
         try {
             const response = await fetch(endpoint, {
@@ -421,11 +346,6 @@ class EnhancedFileHandler {
         }
     }
 
-    /**
-     * 创建下载链接
-     * @param {Blob} blob - 文件blob
-     * @param {string} filename - 文件名
-     */
     createDownloadLink(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -438,13 +358,6 @@ class EnhancedFileHandler {
         URL.revokeObjectURL(url);
     }
 
-    /**
-     * 批量上传文件
-     * @param {File[]} files - 文件数组
-     * @param {string} endpoint - 上传端点
-     * @param {Object} options - 上传选项
-     * @returns {Promise<Object[]>} 上传结果数组
-     */
     async batchUploadFiles(files, endpoint, options = {}) {
         const results = [];
         const totalFiles = files.length;
@@ -470,12 +383,6 @@ class EnhancedFileHandler {
         return results;
     }
 
-    /**
-     * 验证文件集合
-     * @param {File[]} files - 文件数组
-     * @param {string} expectedType - 期望的文件类型
-     * @returns {Object} 验证结果
-     */
     validateFileCollection(files, expectedType = 'document') {
         const results = {
             valid: [],
@@ -504,11 +411,6 @@ class EnhancedFileHandler {
         return results;
     }
 
-    /**
-     * 获取文件预览
-     * @param {File} file - 文件对象
-     * @returns {Promise<string>} 预览URL
-     */
     getFilePreview(file) {
         return new Promise((resolve, reject) => {
             if (file.type.startsWith('image/')) {
@@ -522,12 +424,6 @@ class EnhancedFileHandler {
         });
     }
 
-    /**
-     * 压缩文件
-     * @param {File} file - 文件对象
-     * @param {number} quality - 压缩质量 (0-1)
-     * @returns {Promise<Blob>} 压缩后的文件
-     */
     async compressFile(file, quality = 0.8) {
         if (file.type.startsWith('image/')) {
             return new Promise((resolve) => {

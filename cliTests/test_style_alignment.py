@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 """
-文风统一测试脚本
-功能：测试文档文风统一功能
-参数：reference_file target_file output_file
+文风对齐测试脚本
+功能：测试文风对齐功能
 """
 
 import argparse
 import sys
 import os
 import json
-from base_test_script import BaseTestScript
+import time
+from typing import Dict, Optional
+
+# 修复导入路径
+try:
+    from .base_test_script import BaseTestScript
+except ImportError:
+    # 如果相对导入失败，尝试绝对导入
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from cliTests.base_test_script import BaseTestScript
 
 
 class StyleAlignmentTest(BaseTestScript):

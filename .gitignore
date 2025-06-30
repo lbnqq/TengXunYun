@@ -3,3 +3,26 @@ venv/
 *.pyc
 __pycache__/
 data/
+# 质量检查报告
+quality_check_report.md
+quality_check_report.json
+project_header_fix_report.md
+file_header_fix_report.md
+# 备份文件
+*.backup
+# 临时文件
+*.tmp
+*.temp
+# 日志文件
+*.log
+# 测试报告
+test_results/
+reports/
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+# 系统文件
+.DS_Store
+Thumbs.db

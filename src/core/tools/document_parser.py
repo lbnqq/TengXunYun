@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Document Parser - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import PyPDF2
 import re
 import json
@@ -8,15 +22,6 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from .base_tool import BaseTool
 
 class EnhancedDocumentParserTool(BaseTool):
-    """
-    Enhanced document parser with deep structural analysis capabilities.
-    Features:
-    - Deep structural analysis (paragraphs, headings, lists)
-    - Key information extraction (entities, keywords, summaries)
-    - Data table recognition and parsing
-    - Document structure tree generation
-    - Metadata analysis
-    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Content Filler - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import re
 import json
 import os
@@ -6,16 +20,6 @@ from datetime import datetime
 from .base_tool import BaseTool
 
 class EnhancedContentGeneratorTool(BaseTool):
-    """
-    Enhanced content generation and optimization engine.
-    Features:
-    - Intelligent content filling with context awareness
-    - Style transfer and adaptation
-    - Content optimization and enhancement
-    - Template matching and selection
-    - Context consistency guarantee
-    - Multi-format support
-    """
 
     def __init__(self, llm_client=None, **kwargs):
         super().__init__(**kwargs)

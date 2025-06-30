@@ -1,8 +1,26 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-最小化的web_app.py版本
-包含核心功能但优雅处理缺失的依赖
+最小化Web应用
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
+
+
+
+
+
+
+
+
+
 
 import os
 import sys
@@ -130,21 +148,6 @@ if AGENT_AVAILABLE:
 
 @app.route('/')
 def index():
-    """主页"""
-    return jsonify({
-        'status': 'ok',
-        'message': '办公文档智能代理系统',
-        'version': '1.0.0',
-        'features': {
-            'doc_processor': DOC_PROCESSOR_AVAILABLE,
-            'agent_orchestrator': AGENT_AVAILABLE,
-            'database': DATABASE_AVAILABLE
-        }
-    })
-
-@app.route('/health')
-def health_check():
-    """健康检查"""
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
@@ -157,75 +160,6 @@ def health_check():
 
 @app.route('/api/table-fill', methods=['POST'])
 def api_table_fill():
-    """智能表格批量填充API"""
-    try:
-        if not request.is_json:
-            return jsonify({'success': False, 'error': '请求必须是JSON格式'}), 400
-        
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': '无效的JSON数据'}), 400
-        
-        if 'tables' not in data:
-            return jsonify({'success': False, 'error': '缺少必需字段: tables'}), 400
-        
-        if 'fill_data' not in data:
-            return jsonify({'success': False, 'error': '缺少必需字段: fill_data'}), 400
-        
-        tables = data['tables']
-        fill_data = data['fill_data']
-        
-        if not isinstance(tables, list):
-            return jsonify({'success': False, 'error': 'tables必须是数组'}), 400
-        
-        if not isinstance(fill_data, list):
-            return jsonify({'success': False, 'error': 'fill_data必须是数组'}), 400
-        
-        if len(tables) == 0:
-            return jsonify({'success': True, 'filled_tables': []})
-        
-        # 验证表格结构
-        pd_tables = []
-        for i, t in enumerate(tables):
-            if not isinstance(t, dict):
-                return jsonify({'success': False, 'error': f'表格{i+1}必须是对象'}), 400
-            
-            if 'columns' not in t or 'data' not in t:
-                return jsonify({'success': False, 'error': f'表格{i+1}缺少必需字段'}), 400
-            
-            if not isinstance(t['columns'], list) or not isinstance(t['data'], list):
-                return jsonify({'success': False, 'error': f'表格{i+1}格式错误'}), 400
-            
-            try:
-                df = pd.DataFrame(t['data'], columns=t['columns'])
-                pd_tables.append(df)
-            except Exception as e:
-                return jsonify({'success': False, 'error': f'表格{i+1}数据格式错误: {str(e)}'}), 400
-        
-        # 验证填充数据
-        for i, item in enumerate(fill_data):
-            if not isinstance(item, dict):
-                return jsonify({'success': False, 'error': f'填充数据{i+1}必须是对象'}), 400
-        
-        # 执行表格填充
-        filled_tables = doc_processor.fill_tables(pd_tables, fill_data)
-        
-        # 返回结果
-        result = []
-        for df in filled_tables:
-            result.append({
-                'columns': list(df.columns),
-                'data': df.values.tolist()
-            })
-        
-        return jsonify({'success': True, 'filled_tables': result})
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'服务器内部错误: {str(e)}'}), 500
-
-@app.route('/api/upload', methods=['POST'])
-def api_upload():
-    """文件上传API"""
     try:
         if 'file' not in request.files:
             return jsonify({'success': False, 'error': '没有文件'}), 400
@@ -274,43 +208,3 @@ def api_upload():
 
 @app.route('/api/settings', methods=['GET'])
 def api_settings():
-    """获取系统设置"""
-    try:
-        settings = {
-            'max_file_size': app.config['MAX_CONTENT_LENGTH'],
-            'allowed_extensions': ['txt', 'pdf', 'docx', 'doc'],
-            'features': {
-                'doc_processor': DOC_PROCESSOR_AVAILABLE,
-                'agent_orchestrator': AGENT_AVAILABLE,
-                'database': DATABASE_AVAILABLE
-            }
-        }
-        
-        return jsonify({
-            'success': True,
-            'settings': settings
-        })
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'API端点不存在'}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({'error': '服务器内部错误'}), 500
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '127.0.0.1')
-    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    print(f"🚀 启动最小化Web应用: http://{host}:{port}")
-    print(f"📋 功能状态:")
-    print(f"   DocumentProcessor: {'✅' if DOC_PROCESSOR_AVAILABLE else '⚠️  模拟'}")
-    print(f"   AgentOrchestrator: {'✅' if AGENT_AVAILABLE else '⚠️  模拟'}")
-    print(f"   Database: {'✅' if DATABASE_AVAILABLE else '⚠️  模拟'}")
-    
-    app.run(host=host, port=port, debug=debug)

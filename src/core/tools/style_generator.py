@@ -1,18 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Style Generator - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import os
 import yaml
 from typing import Dict, Any, List, Optional
 from .base_tool import BaseTool
 
 class EnhancedStyleGeneratorTool(BaseTool):
-    """
-    Enhanced style generator with comprehensive style transformation capabilities.
-    Features:
-    - Multiple predefined styles (professional, casual, technical, academic, etc.)
-    - Custom style definitions
-    - Context-aware style adaptation
-    - Style consistency checking
-    - Multi-format output support
-    """
 
     def __init__(self, llm_client, style_kb_path: str = "src/core/knowledge_base/style_templates.yaml", **kwargs):
         super().__init__(**kwargs)

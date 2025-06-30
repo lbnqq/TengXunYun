@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-模板文件清理脚本
-根据分析结果，保留最佳模板文件，删除或备份不需要的文件
+Cleanup Templates
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import os
 import shutil

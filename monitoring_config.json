@@ -1,0 +1,22 @@
+{
+  "performance_monitor": {
+    "enabled": true,
+    "metrics": [
+      "response_time",
+      "success_rate",
+      "error_rate"
+    ],
+    "interval": 60
+  },
+  "quality_monitor": {
+    "enabled": true,
+    "thresholds": {
+      "min_quality_score": 0.7,
+      "max_error_rate": 0.05
+    }
+  },
+  "user_feedback_monitor": {
+    "enabled": true,
+    "collection_interval": 300
+  }
+}

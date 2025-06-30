@@ -1,0 +1,324 @@
+# 页面元素id实现与对照表差异详细报告
+
+## 代码中用到但页面未覆盖的id
+- ai-suggestions
+    - 调用位置: static/js\app.js:1610
+    - 建议: 补充页面元素或移除无效调用
+- ai-thinking-container
+    - 调用位置: static/js\app.js:1471
+    - 调用位置: static/js\app.js:1526
+    - 调用位置: static/js\document-fill.js:381
+    - 调用位置: static/js\document-fill.js:431
+    - 建议: 补充页面元素或移除无效调用
+- analysis-mode-badge
+    - 调用位置: static/js\writing-style.js:277
+    - 建议: 补充页面元素或移除无效调用
+- analysis-result
+    - 调用位置: static/js\app.js:1191
+    - 建议: 补充页面元素或移除无效调用
+- analyze-style-btn
+    - 调用位置: static/js\writing-style.js:76
+    - 调用位置: static/js\writing-style.js:119
+    - 建议: 补充页面元素或移除无效调用
+- analyze-text-btn
+    - 调用位置: static/js\writing-style.js:77
+    - 建议: 补充页面元素或移除无效调用
+- clear-style-file
+    - 调用位置: static/js\writing-style.js:104
+    - 建议: 补充页面元素或移除无效调用
+- continue-with-materials
+    - 调用位置: static/js\document-fill.js:73
+    - 调用位置: static/js\document-fill.js:255
+    - 建议: 补充页面元素或移除无效调用
+- continue-without-materials
+    - 调用位置: static/js\document-fill.js:72
+    - 建议: 补充页面元素或移除无效调用
+- conversation-history
+    - 调用位置: static/js\document-fill.js:475
+    - 建议: 补充页面元素或移除无效调用
+- conversation-section
+    - 调用位置: static/js\document-fill.js:365
+    - 调用位置: static/js\document-fill.js:579
+    - 建议: 补充页面元素或移除无效调用
+- debug-details
+    - 调用位置: static/js\writing-style.js:369
+    - 建议: 补充页面元素或移除无效调用
+- document-content
+    - 调用位置: static/js\app.js:1151
+    - 调用位置: static/js\app.js:2111
+    - 调用位置: static/js\app.js:2141
+    - 调用位置: static/js\app.js:2199
+    - 调用位置: static/js\app.js:2286
+    - 调用位置: static/js\app.js:2304
+    - 建议: 补充页面元素或移除无效调用
+- document-name
+    - 调用位置: static/js\app.js:1152
+    - 调用位置: static/js\app.js:2112
+    - 调用位置: static/js\app.js:2142
+    - 建议: 补充页面元素或移除无效调用
+- download-filled-doc
+    - 调用位置: static/js\document-fill.js:110
+    - 建议: 补充页面元素或移除无效调用
+- fill-file-info
+    - 调用位置: static/js\document-fill.js:145
+    - 调用位置: static/js\document-fill.js:684
+    - 建议: 补充页面元素或移除无效调用
+- fill-file-input
+    - 调用位置: static/js\document-fill.js:25
+    - 调用位置: static/js\document-fill.js:694
+    - 建议: 补充页面元素或移除无效调用
+- fill-file-name
+    - 调用位置: static/js\document-fill.js:146
+    - 建议: 补充页面元素或移除无效调用
+- fill-file-size
+    - 调用位置: static/js\document-fill.js:147
+    - 建议: 补充页面元素或移除无效调用
+- fill-progress-bar
+    - 调用位置: static/js\document-fill.js:565
+    - 建议: 补充页面元素或移除无效调用
+- fill-result
+    - 调用位置: static/js\app.js:1649
+    - 建议: 补充页面元素或移除无效调用
+- fill-result-content
+    - 调用位置: static/js\document-fill.js:605
+    - 建议: 补充页面元素或移除无效调用
+- fill-result-section
+    - 调用位置: static/js\document-fill.js:585
+    - 建议: 补充页面元素或移除无效调用
+- fill-text-data
+    - 调用位置: static/js\app.js:724
+    - 建议: 补充页面元素或移除无效调用
+- fill-upload-area
+    - 调用位置: static/js\document-fill.js:26
+    - 调用位置: static/js\document-fill.js:32
+    - 调用位置: static/js\document-fill.js:156
+    - 调用位置: static/js\document-fill.js:683
+    - 建议: 补充页面元素或移除无效调用
+- format-file-input
+    - 调用位置: static/js\app.js:345
+    - 建议: 补充页面元素或移除无效调用
+- intent-correct-select
+    - 调用位置: static/js\app.js:1404
+    - 建议: 补充页面元素或移除无效调用
+- intent-correct-select-area
+    - 调用位置: static/js\app.js:1397
+    - 调用位置: static/js\app.js:1399
+    - 建议: 补充页面元素或移除无效调用
+- intent-feedback-select
+    - 调用位置: static/js\app.js:1395
+    - 调用位置: static/js\app.js:1403
+    - 建议: 补充页面元素或移除无效调用
+- intent-guide-text
+    - 调用位置: static/js\app.js:2379
+    - 建议: 补充页面元素或移除无效调用
+- intent-modal
+    - 调用位置: static/js\app.js:2322
+    - 调用位置: static/js\app.js:2332
+    - 调用位置: static/js\app.js:2352
+    - 建议: 补充页面元素或移除无效调用
+- intent-recommend
+    - 调用位置: static/js\app.js:2378
+    - 建议: 补充页面元素或移除无效调用
+- intent-type-select
+    - 调用位置: static/js\app.js:2358
+    - 建议: 补充页面元素或移除无效调用
+- material-file-input
+    - 调用位置: static/js\document-fill.js:60
+    - 建议: 补充页面元素或移除无效调用
+- material-upload-area
+    - 调用位置: static/js\document-fill.js:61
+    - 建议: 补充页面元素或移除无效调用
+- materials-list
+    - 调用位置: static/js\document-fill.js:224
+    - 建议: 补充页面元素或移除无效调用
+- modal-content
+    - 调用位置: static/js\app.js:1393
+    - 建议: 补充页面元素或移除无效调用
+- preview-container
+    - 调用位置: static/js\app.js:2170
+    - 建议: 补充页面元素或移除无效调用
+- progress-text
+    - 调用位置: static/js\document-fill.js:564
+    - 建议: 补充页面元素或移除无效调用
+- refresh-templates
+    - 调用位置: static/js\writing-style.js:98
+    - 建议: 补充页面元素或移除无效调用
+- restart-fill
+    - 调用位置: static/js\document-fill.js:111
+    - 建议: 补充页面元素或移除无效调用
+- save-format-name
+    - 调用位置: static/js\app.js:378
+    - 建议: 补充页面元素或移除无效调用
+- save-style-name
+    - 调用位置: static/js\app.js:679
+    - 建议: 补充页面元素或移除无效调用
+- save-style-template
+    - 调用位置: static/js\writing-style.js:87
+    - 建议: 补充页面元素或移除无效调用
+- saved-format-select
+    - 调用位置: static/js\app.js:218
+    - 建议: 补充页面元素或移除无效调用
+- saved-style-select
+    - 调用位置: static/js\app.js:229
+    - 建议: 补充页面元素或移除无效调用
+- send-message
+    - 调用位置: static/js\document-fill.js:94
+    - 建议: 补充页面元素或移除无效调用
+- skip-style-setting
+    - 调用位置: static/js\document-fill.js:83
+    - 建议: 补充页面元素或移除无效调用
+- start-conversation
+    - 调用位置: static/js\document-fill.js:84
+    - 建议: 补充页面元素或移除无效调用
+- start-fill-btn
+    - 调用位置: static/js\document-fill.js:54
+    - 建议: 补充页面元素或移除无效调用
+- style-analysis-input
+    - 调用位置: static/js\writing-style.js:23
+    - 调用位置: static/js\writing-style.js:144
+    - 建议: 补充页面元素或移除无效调用
+- style-analysis-result
+    - 调用位置: static/js\writing-style.js:267
+    - 建议: 补充页面元素或移除无效调用
+- style-analysis-upload
+    - 调用位置: static/js\writing-style.js:24
+    - 调用位置: static/js\writing-style.js:143
+    - 调用位置: static/js\writing-style.js:162
+    - 建议: 补充页面元素或移除无效调用
+- style-file-info
+    - 调用位置: static/js\writing-style.js:142
+    - 调用位置: static/js\writing-style.js:159
+    - 建议: 补充页面元素或移除无效调用
+- style-file-name
+    - 调用位置: static/js\writing-style.js:160
+    - 建议: 补充页面元素或移除无效调用
+- style-file-size
+    - 调用位置: static/js\writing-style.js:161
+    - 建议: 补充页面元素或移除无效调用
+- style-templates-list
+    - 调用位置: static/js\document-fill.js:302
+    - 建议: 补充页面元素或移除无效调用
+- style-templates-management
+    - 调用位置: static/js\writing-style.js:589
+    - 建议: 补充页面元素或移除无效调用
+- style-text-input
+    - 调用位置: static/js\writing-style.js:212
+    - 调用位置: static/js\writing-style.js:536
+    - 建议: 补充页面元素或移除无效调用
+- submit-intent-feedback
+    - 调用位置: static/js\app.js:1402
+    - 建议: 补充页面元素或移除无效调用
+- supplementary-materials-section
+    - 调用位置: static/js\document-fill.js:211
+    - 建议: 补充页面元素或移除无效调用
+- test-style-generation
+    - 调用位置: static/js\writing-style.js:88
+    - 建议: 补充页面元素或移除无效调用
+- toggle-debug
+    - 调用位置: static/js\writing-style.js:368
+    - 建议: 补充页面元素或移除无效调用
+- user-input
+    - 调用位置: static/js\document-fill.js:95
+    - 调用位置: static/js\document-fill.js:508
+    - 建议: 补充页面元素或移除无效调用
+- writing-style-section
+    - 调用位置: static/js\document-fill.js:278
+    - 建议: 补充页面元素或移除无效调用
+
+## 页面有但代码未用到的id
+- auto-save-setting
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- avg-processing-time
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- demo
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- enable-notifications-setting
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- features
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- fill-data-upload
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- fill-feedback
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- fill-preview-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- fill-result-area
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- fill-template-upload
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- format-base-upload
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- format-feedback
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- format-preview-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- format-result-area
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- format-target-upload
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- global-loading
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- history-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- history-table-body
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- historyPagination
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- jobDetailContent
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- language-setting
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- loading-message
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- performance-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- progress-fill
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- review-doc-upload
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- review-feedback
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- review-preview-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- review-result-area
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- scene-fill
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- scene-format
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- scene-management
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- scene-review
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- scene-style
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- settings-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- show-preview-setting
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- style-feedback
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- style-preview-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- style-ref-upload
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- style-result-area
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- style-target-upload
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- success-rate
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- template-grid
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- templates-content
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- total-documents
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- upload-fill-data
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- upload-fill-template
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- upload-review-doc
+    - 建议: 清理冗余页面元素或补充相关逻辑
+- upload-style-target
+    - 建议: 清理冗余页面元素或补充相关逻辑

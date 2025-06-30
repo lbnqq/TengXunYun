@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Writing Style Analyzer - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import re
 import json
 import os
@@ -17,11 +31,6 @@ except ImportError:
     print("Warning: Enhanced style analysis features not available. Using basic functionality.")
 
 class WritingStyleAnalyzer:
-    """
-    文风分析器
-    分析文档的写作风格特征，生成文风模板，支持文风对齐功能
-    现已集成增强的文风分析功能
-    """
 
     def __init__(self, storage_path: str = "src/core/knowledge_base/writing_style_templates", llm_client=None):
         self.tool_name = "文风分析器"

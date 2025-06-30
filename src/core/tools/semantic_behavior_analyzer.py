@@ -1,8 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-语义空间行为分析器
-包括核心概念聚类、语义距离分析、联想创新度评估等功能
-讯飞大模型作为风格评估员，提供深度分析和评估
+Semantic Behavior Analyzer - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import numpy as np
 import json

@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-端到端自动化测试脚本
-在虚拟环境下启动服务、前端，并运行完整的测试套件
+Run E2E Automation
 
-功能包括：
-1. 虚拟环境检查和设置
-2. 依赖安装和验证
-3. 后端服务启动
-4. 前端界面测试
-5. 端到端功能测试
-6. 性能监控
-7. 测试报告生成
-8. 环境清理
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import os
 import sys

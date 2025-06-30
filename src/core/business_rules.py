@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-业务规则管理模块
-统一管理各个功能的业务规则和配置
+File: business_rules.py
+Description: 业务规则引擎
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
 
 from typing import Dict, Any, List, Optional
@@ -12,14 +19,8 @@ from datetime import datetime
 
 
 class BusinessRuleManager:
-    """业务规则管理器"""
-    
     def __init__(self):
-        self.rules = self._load_default_rules()
-    
-    def _load_default_rules(self) -> Dict[str, Dict[str, Any]]:
-        """加载默认业务规则"""
-        return {
+        self.rules = {
             'style_alignment': {
                 'export_rules': {
                     'content_processing': '原文+已接受的风格变更（按diff顺序应用）',
@@ -82,63 +83,19 @@ class BusinessRuleManager:
                 }
             }
         }
-    
+
     def get_export_rules(self, feature_name: str) -> Dict[str, Any]:
-        """
-        获取指定功能的导出规则
-        
-        Args:
-            feature_name: 功能名称
-            
-        Returns:
-            Dict: 导出规则
-        """
         return self.rules.get(feature_name, {}).get('export_rules', {})
-    
+
     def get_template_rules(self, feature_name: str) -> Dict[str, Any]:
-        """
-        获取指定功能的模板规则
-        
-        Args:
-            feature_name: 功能名称
-            
-        Returns:
-            Dict: 模板规则
-        """
         return self.rules.get(feature_name, {}).get('template_rules', {})
-    
+
     def get_session_rules(self, feature_name: str) -> Dict[str, Any]:
-        """
-        获取指定功能的会话规则
-        
-        Args:
-            feature_name: 功能名称
-            
-        Returns:
-            Dict: 会话规则
-        """
         return self.rules.get(feature_name, {}).get('session_rules', {})
-    
-    def generate_filename(self, feature_name: str, original_name: str, 
-                         template_name: Optional[str] = None, data_source: Optional[str] = None) -> str:
-        """
-        根据业务规则生成文件名
-        
-        Args:
-            feature_name: 功能名称
-            original_name: 原文件名
-            template_name: 模板名称
-            data_source: 数据源名称
-            
-        Returns:
-            str: 生成的文件名
-        """
+
+    def generate_filename(self, feature_name: str, original_name: str, template_name: Optional[str] = None, data_source: Optional[str] = None) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # 移除原文件扩展名
         base_name = os.path.splitext(original_name)[0]
-        
-        # 根据功能类型生成文件名
         if feature_name == 'style_alignment':
             template_suffix = template_name or 'template'
             return f"{base_name}_{template_suffix}_{timestamp}.docx"
@@ -151,54 +108,30 @@ class BusinessRuleManager:
             return f"{base_name}_评审报告_{timestamp}.docx"
         else:
             return f"{base_name}_{feature_name}_{timestamp}.docx"
-    
+
     def validate_export_content(self, feature_name: str, content: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        验证导出内容是否符合业务规则
-        
-        Args:
-            feature_name: 功能名称
-            content: 导出内容
-            
-        Returns:
-            Dict: 验证结果 {'valid': bool, 'issues': List[str]}
-        """
         rules = self.get_export_rules(feature_name)
         issues = []
-        
-        # 检查必需字段
         required_fields = ['original_content', 'processed_content']
         for field in required_fields:
             if field not in content:
                 issues.append(f"缺少必需字段: {field}")
-        
-        # 检查内容处理规则
         if feature_name == 'style_alignment':
             if 'style_changes' not in content:
                 issues.append("缺少风格变更信息")
             if 'template_id' not in content:
                 issues.append("缺少模板ID")
-        
         return {
             'valid': len(issues) == 0,
             'issues': issues,
             'rules_applied': list(rules.keys())
         }
-    
+
     def get_processing_pipeline(self, feature_name: str) -> List[str]:
-        """
-        获取指定功能的处理流程
-        
-        Args:
-            feature_name: 功能名称
-            
-        Returns:
-            List[str]: 处理步骤列表
-        """
         pipelines = {
             'style_alignment': [
                 'analyze_writing_style',
-                'generate_style_preview', 
+                'generate_style_preview',
                 'apply_style_changes',
                 'export_styled_document'
             ],
@@ -222,47 +155,24 @@ class BusinessRuleManager:
                 'export_reviewed_document'
             ]
         }
-        
         return pipelines.get(feature_name, [])
-    
+
     def save_rules_to_file(self, file_path: str = "business_rules.json"):
-        """
-        保存业务规则到文件
-        
-        Args:
-            file_path: 文件路径
-        """
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(self.rules, f, ensure_ascii=False, indent=2)
-    
+
     def load_rules_from_file(self, file_path: str = "business_rules.json"):
-        """
-        从文件加载业务规则
-        
-        Args:
-            file_path: 文件路径
-        """
         if os.path.exists(file_path):
             with open(file_path, 'r', encoding='utf-8') as f:
                 self.rules = json.load(f)
-
 
 # 全局实例
 business_rule_manager = BusinessRuleManager()
 
 
 def get_export_rules(feature_name: str) -> Dict[str, Any]:
-    """便捷函数：获取导出规则"""
     return business_rule_manager.get_export_rules(feature_name)
 
 
-def generate_filename(feature_name: str, original_name: str, 
-                     template_name: Optional[str] = None, data_source: Optional[str] = None) -> str:
-    """便捷函数：生成文件名"""
-    return business_rule_manager.generate_filename(feature_name, original_name, 
-                                                 template_name, data_source)
-
-
 def validate_export_content(feature_name: str, content: Dict[str, Any]) -> Dict[str, Any]:
-    """便捷函数：验证导出内容"""
-    return business_rule_manager.validate_export_content(feature_name, content) 
+    return business_rule_manager.validate_export_content(feature_name, content)

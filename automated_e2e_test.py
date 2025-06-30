@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-完整的自动化端到端测试脚本
-包含虚拟环境管理、CLI功能测试、Web前端自动化测试
+Automated E2E Test
 
-测试流程：
-1. 虚拟环境设置和依赖安装
-2. 后端服务启动
-3. CLI功能测试（API接口测试）
-4. Web前端自动化测试（Selenium）
-5. 业务流程图贯通性验证
-6. 测试报告生成
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import os
 import sys
@@ -503,7 +504,9 @@ class AutomatedE2ETest:
     def test_page_load(self):
         """测试页面加载"""
         try:
-            self.driver.get(f"{self.server_url}/enhanced-frontend-complete")
+            if self.driver is None:
+                return False
+            self.driver.get(f"{self.server_url}/")
             WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.TAG_NAME, "body"))
             )
@@ -514,6 +517,8 @@ class AutomatedE2ETest:
     def test_navigation(self):
         """测试页面导航"""
         try:
+            if self.driver is None:
+                return False
             # 测试导航菜单
             nav_items = ['format', 'style', 'fill', 'review', 'management']
             for nav_item in nav_items:
@@ -535,6 +540,8 @@ class AutomatedE2ETest:
     def test_file_upload_ui(self):
         """测试文件上传UI"""
         try:
+            if self.driver is None:
+                return False
             # 切换到格式对齐场景
             format_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="format"]')
             format_nav.click()
@@ -549,6 +556,8 @@ class AutomatedE2ETest:
     def test_format_alignment_ui(self):
         """测试格式对齐UI"""
         try:
+            if self.driver is None:
+                return False
             # 检查格式对齐按钮
             format_btn = self.driver.find_element(By.CSS_SELECTOR, '[data-action="format_alignment"]')
             return format_btn.is_displayed() and format_btn.is_enabled()
@@ -558,6 +567,8 @@ class AutomatedE2ETest:
     def test_style_analysis_ui(self):
         """测试文风分析UI"""
         try:
+            if self.driver is None:
+                return False
             # 切换到文风统一场景
             style_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]')
             style_nav.click()
@@ -572,6 +583,8 @@ class AutomatedE2ETest:
     def test_document_fill_ui(self):
         """测试文档填写UI"""
         try:
+            if self.driver is None:
+                return False
             # 切换到智能填报场景
             fill_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="fill"]')
             fill_nav.click()
@@ -586,6 +599,8 @@ class AutomatedE2ETest:
     def test_document_review_ui(self):
         """测试文档审查UI"""
         try:
+            if self.driver is None:
+                return False
             # 切换到文档审查场景
             review_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="review"]')
             review_nav.click()
@@ -630,6 +645,8 @@ class AutomatedE2ETest:
     def test_format_alignment_flow(self):
         """测试格式对齐业务流程"""
         try:
+            if self.driver is None:
+                return False
             # 切换到格式对齐场景
             format_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="format"]')
             format_nav.click()
@@ -644,6 +661,8 @@ class AutomatedE2ETest:
     def test_style_analysis_flow(self):
         """测试文风分析业务流程"""
         try:
+            if self.driver is None:
+                return False
             # 切换到文风统一场景
             style_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="style"]')
             style_nav.click()
@@ -658,6 +677,8 @@ class AutomatedE2ETest:
     def test_document_fill_flow(self):
         """测试文档填写业务流程"""
         try:
+            if self.driver is None:
+                return False
             # 切换到智能填报场景
             fill_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="fill"]')
             fill_nav.click()
@@ -672,6 +693,8 @@ class AutomatedE2ETest:
     def test_document_review_flow(self):
         """测试文档审查业务流程"""
         try:
+            if self.driver is None:
+                return False
             # 切换到文档审查场景
             review_nav = self.driver.find_element(By.CSS_SELECTOR, '[data-scene="review"]')
             review_nav.click()

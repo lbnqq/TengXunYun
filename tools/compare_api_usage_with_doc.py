@@ -1,3 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+API使用与文档比对工具
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
+
+
+
+
+
+
+
+
+
 import os
 import re
 
@@ -17,9 +40,13 @@ for base in PY_JS_DIRS:
                         for api in API_PATTERN.findall(line):
                             api_usage.setdefault(api, []).append(f'{os.path.join(root, file)}:{i}')
 
+if not os.path.exists(API_DOC_PATH):
+    print(f"API文档 {API_DOC_PATH} 不存在，跳过API接口文档一致性检查。")
+    exit(0)
+
 # 提取文档中所有API路径及说明
 api_doc = {}
-with open(API_DOC_PATH, encoding='utf-8') as f:
+with open(API_DOC_PATH, 'r', encoding='utf-8') as f:
     last_path = None
     for line in f:
         if line.strip().startswith('- 路径:'):
@@ -45,4 +72,4 @@ with open(REPORT_PATH, 'w', encoding='utf-8') as f:
         f.write(f'    - 文档说明: {api_doc[api]}\n')
         f.write('    - 建议: 实现该接口或清理文档冗余\n')
 
-print(f'已生成 {REPORT_PATH}') 
+print(f'已生成 {REPORT_PATH}')

@@ -1,12 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-精确格式提取器 - 完整提取Word/PDF/Excel/PPT的所有格式信息
+Precise Format Extractor - 核心模块
 
-核心功能：
-1. 提取所有样式信息（字体、字号、颜色、对齐方式等）
-2. 提取布局信息（页边距、行间距、段间距等）
-3. 提取表格格式（边框、单元格样式、列宽等）
-4. 保存为可重用的格式模板
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
 """
+
 
 import json
 import os

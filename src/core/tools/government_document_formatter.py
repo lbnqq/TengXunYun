@@ -1,13 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Government Document Formatter - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 import re
 import json
 from typing import Dict, Any, List
 from datetime import datetime
 
 class GovernmentDocumentFormatterTool:
-    """
-    政府公文格式化工具
-    根据《党政机关公文处理工作条例》等规范，对政府公文进行格式检查和优化
-    """
     
     def __init__(self):
         self.tool_name = "政府公文格式化工具"

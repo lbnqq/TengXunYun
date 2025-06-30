@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Meeting Review - 核心模块
+
+Author: AI Assistant (Claude)
+Created: 2025-01-28
+Last Modified: 2025-01-28
+Modified By: AI Assistant (Claude)
+AI Assisted: 是 - Claude 3.5 Sonnet
+Version: v1.0
+License: MIT
+"""
+
 from .base_tool import BaseTool
 import json
 
@@ -13,16 +27,6 @@ class MeetingReviewTool(BaseTool):
                 all_comments.extend(output["review_comments"]["comments"])
         if not all_comments:
             return {"summary": "No review comments were provided. No meeting simulation needed."}
-        prompt = f"""
-        You are a facilitator for a document review meeting.
-        Consolidate the following review comments from multiple reviewers. Identify common themes, critical issues, and potential points of discussion.
-        Suggest a brief meeting summary and any implied decisions or action items.
-        Review Comments:
-        ---
-        {json.dumps(all_comments, indent=2)}
-        ---
-        Provide the output as a JSON object with keys: 'meeting_summary', 'discussion_points', 'action_items'.
-        """
         try:
             meeting_summary_json_str = """
             {
