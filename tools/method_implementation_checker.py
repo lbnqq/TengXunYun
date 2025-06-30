@@ -14,14 +14,6 @@ License: MIT
 
 
 
-
-
-
-
-
-
-
-
 import os
 import sys
 import json
@@ -37,27 +29,26 @@ sys.path.insert(0, str(project_root))
 
 
 class MethodImplementationChecker:
+    def __init__(self, core_methods=None):
+        self.core_methods = core_methods or {}
+        self.project_root = project_root
+        self.report_data = {"module_status": {}, "method_details": {}}
+
+    def check_methods(self):
         print("🔍 开始检查方法实现状态...")
-        
         total_methods = 0
         implemented_methods = 0
-        
         for file_path, classes in self.core_methods.items():
             full_path = self.project_root / file_path
-            
             if not full_path.exists():
                 print(f"⚠️  文件不存在: {file_path}")
                 continue
-            
             module_status = self._check_module_methods(file_path, classes)
             self.report_data["module_status"][file_path] = module_status
-            
             for class_name, methods in classes.items():
                 total_methods += len(methods)
                 implemented_count = module_status.get(class_name, {}).get("implemented_count", 0)
                 implemented_methods += implemented_count
-                
-                # 记录详细信息
                 self.report_data["method_details"][f"{file_path}.{class_name}"] = {
                     "total_methods": len(methods),
                     "implemented_methods": implemented_count,
@@ -65,20 +56,15 @@ class MethodImplementationChecker:
                     "methods": methods,
                     "status": module_status.get(class_name, {})
                 }
-        
-        # 计算总体统计
         self.report_data["total_methods"] = total_methods
         self.report_data["implemented_methods"] = implemented_methods
         self.report_data["missing_methods"] = total_methods - implemented_methods
         self.report_data["implementation_rate"] = (
             implemented_methods / total_methods if total_methods > 0 else 0.0
         )
-        
-        # 生成建议
         self.report_data["recommendations"] = self._generate_recommendations()
-        
         return self.report_data
-    
+
     def _check_module_methods(self, file_path: str, classes: Dict[str, List[str]]) -> Dict[str, Any]:
         implemented_methods = []
         missing_methods = []
@@ -107,6 +93,20 @@ class MethodImplementationChecker:
         }
     
     def _is_real_implementation(self, method) -> bool:
+        code_lines = []
+        placeholder_indicators = ["pass", "raise NotImplementedError", "TODO", "xxx", "impl", "pass"]
+        
+        try:
+            # 获取方法的源代码
+            source = inspect.getsource(method)
+            # 按行分割
+            lines = source.splitlines()
+            
+            # 提取有效代码行
+            for line in lines:
+                line = line.strip()
+                # 排除空行
+                if line:
                     code_lines.append(line)
             
             # 如果只有很少的代码行，可能是占位符
@@ -152,28 +152,28 @@ class MethodImplementationChecker:
         return str(output_path)
     
     def print_summary(self):
-    checker = MethodImplementationChecker()
-    
-    # 执行检查
-    checker.check_all_methods()
-    
-    # 打印摘要
-    checker.print_summary()
-    
-    # 生成报告
-    report_file = checker.generate_report()
-    print(f"\n📄 详细报告已保存到: {report_file}")
-    
-    # 返回退出码
-    implementation_rate = checker.report_data["implementation_rate"]
-    if implementation_rate < 0.8:
-        print("❌ 实现率低于80%，检查失败")
-        return 1
-    else:
-        print("✅ 实现率达标，检查通过")
-        return 0
+        checker = MethodImplementationChecker()
+        
+        # 执行检查
+        checker.check_all_methods()
+        
+        # 打印摘要
+        checker.print_summary()
+        
+        # 生成报告
+        report_file = checker.generate_report()
+        print(f"\n📄 详细报告已保存到: {report_file}")
+        
+        # 返回退出码
+        implementation_rate = checker.report_data["implementation_rate"]
+        if implementation_rate < 0.8:
+            print("❌ 实现率低于80%，检查失败")
+            return 1
+        else:
+            print("✅ 实现率达标，检查通过")
+            return 0
 
 
 if __name__ == "__main__":
     exit_code = main()
-    sys.exit(exit_code) 
+    sys.exit(exit_code)

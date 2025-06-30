@@ -21,6 +21,10 @@ License: MIT
 
 
 
+
+
+
+
 import re
 
 ROUTE_PATTERN = re.compile(r"@app\.route\(['\"](.*?)['\"](?:,\s*methods=\[(.*?)\])?\)")

@@ -14,14 +14,6 @@ License: MIT
 
 
 
-
-
-
-
-
-
-
-
 import os
 import sys
 import inspect
@@ -37,36 +29,25 @@ sys.path.insert(0, project_root)
 
 logger = logging.getLogger(__name__)
 
-
 class ComprehensiveMethodChecker:
+    def __init__(self, project_root=None, search_directories=None):
+        self.project_root = Path(project_root) if project_root else Path(project_root or os.getcwd())
+        self.search_directories = search_directories or ["src", "tools"]
+
+    def scan_all_python_files(self) -> Dict[str, str]:
         python_files = {}
-        
         for search_dir in self.search_directories:
             dir_path = self.project_root / search_dir
             if dir_path.exists():
                 for py_file in dir_path.rglob("*.py"):
                     relative_path = py_file.relative_to(self.project_root)
                     python_files[str(relative_path)] = str(py_file)
-        
         return python_files
-    
+
     def extract_methods_from_file(self, file_path: str) -> Set[str]:
-        python_files = self.scan_all_python_files()
-        all_methods = {}
-        
-        for module_name, file_path in python_files.items():
-            methods = self.extract_methods_from_file(file_path)
-            
-            for method_name in methods:
-                if method_name not in all_methods:
-                    all_methods[method_name] = []
-                all_methods[method_name].append({
-                    'file': module_name,
-                    'path': file_path
-                })
-        
-        return all_methods
-    
+        # 示例方法体
+        return set()
+
     def check_method_coverage(self) -> Dict[str, Dict[str, Any]]:
         api_endpoints = {}
         
@@ -168,37 +149,37 @@ class ComprehensiveMethodChecker:
         return "\n".join(report)
     
     def save_detailed_report(self, output_file: str = "comprehensive_method_report.md"):
-    checker = ComprehensiveMethodChecker()
-    
-    print("🚀 开始全面深入方法实现检查...")
-    print("=" * 60)
-    
-    # 生成报告
-    report = checker.generate_comprehensive_report()
-    print(report)
-    
-    # 保存报告
-    output_file = checker.save_detailed_report()
-    
-    # 检查严重问题
-    coverage_results = checker.check_method_coverage()
-    critical_issues = []
-    
-    for module_name, result in coverage_results.items():
-        if result['coverage'] < 0.8:
-            critical_issues.append(f"{module_name}: 实现覆盖率过低 ({result['coverage']:.1%})")
-    
-    if critical_issues:
-        print("\n" + "=" * 60)
-        print("⚠️ 发现严重问题:")
-        for issue in critical_issues:
-            print(f"  - {issue}")
-        return 1
-    else:
-        print("\n" + "=" * 60)
-        print("✅ 所有模块方法实现状态良好")
-        return 0
+        checker = ComprehensiveMethodChecker()
+        
+        print("🚀 开始全面深入方法实现检查...")
+        print("=" * 60)
+        
+        # 生成报告
+        report = checker.generate_comprehensive_report()
+        print(report)
+        
+        # 保存报告
+        output_file = checker.save_detailed_report()
+        
+        # 检查严重问题
+        coverage_results = checker.check_method_coverage()
+        critical_issues = []
+        
+        for module_name, result in coverage_results.items():
+            if result['coverage'] < 0.8:
+                critical_issues.append(f"{module_name}: 实现覆盖率过低 ({result['coverage']:.1%})")
+        
+        if critical_issues:
+            print("\n" + "=" * 60)
+            print("⚠️ 发现严重问题:")
+            for issue in critical_issues:
+                print(f"  - {issue}")
+            return 1
+        else:
+            print("\n" + "=" * 60)
+            print("✅ 所有模块方法实现状态良好")
+            return 0
 
 
 if __name__ == "__main__":
-    exit(main()) 
+    exit(main())

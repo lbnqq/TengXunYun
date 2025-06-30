@@ -2,25 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 运行所有测试
-
-Author: AI Assistant (Claude)
-Created: 2025-01-28
-Last Modified: 2025-01-28
-Modified By: AI Assistant (Claude)
-AI Assisted: 是 - Claude 3.5 Sonnet
-Version: v1.0
-License: MIT
 """
-
-
-
-
-
-
-
-
-
-
 
 import os
 import sys
@@ -35,6 +17,7 @@ import requests
 
 
 class TestRunner:
+    def __init__(self, base_url=None, verbose=False):
         self.base_url = base_url
         self.verbose = verbose
         self.start_time = time.time()
@@ -102,113 +85,10 @@ class TestRunner:
         ]
     
     def create_test_data(self):
-
-## 标题格式
-这是标准的标题格式，使用Markdown语法。
-
-### 子标题
-子标题使用三级标题格式。
-
-## 段落格式
-这是标准的段落格式，包含适当的空行和缩进。
-
-### 列表格式
-- 项目1
-- 项目2
-  - 子项目2.1
-  - 子项目2.2
-- 项目3
-
-## 代码格式
-```python
-def example_function():
-    return "这是代码示例"
-```
-
-## 表格格式
-| 列1 | 列2 | 列3 |
-|-----|-----|-----|
-| 数据1 | 数据2 | 数据3 |
-| 数据4 | 数据5 | 数据6 |
-
-标题格式
-这是不标准的标题格式，没有使用Markdown语法。
-
-子标题
-子标题格式也不标准。
-
-段落格式
-这是不标准的段落格式，缺少适当的空行和缩进。
-
-列表格式
-* 项目1
-* 项目2
-* 子项目2.1
-* 子项目2.2
-* 项目3
-
-代码格式
-def example_function():
-    return "这是代码示例"
-
-表格格式
-列1 列2 列3
-数据1 数据2 数据3
-数据4 数据5 数据6
-
-## 学术风格
-本文档采用正式的学术写作风格，语言严谨、客观，使用专业术语，避免主观表达。
-
-### 研究方法
-本研究采用定量分析方法，通过问卷调查收集数据，运用统计软件进行数据分析。
-
-### 结论
-基于上述分析，我们可以得出以下结论：该方案具有可行性和有效性。
-
-## 内容分析
-我觉得这个方案挺好的，应该可以解决问题。
-
-### 方法说明
-我们用了问卷调查，然后用软件算了一下数据。
-
-### 总结
-总的来说，这个方案不错，应该能用。
-
-## 项目基本信息
-- 项目名称：{project_name}
-- 申请人：{applicant_name}
-- 申请日期：{application_date}
-- 项目类型：{project_type}
-
-## 项目描述
-{project_description}
-
-## 技术方案
-{technical_solution}
-
-## 预期成果
-{expected_results}
-
-## 预算信息
-- 总预算：{total_budget}元
-- 设备费用：{equipment_cost}元
-- 人员费用：{personnel_cost}元
-- 其他费用：{other_cost}元
-
-## 项目概述
-本项目旨在开发一个智能文档处理系统。
-
-## 技术架构
-系统采用微服务架构，包含以下组件：
-- 文档解析模块
-- AI处理模块
-- 用户界面模块
-
-## 风险评估
-项目存在技术风险和时间风险。
-
-## 结论
-该方案具有可行性。
+        # 示例方法体
+        pass
+    
+    def run_test(self, config: Dict[str, Any]) -> Dict[str, Any]:
         test_name = config["name"]
         script_path = config["script"]
         args = config["args"]
@@ -368,30 +248,30 @@ def example_function():
         print(f"[报告] 总数: {total} 通过: {passed} 失败: {failed} 成功率: {success_rate:.1f}% 总耗时: {duration or 0:.2f}秒")
 
     def generate_summary(self, test_results: List[Dict[str, Any]], duration: float) -> Dict[str, Any]:
-    parser = argparse.ArgumentParser(description="CLI业务场景贯通性测试")
-    parser.add_argument("--report", action="store_true", help="生成详细报告")
-    parser.add_argument("--verbose", action="store_true", help="详细输出")
-    parser.add_argument("--create-data", action="store_true", help="仅创建测试数据")
-    
-    args = parser.parse_args()
-    
-    runner = TestRunner(verbose=args.verbose)
-    
-    if args.create_data:
-        runner.create_test_data()
-        print("✅ 测试数据创建完成")
-        return
-    
-    success = runner.run_tests()
-    
-    if not success.get("success", False):
-        print(f"\n❌ CLI业务场景测试失败，工程可用性验证未通过")
-        print("请根据上述错误信息和建议进行修复后重新测试")
-        sys.exit(1)
-    else:
-        print(f"\n✅ CLI业务场景测试成功，工程可用性验证通过")
-        sys.exit(0)
+        parser = argparse.ArgumentParser(description="CLI业务场景贯通性测试")
+        parser.add_argument("--report", action="store_true", help="生成详细报告")
+        parser.add_argument("--verbose", action="store_true", help="详细输出")
+        parser.add_argument("--create-data", action="store_true", help="仅创建测试数据")
+        
+        args = parser.parse_args()
+        
+        runner = TestRunner(verbose=args.verbose)
+        
+        if args.create_data:
+            runner.create_test_data()
+            print("✅ 测试数据创建完成")
+            return
+        
+        success = runner.run_tests()
+        
+        if not success.get("success", False):
+            print(f"\n❌ CLI业务场景测试失败，工程可用性验证未通过")
+            print("请根据上述错误信息和建议进行修复后重新测试")
+            sys.exit(1)
+        else:
+            print(f"\n✅ CLI业务场景测试成功，工程可用性验证通过")
+            sys.exit(0)
 
 
 if __name__ == "__main__":
-    main() 
+    main()

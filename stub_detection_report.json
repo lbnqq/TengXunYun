@@ -1,8 +1,8 @@
 {
   "summary": {
-    "total_issues": 80,
-    "high_severity": 22,
-    "medium_severity": 58,
+    "total_issues": 86,
+    "high_severity": 27,
+    "medium_severity": 59,
     "low_severity": 0
   },
   "issues_by_type": {
@@ -13,6 +13,14 @@
         "line": 386,
         "content": "raise NotImplementedError(\"子类必须实现run_test方法\")",
         "description": "NotImplementedError: raise NotImplementedError(\"子类必须实现run_test方法\")",
+        "severity": "high"
+      },
+      {
+        "type": "not_implemented",
+        "file": "tools\\method_implementation_checker.py",
+        "line": 97,
+        "content": "placeholder_indicators = [\"pass\", \"raise NotImplementedError\", \"TODO\", \"xxx\", \"impl\", \"pass\"]",
+        "description": "NotImplementedError: placeholder_indicators = [\"pass\", \"raise NotImplementedError\", \"TODO\", \"xxx\", \"impl\", \"pass\"]",
         "severity": "high"
       },
       {
@@ -50,9 +58,163 @@
       {
         "type": "not_implemented",
         "file": "tools\\stub_function_detector.py",
-        "line": 48,
+        "line": 52,
         "content": "\"not_implemented\": r\"raise\\s+NotImplementedError\",",
         "description": "NotImplementedError: \"not_implemented\": r\"raise\\s+NotImplementedError\",",
+        "severity": "high"
+      }
+    ],
+    "empty_function": [
+      {
+        "type": "empty_function",
+        "file": "cliTests\\run_all_tests.py",
+        "line": 87,
+        "name": "create_test_data",
+        "description": "空函数定义: create_test_data",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "examples\\minimal_web_app.py",
+        "line": 54,
+        "name": "load_dotenv",
+        "description": "空函数定义: load_dotenv",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "examples\\minimal_web_app.py",
+        "line": 67,
+        "name": "__init__",
+        "description": "空函数定义: __init__",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "examples\\minimal_web_app.py",
+        "line": 104,
+        "name": "__init__",
+        "description": "空函数定义: __init__",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\main.py",
+        "line": 34,
+        "name": "main",
+        "description": "空函数定义: main",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "tools\\stub_function_detector.py",
+        "line": 203,
+        "name": "export_json",
+        "description": "空函数定义: export_json",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\llm_clients\\base_llm.py",
+        "line": 32,
+        "name": "generate",
+        "description": "空函数定义: generate",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\llm_clients\\multi_llm_new.py",
+        "line": 538,
+        "name": "_record_performance_metrics",
+        "description": "空函数定义: _record_performance_metrics",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\agent\\intent_driven_orchestrator.py",
+        "line": 288,
+        "name": "_generate_user_message",
+        "description": "空函数定义: _generate_user_message",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\efficient_format_aligner.py",
+        "line": 226,
+        "name": "_extract_format_from_content",
+        "description": "空函数定义: _extract_format_from_content",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\efficient_format_aligner.py",
+        "line": 229,
+        "name": "_parse_custom_format_rules",
+        "description": "空函数定义: _parse_custom_format_rules",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\efficient_format_aligner.py",
+        "line": 232,
+        "name": "_assess_alignment_quality",
+        "description": "空函数定义: _assess_alignment_quality",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 343,
+        "name": "_apply_table_cell_style",
+        "description": "空函数定义: _apply_table_cell_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 346,
+        "name": "_apply_paragraph_style",
+        "description": "空函数定义: _apply_paragraph_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 349,
+        "name": "_apply_character_style",
+        "description": "空函数定义: _apply_character_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 352,
+        "name": "_apply_list_style",
+        "description": "空函数定义: _apply_list_style",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\analysis\\precise_format_applier.py",
+        "line": 355,
+        "name": "_apply_table_style_v2",
+        "description": "空函数定义: _apply_table_style_v2",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\tools\\base_tool.py",
+        "line": 18,
+        "name": "__init__",
+        "description": "空函数定义: __init__",
+        "severity": "high"
+      },
+      {
+        "type": "empty_function",
+        "file": "src\\core\\tools\\base_tool.py",
+        "line": 22,
+        "name": "execute",
+        "description": "空函数定义: execute",
         "severity": "high"
       }
     ],
@@ -418,129 +580,15 @@
         "severity": "medium"
       }
     ],
-    "empty_function": [
-      {
-        "type": "empty_function",
-        "file": "src\\main.py",
-        "line": 30,
-        "name": "main",
-        "description": "空函数定义: main",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "tools\\stub_function_detector.py",
-        "line": 199,
-        "name": "export_json",
-        "description": "空函数定义: export_json",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\llm_clients\\base_llm.py",
-        "line": 28,
-        "name": "generate",
-        "description": "空函数定义: generate",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\llm_clients\\multi_llm_new.py",
-        "line": 538,
-        "name": "_record_performance_metrics",
-        "description": "空函数定义: _record_performance_metrics",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\agent\\intent_driven_orchestrator.py",
-        "line": 284,
-        "name": "_generate_user_message",
-        "description": "空函数定义: _generate_user_message",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\efficient_format_aligner.py",
-        "line": 222,
-        "name": "_extract_format_from_content",
-        "description": "空函数定义: _extract_format_from_content",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\efficient_format_aligner.py",
-        "line": 225,
-        "name": "_parse_custom_format_rules",
-        "description": "空函数定义: _parse_custom_format_rules",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\efficient_format_aligner.py",
-        "line": 228,
-        "name": "_assess_alignment_quality",
-        "description": "空函数定义: _assess_alignment_quality",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 340,
-        "name": "_apply_table_cell_style",
-        "description": "空函数定义: _apply_table_cell_style",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 343,
-        "name": "_apply_paragraph_style",
-        "description": "空函数定义: _apply_paragraph_style",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 346,
-        "name": "_apply_character_style",
-        "description": "空函数定义: _apply_character_style",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 349,
-        "name": "_apply_list_style",
-        "description": "空函数定义: _apply_list_style",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 352,
-        "name": "_apply_table_style_v2",
-        "description": "空函数定义: _apply_table_style_v2",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\tools\\base_tool.py",
-        "line": 18,
-        "name": "__init__",
-        "description": "空函数定义: __init__",
-        "severity": "high"
-      },
-      {
-        "type": "empty_function",
-        "file": "src\\core\\tools\\base_tool.py",
-        "line": 22,
-        "name": "execute",
-        "description": "空函数定义: execute",
-        "severity": "high"
-      }
-    ],
     "todo_comment": [
+      {
+        "type": "todo_comment",
+        "file": "src\\main.py",
+        "line": 37,
+        "content": "# TODO: Implement the main application logic here.",
+        "description": "TODO标记: # TODO: Implement the main application logic here.",
+        "severity": "medium"
+      },
       {
         "type": "todo_comment",
         "file": "tools\\code_template_generator.py",
@@ -600,7 +648,7 @@
       {
         "type": "todo_comment",
         "file": "src\\core\\agent\\intent_driven_orchestrator.py",
-        "line": 285,
+        "line": 289,
         "content": "pass  # TODO: 实现用户消息生成逻辑",
         "description": "TODO标记: pass  # TODO: 实现用户消息生成逻辑",
         "severity": "medium"
@@ -608,7 +656,7 @@
       {
         "type": "todo_comment",
         "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 209,
+        "line": 212,
         "content": "# TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
         "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
         "severity": "medium"
@@ -616,7 +664,7 @@
       {
         "type": "todo_comment",
         "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 253,
+        "line": 256,
         "content": "# TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
         "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
         "severity": "medium"
@@ -624,7 +672,7 @@
       {
         "type": "todo_comment",
         "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 258,
+        "line": 261,
         "content": "# TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
         "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
         "severity": "medium"
@@ -632,7 +680,7 @@
       {
         "type": "todo_comment",
         "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 278,
+        "line": 281,
         "content": "# TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
         "description": "TODO标记: # TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
         "severity": "medium"
@@ -640,7 +688,7 @@
       {
         "type": "todo_comment",
         "file": "src\\core\\analysis\\precise_format_applier.py",
-        "line": 283,
+        "line": 286,
         "content": "# TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
         "description": "TODO标记: # TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
         "severity": "medium"
@@ -664,6 +712,14 @@
       "line": 386,
       "content": "raise NotImplementedError(\"子类必须实现run_test方法\")",
       "description": "NotImplementedError: raise NotImplementedError(\"子类必须实现run_test方法\")",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "cliTests\\run_all_tests.py",
+      "line": 87,
+      "name": "create_test_data",
+      "description": "空函数定义: create_test_data",
       "severity": "high"
     },
     {
@@ -1012,11 +1068,43 @@
     },
     {
       "type": "empty_function",
+      "file": "examples\\minimal_web_app.py",
+      "line": 54,
+      "name": "load_dotenv",
+      "description": "空函数定义: load_dotenv",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "examples\\minimal_web_app.py",
+      "line": 67,
+      "name": "__init__",
+      "description": "空函数定义: __init__",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
+      "file": "examples\\minimal_web_app.py",
+      "line": 104,
+      "name": "__init__",
+      "description": "空函数定义: __init__",
+      "severity": "high"
+    },
+    {
+      "type": "empty_function",
       "file": "src\\main.py",
-      "line": 30,
+      "line": 34,
       "name": "main",
       "description": "空函数定义: main",
       "severity": "high"
+    },
+    {
+      "type": "todo_comment",
+      "file": "src\\main.py",
+      "line": 37,
+      "content": "# TODO: Implement the main application logic here.",
+      "description": "TODO标记: # TODO: Implement the main application logic here.",
+      "severity": "medium"
     },
     {
       "type": "todo_comment",
@@ -1076,6 +1164,14 @@
     },
     {
       "type": "not_implemented",
+      "file": "tools\\method_implementation_checker.py",
+      "line": 97,
+      "content": "placeholder_indicators = [\"pass\", \"raise NotImplementedError\", \"TODO\", \"xxx\", \"impl\", \"pass\"]",
+      "description": "NotImplementedError: placeholder_indicators = [\"pass\", \"raise NotImplementedError\", \"TODO\", \"xxx\", \"impl\", \"pass\"]",
+      "severity": "high"
+    },
+    {
+      "type": "not_implemented",
       "file": "tools\\stub_detector.py",
       "line": 31,
       "content": "- 检测NotImplementedError",
@@ -1109,7 +1205,7 @@
     {
       "type": "empty_function",
       "file": "tools\\stub_function_detector.py",
-      "line": 199,
+      "line": 203,
       "name": "export_json",
       "description": "空函数定义: export_json",
       "severity": "high"
@@ -1117,7 +1213,7 @@
     {
       "type": "not_implemented",
       "file": "tools\\stub_function_detector.py",
-      "line": 48,
+      "line": 52,
       "content": "\"not_implemented\": r\"raise\\s+NotImplementedError\",",
       "description": "NotImplementedError: \"not_implemented\": r\"raise\\s+NotImplementedError\",",
       "severity": "high"
@@ -1125,7 +1221,7 @@
     {
       "type": "empty_function",
       "file": "src\\llm_clients\\base_llm.py",
-      "line": 28,
+      "line": 32,
       "name": "generate",
       "description": "空函数定义: generate",
       "severity": "high"
@@ -1149,7 +1245,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\agent\\intent_driven_orchestrator.py",
-      "line": 284,
+      "line": 288,
       "name": "_generate_user_message",
       "description": "空函数定义: _generate_user_message",
       "severity": "high"
@@ -1157,7 +1253,7 @@
     {
       "type": "todo_comment",
       "file": "src\\core\\agent\\intent_driven_orchestrator.py",
-      "line": 285,
+      "line": 289,
       "content": "pass  # TODO: 实现用户消息生成逻辑",
       "description": "TODO标记: pass  # TODO: 实现用户消息生成逻辑",
       "severity": "medium"
@@ -1165,7 +1261,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\efficient_format_aligner.py",
-      "line": 222,
+      "line": 226,
       "name": "_extract_format_from_content",
       "description": "空函数定义: _extract_format_from_content",
       "severity": "high"
@@ -1173,7 +1269,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\efficient_format_aligner.py",
-      "line": 225,
+      "line": 229,
       "name": "_parse_custom_format_rules",
       "description": "空函数定义: _parse_custom_format_rules",
       "severity": "high"
@@ -1181,7 +1277,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\efficient_format_aligner.py",
-      "line": 228,
+      "line": 232,
       "name": "_assess_alignment_quality",
       "description": "空函数定义: _assess_alignment_quality",
       "severity": "high"
@@ -1189,7 +1285,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 340,
+      "line": 343,
       "name": "_apply_table_cell_style",
       "description": "空函数定义: _apply_table_cell_style",
       "severity": "high"
@@ -1197,7 +1293,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 343,
+      "line": 346,
       "name": "_apply_paragraph_style",
       "description": "空函数定义: _apply_paragraph_style",
       "severity": "high"
@@ -1205,7 +1301,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 346,
+      "line": 349,
       "name": "_apply_character_style",
       "description": "空函数定义: _apply_character_style",
       "severity": "high"
@@ -1213,7 +1309,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 349,
+      "line": 352,
       "name": "_apply_list_style",
       "description": "空函数定义: _apply_list_style",
       "severity": "high"
@@ -1221,7 +1317,7 @@
     {
       "type": "empty_function",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 352,
+      "line": 355,
       "name": "_apply_table_style_v2",
       "description": "空函数定义: _apply_table_style_v2",
       "severity": "high"
@@ -1229,7 +1325,7 @@
     {
       "type": "todo_comment",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 209,
+      "line": 212,
       "content": "# TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
       "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 当前只支持纯文本PDF导出",
       "severity": "medium"
@@ -1237,7 +1333,7 @@
     {
       "type": "todo_comment",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 253,
+      "line": 256,
       "content": "# TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
       "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 表格功能暂不支持",
       "severity": "medium"
@@ -1245,7 +1341,7 @@
     {
       "type": "todo_comment",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 258,
+      "line": 261,
       "content": "# TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
       "description": "TODO标记: # TODO: MVP仅占位，后续完善 - 列表功能暂不支持",
       "severity": "medium"
@@ -1253,7 +1349,7 @@
     {
       "type": "todo_comment",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 278,
+      "line": 281,
       "content": "# TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
       "description": "TODO标记: # TODO: MVP仅占位，后续完善 - Excel生成功能待实现",
       "severity": "medium"
@@ -1261,7 +1357,7 @@
     {
       "type": "todo_comment",
       "file": "src\\core\\analysis\\precise_format_applier.py",
-      "line": 283,
+      "line": 286,
       "content": "# TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
       "description": "TODO标记: # TODO: MVP仅占位，后续完善 - PowerPoint生成功能待实现",
       "severity": "medium"

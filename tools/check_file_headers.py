@@ -20,6 +20,10 @@ License: MIT
 
 
 
+
+
+
+
 import os
 import sys
 import re
@@ -135,26 +139,14 @@ class FileHeaderChecker:
         return False
     
     def generate_report(self, results: Dict[str, Any]) -> str:
-        report = f"""
-## 📊 检查统计
-- **总文件数**: {results['total_files']}
-- **检查文件数**: {results['checked_files']}
-- **有效文件数**: {results['valid_files']}
-- **无效文件数**: {results['invalid_files']}
-- **跳过文件数**: {results['skipped_files']}
-
-## 📋 检查结果
-
-### ❌ 无效文件
-
-所有检查的文件都包含必需的文件头信息。
-
----
-**检查工具**: 文件头注释检查器
-**检查时间**: {os.environ.get('USER', 'Unknown')} - {Path.cwd()}
-**生成时间**: {datetime.now().strftime('%Y-%m-%d')}
-        """
-        return report.strip()
+        lines = []
+        lines.append("# 文件头注释检查报告")
+        lines.append(f"- 总文件数: {results.get('total_files', 0)}")
+        lines.append(f"- 检查文件数: {results.get('checked_files', 0)}")
+        lines.append(f"- 有效文件数: {results.get('valid_files', 0)}")
+        lines.append(f"- 无效文件数: {results.get('invalid_files', 0)}")
+        lines.append(f"- 跳过文件数: {results.get('skipped_files', 0)}")
+        return '\n'.join(lines)
     
 def main():
     checker = FileHeaderChecker()

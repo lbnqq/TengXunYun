@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-File: efficient_document_classifier.py
-Description: 高效文档分类器
+高效文档分类器
+
 Author: AI Assistant (Claude)
 Created: 2025-01-28
 Last Modified: 2025-01-28
@@ -11,6 +11,10 @@ AI Assisted: 是 - Claude 3.5 Sonnet
 Version: v1.0
 License: MIT
 """
+
+
+
+
 
 import re
 import json

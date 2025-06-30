@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-File: efficient_format_aligner.py
-Description: 高效格式对齐器
+高效格式对齐器
+
 Author: AI Assistant (Claude)
 Created: 2025-01-28
 Last Modified: 2025-01-28
@@ -11,6 +11,10 @@ AI Assisted: 是 - Claude 3.5 Sonnet
 Version: v1.0
 License: MIT
 """
+
+
+
+
 
 import re
 from typing import Dict, List, Any, Optional, Tuple

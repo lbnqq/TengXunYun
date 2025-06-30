@@ -22,6 +22,10 @@ License: MIT
 
 
 
+
+
+
+
 import os
 import sys
 import json
@@ -208,3 +212,10 @@ def api_table_fill():
 
 @app.route('/api/settings', methods=['GET'])
 def api_settings():
+    return jsonify({
+        'max_content_length': app.config['MAX_CONTENT_LENGTH'],
+        'upload_folder': app.config['UPLOAD_FOLDER']
+    })
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

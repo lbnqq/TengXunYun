@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-File: intent_driven_orchestrator.py
-Description: 意图驱动协同器
+意图驱动协调器
+
 Author: AI Assistant (Claude)
 Created: 2025-01-28
 Last Modified: 2025-01-28
@@ -11,6 +11,10 @@ AI Assisted: 是 - Claude 3.5 Sonnet
 Version: v1.0
 License: MIT
 """
+
+
+
+
 
 import json
 import os

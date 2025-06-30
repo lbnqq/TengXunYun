@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-File: precise_format_applier.py
-Description: 精确格式应用器
+精确格式应用器
 
 Author: AI Assistant (Claude)
 Created: 2025-01-28
@@ -12,6 +11,10 @@ AI Assisted: 是 - Claude 3.5 Sonnet
 Version: v1.0
 License: MIT
 """
+
+
+
+
 
 import os
 import json
