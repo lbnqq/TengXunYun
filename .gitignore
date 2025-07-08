@@ -1,28 +1,51 @@
 # Python environment
 venv/
+venv_ci_test/
 *.pyc
 __pycache__/
 data/
-# 质量检查报告
-quality_check_report.md
-quality_check_report.json
-project_header_fix_report.md
-file_header_fix_report.md
-# 备份文件
-*.backup
-# 临时文件
-*.tmp
-*.temp
-# 日志文件
-*.log
-# 测试报告
-test_results/
-reports/
-# IDE文件
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-# 系统文件
+
+# System files
 .DS_Store
 Thumbs.db
+
+# Log files
+*.log
+
+# Test results and reports
+test_results/
+reports/
+cliTests/test_results/
+quality_check_report.md
+quality_check_report.json
+project_header_fix_report.md
+file_header_fix_report.md
+deployment_report_*.json
+stub_detection_report.json
+id_class_report.md
+id_usage_diff_report.md
+method_implementation_report.md
+comprehensive_method_report.md
+docs/桩子函数检测结果.json
+docs/项目增量检测完整报告.md
+docs/项目实现状态报告.md
+docs/高频易错点防控与扫描报告.md
+.project_status.json
+
+# Uploads and generated documents
+uploads/
+*.docx
+
+# Backup and temporary files
+*.backup
+*.tmp
+*.temp
+*~
+.#*
+*.bak
