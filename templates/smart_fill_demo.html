@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能填报模块演示</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+        }
+        .status-info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .download-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: #27ae60;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .download-link:hover {
+            background-color: #229954;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 智能填报模块演示</h1>
+        
+        <!-- 状态信息 -->
+        <div class="status-info">
+            <h3>系统状态</h3>
+            <div id="status-info">正在检查系统状态...</div>
+            <button onclick="checkStatus()">刷新状态</button>
+        </div>
+        
+        <!-- 年度总结生成 -->
+        <div class="section">
+            <h2>📝 年度总结生成</h2>
+            <p>请输入您的工作内容描述，系统将自动生成专业的年度工作总结：</p>
+            <textarea id="summaryInput" placeholder="请输入工作内容，例如：
+今年我主要负责了公司核心产品的技术升级工作，成功完成了从单体架构到微服务架构的转型。
+在项目管理方面，我带领5人团队完成了3个重要项目，项目按时交付率达到100%。
+技术方面，我深入学习了云原生技术，包括Docker、Kubernetes等。
+遇到的主要挑战是系统迁移过程中的数据一致性问题，通过设计分布式事务方案得到解决。
+明年计划继续深化在AI和大数据方向的技术能力。"></textarea>
+            <br>
+            <button onclick="generateSummary()" id="summaryBtn">生成年度总结</button>
+            <div class="loading" id="summaryLoading">正在生成年度总结，请稍候...</div>
+            <div class="result" id="summaryResult"></div>
+        </div>
+        
+        <!-- 简历生成 -->
+        <div class="section">
+            <h2>👤 简历生成</h2>
+            <p>请输入您的个人信息，系统将自动生成格式化的个人简历：</p>
+            <textarea id="resumeInput" placeholder="请输入个人信息，例如：
+张三，联系电话：138xxxx8888，邮箱：zhangsan@email.com
+
+教育背景：
+2018-2022年就读于北京大学计算机科学与技术专业，获得学士学位
+
+工作经验：
+2022年7月至今在腾讯科技有限公司担任软件工程师
+主要负责微信支付系统的后端开发和维护
+使用Java、Spring Boot、MySQL、Redis等技术栈
+
+项目经验：
+支付风控系统（2023.3-2023.8）
+担任核心开发工程师，负责实时风险识别模块
+技术栈：Java、Kafka、Elasticsearch
+实现毫秒级风险评估，降低欺诈交易率30%
+
+专业技能：
+编程语言：Java、Python、JavaScript
+框架：Spring Boot、Django、React
+数据库：MySQL、Redis、MongoDB
+工具：Git、Docker、Jenkins"></textarea>
+            <br>
+            <button onclick="generateResume()" id="resumeBtn">生成简历</button>
+            <div class="loading" id="resumeLoading">正在生成简历，请稍候...</div>
+            <div class="result" id="resumeResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // 检查系统状态
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/smart-fill/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const status = data.data;
+                    document.getElementById('status-info').innerHTML = `
+                        <strong>星火X1状态:</strong> ${status.spark_x1_available ? '✅ 可用' : '❌ 不可用'}<br>
+                        <strong>支持功能:</strong> ${status.supported_functions.join(', ')}<br>
+                        <strong>版本:</strong> ${status.version}<br>
+                        ${status.api_connection ? `<strong>API连接:</strong> ${status.api_connection}<br>` : ''}
+                        <strong>检查时间:</strong> ${new Date(status.timestamp).toLocaleString()}
+                    `;
+                } else {
+                    document.getElementById('status-info').innerHTML = `❌ 状态检查失败: ${data.error}`;
+                }
+            } catch (error) {
+                document.getElementById('status-info').innerHTML = `❌ 状态检查异常: ${error.message}`;
+            }
+        }
+        
+        // 生成年度总结
+        async function generateSummary() {
+            const content = document.getElementById('summaryInput').value.trim();
+            if (!content) {
+                alert('请输入工作内容');
+                return;
+            }
+            
+            const btn = document.getElementById('summaryBtn');
+            const loading = document.getElementById('summaryLoading');
+            const result = document.getElementById('summaryResult');
+            
+            btn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/smart-fill/generate-summary', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        api_password: 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h4>✅ 年度总结生成成功</h4>
+                        <p><strong>文件名:</strong> ${data.data.filename}</p>
+                        <p><strong>内容预览:</strong></p>
+                        <div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                            ${data.data.content.replace(/\n/g, '<br>')}
+                        </div>
+                        <a href="/api/smart-fill/download/${data.data.filename}" class="download-link" target="_blank">📥 下载Word文档</a>
+                        ${data.data.usage ? `<p><strong>Token使用:</strong> ${data.data.usage.total_tokens || 'N/A'}</p>` : ''}
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `<h4>❌ 生成失败</h4><p>${data.error}</p>`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<h4>❌ 请求异常</h4><p>${error.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            }
+        }
+        
+        // 生成简历
+        async function generateResume() {
+            const content = document.getElementById('resumeInput').value.trim();
+            if (!content) {
+                alert('请输入个人信息');
+                return;
+            }
+            
+            const btn = document.getElementById('resumeBtn');
+            const loading = document.getElementById('resumeLoading');
+            const result = document.getElementById('resumeResult');
+            
+            btn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/smart-fill/generate-resume', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        api_password: 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const resumeData = data.data.resume_data;
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h4>✅ 简历生成成功</h4>
+                        <p><strong>文件名:</strong> ${data.data.filename}</p>
+                        <p><strong>提取信息:</strong></p>
+                        <ul>
+                            <li><strong>姓名:</strong> ${resumeData.姓名}</li>
+                            <li><strong>电话:</strong> ${resumeData.电话}</li>
+                            <li><strong>邮箱:</strong> ${resumeData.邮箱}</li>
+                        </ul>
+                        <a href="/api/smart-fill/download/${data.data.filename}" class="download-link" target="_blank">📥 下载Word文档</a>
+                        ${data.data.usage ? `<p><strong>Token使用:</strong> ${data.data.usage.total_tokens || 'N/A'}</p>` : ''}
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `<h4>❌ 生成失败</h4><p>${data.error}</p>`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<h4>❌ 请求异常</h4><p>${error.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            }
+        }
+        
+        // 页面加载时检查状态
+        window.onload = function() {
+            checkStatus();
+        };
+    </script>
+</body>
+</html>

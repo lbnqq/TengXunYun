@@ -36,6 +36,15 @@ from werkzeug.utils import secure_filename
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# 导入智能填报模块
+try:
+    from llm_clients.spark_x1_client import SparkX1Client
+    from core.tools.simple_smart_fill_manager import SimpleSmartFillManager
+    SPARK_X1_AVAILABLE = True
+except ImportError as e:
+    print(f"警告: 智能填报模块导入失败: {e}")
+    SPARK_X1_AVAILABLE = False
+
 # 创建Flask应用
 app = Flask(__name__, 
            template_folder=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates'),
@@ -50,6 +59,19 @@ CORS(app)
 # 确保上传目录存在
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# 初始化智能填报管理器
+integrated_manager = None
+if SPARK_X1_AVAILABLE:
+    try:
+        smart_fill_config = {
+            'spark_x1_api_password': 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+        }
+        integrated_manager = SimpleSmartFillManager(smart_fill_config)
+        print("✅ 简化智能填报管理器初始化成功")
+    except Exception as e:
+        print(f"❌ 智能填报管理器初始化失败: {e}")
+        integrated_manager = None
+
 # 模拟数据存储
 document_history = []
 format_templates = [
@@ -60,7 +82,47 @@ writing_style_templates = [
 ]
 
 def allowed_file(filename):
-    return render_template('enhanced-frontend-complete.html')
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'docx'}
+
+# 主页路由
+@app.route('/')
+def index():
+    """主页"""
+    try:
+        return render_template('enhanced-frontend-complete.html')
+    except Exception as e:
+        # 如果模板不存在，返回简单的HTML页面
+        return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>AI文档处理系统</title>
+            <meta charset="utf-8">
+        </head>
+        <body>
+            <h1>AI文档处理系统</h1>
+            <p>系统正在运行中...</p>
+            <p>API端点：</p>
+            <ul>
+                <li><a href="/api/health">健康检查</a></li>
+                <li><a href="/dashboard">仪表板</a></li>
+                <li>POST /api/upload - 文件上传</li>
+            </ul>
+            <p>错误信息: {str(e)}</p>
+        </body>
+        </html>
+        '''
+
+# 健康检查路由
+@app.route('/api/health')
+def health_check():
+    """健康检查端点"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'version': '1.0.0',
+        'service': 'AI文档处理系统'
+    })
 
 @app.route('/dashboard')
 def dashboard():
@@ -262,6 +324,229 @@ def style_alignment_preview():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== 智能填报模块 ====================
+
+@app.route('/smart-fill-demo')
+def smart_fill_demo():
+    """智能填报演示页面"""
+    return render_template('smart_fill_demo.html')
+
+# ==================== 智能填报模块 API端点 ====================
+
+@app.route('/api/smart-fill/generate-summary', methods=['POST'])
+def generate_summary():
+    """生成年度总结"""
+    try:
+        if not SPARK_X1_AVAILABLE:
+            return jsonify({
+                'success': False,
+                'error': '星火X1客户端不可用，请检查配置'
+            }), 500
+
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({
+                'success': False,
+                'error': '缺少必要参数：content'
+            }), 400
+
+        work_content = data['content']
+        api_password = data.get('api_password') or "NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh"
+
+        # 创建星火X1客户端
+        client = SparkX1Client(api_password=api_password)
+
+        # 生成年度总结
+        result = client.generate_summary(work_content)
+
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': '年度总结生成成功',
+                'content': result['content'],
+                'filename': result['filename'],
+                'file_path': result['file_path'],
+                'usage': result.get('usage', {}),
+                'data': {
+                    'content': result['content'],
+                    'filename': result['filename'],
+                    'file_path': result['file_path'],
+                    'usage': result.get('usage', {})
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'生成年度总结失败: {str(e)}'
+        }), 500
+
+@app.route('/api/smart-fill/generate-resume', methods=['POST'])
+def generate_resume():
+    """生成个人简历"""
+    try:
+        if not SPARK_X1_AVAILABLE:
+            return jsonify({
+                'success': False,
+                'error': '星火X1客户端不可用，请检查配置'
+            }), 500
+
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({
+                'success': False,
+                'error': '缺少必要参数：content'
+            }), 400
+
+        personal_info = data['content']
+        api_password = data.get('api_password') or "NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh"
+
+        # 创建星火X1客户端
+        client = SparkX1Client(api_password=api_password)
+
+        # 生成简历
+        result = client.generate_resume(personal_info)
+
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': '简历生成成功',
+                'resume_data': result['data'],
+                'filename': result['filename'],
+                'file_path': result['file_path'],
+                'usage': result.get('usage', {}),
+                'data': {
+                    'resume_data': result['data'],
+                    'filename': result['filename'],
+                    'file_path': result['file_path'],
+                    'usage': result.get('usage', {})
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'生成简历失败: {str(e)}'
+        }), 500
+
+@app.route('/api/smart-fill/download/<path:filename>')
+def download_file(filename):
+    """下载生成的文件"""
+    try:
+        import tempfile
+        import urllib.parse
+
+        # URL解码文件名
+        decoded_filename = urllib.parse.unquote(filename)
+
+        temp_dir = tempfile.gettempdir()
+        file_path = os.path.join(temp_dir, decoded_filename)
+
+        print(f"尝试下载文件: {decoded_filename}")
+        print(f"文件路径: {file_path}")
+        print(f"文件是否存在: {os.path.exists(file_path)}")
+
+        # 如果文件不存在，尝试查找类似的文件
+        if not os.path.exists(file_path):
+            # 列出临时目录中的所有文件
+            temp_files = []
+            try:
+                temp_files = os.listdir(temp_dir)
+                print(f"临时目录中的文件: {temp_files}")
+
+                # 查找包含关键词的文件
+                if '年度工作总结' in decoded_filename:
+                    matching_files = [f for f in temp_files if '年度工作总结' in f and f.endswith('.docx')]
+                elif '个人简历' in decoded_filename:
+                    matching_files = [f for f in temp_files if '个人简历' in f and f.endswith('.docx')]
+                else:
+                    matching_files = [f for f in temp_files if decoded_filename in f]
+
+                if matching_files:
+                    # 使用最新的文件
+                    matching_files.sort(reverse=True)
+                    actual_filename = matching_files[0]
+                    file_path = os.path.join(temp_dir, actual_filename)
+                    print(f"找到匹配文件: {actual_filename}")
+                else:
+                    print(f"未找到匹配文件，搜索关键词: {decoded_filename}")
+            except Exception as e:
+                print(f"列出临时目录文件失败: {e}")
+
+        if not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': f'文件不存在: {decoded_filename}',
+                'debug_info': {
+                    'temp_dir': temp_dir,
+                    'requested_file': decoded_filename,
+                    'file_path': file_path,
+                    'temp_files': temp_files[:10] if 'temp_files' in locals() else []
+                }
+            }), 404
+
+        return send_from_directory(
+            temp_dir,
+            os.path.basename(file_path),
+            as_attachment=True,
+            download_name=decoded_filename
+        )
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'文件下载失败: {str(e)}'
+        }), 500
+
+@app.route('/api/smart-fill/status')
+def smart_fill_status():
+    """智能填报模块状态检查"""
+    try:
+        if integrated_manager:
+            # 使用简化管理器获取状态
+            status = integrated_manager.get_status()
+        else:
+            # 备用状态信息
+            status = {
+                'spark_x1_available': SPARK_X1_AVAILABLE,
+                'core_components_available': False,
+                'supported_types': ['summary', 'resume'],
+                'supported_functions': ['generate_summary', 'generate_resume'],
+                'integration_mode': 'simplified_spark_x1_only',
+                'version': '1.0.0',
+                'timestamp': datetime.now().isoformat()
+            }
+
+            if SPARK_X1_AVAILABLE:
+                # 测试API连接
+                try:
+                    client = SparkX1Client(api_password="NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh")
+                    api_status = client.is_available()
+                    status['api_connection'] = 'connected' if api_status else 'disconnected'
+                except Exception as e:
+                    status['api_connection'] = f'error: {str(e)}'
+
+        return jsonify({
+            'success': True,
+            'data': status
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'状态检查失败: {str(e)}'
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

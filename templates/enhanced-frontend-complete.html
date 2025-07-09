@@ -7,6 +7,174 @@
     <link rel="stylesheet" href="/static/css/enhanced-frontend-complete.css">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <meta name="description" content="智能办公文档处理系统，支持格式对齐、文风统一、智能填报、文档审查等功能">
+
+    <!-- 智能填报专用样式 -->
+    <style>
+        .status-display {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+
+        .status-success {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .status-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #2196F3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .feedback-message.success {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .feedback-message.error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .input-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+        }
+
+        .input-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .workflow-block {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .workflow-title {
+            color: #2c3e50;
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <!-- 全局进度条 -->
@@ -229,104 +397,98 @@
 
         <!-- 智能填报场景 -->
         <section id="scene-fill" class="scene-section hidden">
-            <h2 class="scene-title">🤖 智能填报</h2>
-            <p class="scene-description">智能识别文档字段，自动匹配数据源，快速完成文档填写</p>
+            <h2 class="scene-title">🤖 智能填报 - 星火X1增强版</h2>
+            <p class="scene-description">基于星火X1大模型的智能填报系统，专注于年度总结和简历生成功能</p>
             
-            <!-- 步骤指示器 -->
-            <div class="step-indicator" role="progressbar" aria-label="智能填报进度">
-                <div class="step-item active">
-                    <div class="step-number">1</div>
-                    <span>上传文档</span>
-                </div>
-                <div class="step-line"></div>
-                <div class="step-item">
-                    <div class="step-number">2</div>
-                    <span>字段识别</span>
-                </div>
-                <div class="step-line"></div>
-                <div class="step-item">
-                    <div class="step-number">3</div>
-                    <span>数据匹配</span>
-                </div>
-                <div class="step-line"></div>
-                <div class="step-item">
-                    <div class="step-number">4</div>
-                    <span>生成文档</span>
-                </div>
-            </div>
-
-            <!-- 工作流块 -->
+            <!-- 系统状态 -->
             <div class="workflow-block">
-                <h3 class="workflow-title">文件上传</h3>
-                
-                <div class="input-group">
-                    <label for="upload-fill-template">文档模板:</label>
-                    <div class="file-upload-area" id="fill-template-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-fill-template" 
-                               title="选择文档模板" aria-label="上传文档模板">
-                        <div class="file-upload-text">点击或拖拽上传文档模板</div>
-                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label for="upload-fill-data">数据源文件:</label>
-                    <div class="file-upload-area" id="fill-data-upload">
-                        <input type="file" accept=".json,.csv,.xlsx,.xls,.txt" id="upload-fill-data" 
-                               title="选择数据源文件" aria-label="上传数据源文件">
-                        <div class="file-upload-text">点击或拖拽上传数据源文件</div>
-                        <div class="file-upload-hint">支持 .json, .csv, .xlsx, .xls, .txt 格式</div>
-                    </div>
+                <h3 class="workflow-title">系统状态</h3>
+                <div class="status-info" id="smart-fill-status">
+                    <button class="btn btn-secondary" onclick="checkSmartFillStatus()">
+                        <span>🔍</span> 检查系统状态
+                    </button>
+                    <div id="status-display" class="status-display"></div>
                 </div>
             </div>
 
-            <!-- 操作块 -->
-            <div class="action-block">
-                <h3 class="workflow-title">操作控制</h3>
+
+
+            <!-- 年度总结生成 -->
+            <div class="workflow-block">
+                <h3 class="workflow-title">年度总结生成</h3>
+                <p>请输入您的工作内容描述，系统将自动生成专业的年度工作总结：</p>
+
+                <div class="input-group">
+                    <label for="summary-input">工作内容:</label>
+                    <textarea class="input-textarea" id="summary-input" rows="6"
+                              placeholder="请输入工作内容，例如：
+今年我主要负责了公司核心产品的技术升级工作，成功完成了从单体架构到微服务架构的转型。
+在项目管理方面，我带领5人团队完成了3个重要项目，项目按时交付率达到100%。
+技术方面，我深入学习了云原生技术，包括Docker、Kubernetes等。
+遇到的主要挑战是系统迁移过程中的数据一致性问题，通过设计分布式事务方案得到解决。
+明年计划继续深化在AI和大数据方向的技术能力。"
+                              title="输入工作内容" aria-label="输入工作内容"></textarea>
+                </div>
+
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="document_fill" 
-                            aria-label="开始智能填报">
-                        <span>🤖</span> 开始填报
-                    </button>
-                    <button class="btn btn-secondary" data-action="auto_match_data" 
-                            aria-label="自动匹配数据">
-                        <span>🔗</span> 自动匹配
-                    </button>
-                    <button class="btn btn-secondary" data-action="manual_match" 
-                            aria-label="手动匹配数据">
-                        <span>✋</span> 手动匹配
-                    </button>
-                    <button class="btn btn-secondary" data-action="preview_fill" 
-                            aria-label="预览填报结果">
-                        <span>👁️</span> 预览结果
-                    </button>
-                    <button class="btn btn-success" data-action="export_fill" 
-                            aria-label="导出填报后的文档">
-                        <span>📥</span> 导出文档
-                    </button>
-                    <button class="btn btn-success" data-action="export_filled_doc" 
-                            aria-label="导出填充后的文档">
-                        <span>📄</span> 导出填充文档
+                    <button class="btn btn-primary" onclick="generateSummary()" id="summary-btn">
+                        <span>📝</span> 生成年度总结
                     </button>
                 </div>
-                
-                <div class="feedback-message" id="fill-feedback" role="status" aria-live="polite"></div>
+
+                <div class="loading-indicator" id="summary-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>正在生成年度总结，请稍候...</span>
+                </div>
+
+                <div class="feedback-message" id="summary-result" role="status" aria-live="polite"></div>
             </div>
 
-            <!-- 结果预览区域 -->
-            <div class="workflow-block" id="fill-result-area" style="display: none;">
-                <h3 class="workflow-title">填报结果</h3>
-                <div id="fill-preview-content" role="region" aria-label="智能填报结果预览"></div>
+            <!-- 简历生成 -->
+            <div class="workflow-block">
+                <h3 class="workflow-title">简历生成</h3>
+                <p>请输入您的个人信息，系统将自动生成格式化的个人简历：</p>
+
+                <div class="input-group">
+                    <label for="resume-input">个人信息:</label>
+                    <textarea class="input-textarea" id="resume-input" rows="8"
+                              placeholder="请输入个人信息，例如：
+张三，联系电话：138xxxx8888，邮箱：zhangsan@email.com
+
+教育背景：
+2018-2022年就读于北京大学计算机科学与技术专业，获得学士学位
+
+工作经验：
+2022年7月至今在腾讯科技有限公司担任软件工程师
+主要负责微信支付系统的后端开发和维护
+使用Java、Spring Boot、MySQL、Redis等技术栈
+
+项目经验：
+支付风控系统（2023.3-2023.8）
+担任核心开发工程师，负责实时风险识别模块
+技术栈：Java、Kafka、Elasticsearch
+实现毫秒级风险评估，降低欺诈交易率30%
+
+专业技能：
+编程语言：Java、Python、JavaScript
+框架：Spring Boot、Django、React
+数据库：MySQL、Redis、MongoDB
+工具：Git、Docker、Jenkins"
+                              title="输入个人信息" aria-label="输入个人信息"></textarea>
+                </div>
+
                 <div class="action-buttons">
-                    <button class="btn btn-primary" data-action="preview_fill_result" 
-                            aria-label="预览填报结果">
-                        <span>👁️</span> 预览结果
-                    </button>
-                    <button class="btn btn-success" data-action="export_fill_result" 
-                            aria-label="导出填报后的文档">
-                        <span>📥</span> 导出文档
+                    <button class="btn btn-primary" onclick="generateResume()" id="resume-btn">
+                        <span>👤</span> 生成简历
                     </button>
                 </div>
+
+                <div class="loading-indicator" id="resume-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>正在生成简历，请稍候...</span>
+                </div>
+
+                <div class="feedback-message" id="resume-result" role="status" aria-live="polite"></div>
             </div>
         </section>
 
@@ -546,5 +708,146 @@
 
     <!-- 脚本引用 -->
     <script src="/static/js/enhanced-frontend-complete.js"></script>
+
+    <!-- 智能填报功能脚本 -->
+    <script>
+        // 检查智能填报系统状态
+        async function checkSmartFillStatus() {
+            try {
+                const response = await fetch('/api/smart-fill/status');
+                const data = await response.json();
+
+                const statusDisplay = document.getElementById('status-display');
+
+                if (data.success) {
+                    const status = data.data;
+                    statusDisplay.innerHTML = `
+                        <div class="status-success">
+                            <h4>✅ 系统状态正常</h4>
+                            <p><strong>星火X1状态:</strong> ${status.spark_x1_available ? '✅ 可用' : '❌ 不可用'}</p>
+                            <p><strong>核心组件:</strong> ${status.core_components_available ? '✅ 可用' : '❌ 不可用'}</p>
+                            <p><strong>集成模式:</strong> ${status.integration_mode || 'standard'}</p>
+                            <p><strong>支持类型:</strong> ${status.supported_types ? status.supported_types.join(', ') : 'N/A'}</p>
+                            <p><strong>版本:</strong> ${status.version}</p>
+                            ${status.spark_x1_connection ? `<p><strong>API连接:</strong> ${status.spark_x1_connection}</p>` : ''}
+                            <p><strong>检查时间:</strong> ${new Date(status.timestamp).toLocaleString()}</p>
+                        </div>
+                    `;
+                } else {
+                    statusDisplay.innerHTML = `<div class="status-error">❌ 状态检查失败: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('status-display').innerHTML = `<div class="status-error">❌ 状态检查异常: ${error.message}</div>`;
+            }
+        }
+
+
+
+        // 生成年度总结
+        async function generateSummary() {
+            const content = document.getElementById('summary-input').value.trim();
+
+            if (!content) {
+                alert('请输入工作内容');
+                return;
+            }
+
+            const btn = document.getElementById('summary-btn');
+            const loading = document.getElementById('summary-loading');
+            const result = document.getElementById('summary-result');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/smart-fill/generate-summary', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        api_password: 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    result.className = 'feedback-message success';
+                    result.innerHTML = `
+                        <h4>✅ 年度总结生成成功</h4>
+                        <p><strong>文件名:</strong> ${data.filename}</p>
+                        <a href="/api/smart-fill/download/${data.filename}" class="btn btn-success" target="_blank">📥 下载年度总结</a>
+                        ${data.usage ? `<p><strong>Token使用:</strong> ${data.usage.total_tokens}</p>` : ''}
+                    `;
+                } else {
+                    result.className = 'feedback-message error';
+                    result.innerHTML = `<h4>❌ 生成失败</h4><p>${data.error}</p>`;
+                }
+            } catch (error) {
+                result.className = 'feedback-message error';
+                result.innerHTML = `<h4>❌ 请求异常</h4><p>${error.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            }
+        }
+
+        // 生成简历
+        async function generateResume() {
+            const content = document.getElementById('resume-input').value.trim();
+
+            if (!content) {
+                alert('请输入个人信息');
+                return;
+            }
+
+            const btn = document.getElementById('resume-btn');
+            const loading = document.getElementById('resume-loading');
+            const result = document.getElementById('resume-result');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/smart-fill/generate-resume', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        api_password: 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    result.className = 'feedback-message success';
+                    result.innerHTML = `
+                        <h4>✅ 简历生成成功</h4>
+                        <p><strong>文件名:</strong> ${data.filename}</p>
+                        <a href="/api/smart-fill/download/${data.filename}" class="btn btn-success" target="_blank">📥 下载简历</a>
+                        ${data.usage ? `<p><strong>Token使用:</strong> ${data.usage.total_tokens}</p>` : ''}
+                    `;
+                } else {
+                    result.className = 'feedback-message error';
+                    result.innerHTML = `<h4>❌ 生成失败</h4><p>${data.error}</p>`;
+                }
+            } catch (error) {
+                result.className = 'feedback-message error';
+                result.innerHTML = `<h4>❌ 请求异常</h4><p>${error.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            }
+        }
+    </script>
 </body>
-</html> 
+</html>
