@@ -22,11 +22,12 @@ import time
 
 class DocumentFormatExtractor:
     
-    def __init__(self, storage_path: str = "src/core/knowledge_base/format_templates"):
+    def __init__(self, storage_path: str = "src/core/knowledge_base/format_templates", spark_x1_client=None):
         self.tool_name = "文档格式提取器"
         self.description = "智能分析文档格式，生成格式对齐提示词，支持格式模板保存和复用"
         self.storage_path = storage_path
-        
+        self.spark_x1_client = spark_x1_client
+
         # 确保存储目录存在
         os.makedirs(storage_path, exist_ok=True)
         
@@ -280,35 +281,99 @@ class DocumentFormatExtractor:
     def _call_llm_for_alignment(self, prompt: str) -> str:
         """调用LLM进行格式对齐"""
         try:
-            # 尝试获取LLM客户端
+            # 优先使用星火X1客户端
+            if self.spark_x1_client:
+                print(f"🤖 使用星火X1进行格式对齐...")
+                print(f"📝 提示词长度: {len(prompt)} 字符")
+
+                # 提取指令和内容
+                instruction, content = self._extract_instruction_and_content(prompt)
+
+                response = self.spark_x1_client.format_text(
+                    instruction=instruction,
+                    content=content,
+                    temperature=0.3,  # 低温度确保格式一致性
+                    max_tokens=4000
+                )
+
+                print(f"✅ 星火X1响应长度: {len(response)} 字符")
+                return self._clean_llm_response(response)
+
+            # 回退到原有LLM客户端
             llm_client = self._get_llm_client()
-            
+
             if llm_client is None:
                 # 如果没有LLM客户端，使用模拟对齐
                 return self._mock_alignment(prompt)
-            
+
             # 调用LLM
-            print(f"🤖 调用LLM进行格式对齐...")
+            print(f"🤖 调用传统LLM进行格式对齐...")
             print(f"📝 提示词长度: {len(prompt)} 字符")
-            
+
             response = llm_client.generate(
                 prompt,
                 temperature=0.3,  # 低温度确保格式一致性
                 max_tokens=4000
             )
-            
+
             print(f"✅ LLM响应长度: {len(response)} 字符")
-            
+
             # 清理响应内容
             cleaned_response = self._clean_llm_response(response)
-            
+
             return cleaned_response
-            
+
         except Exception as e:
             print(f"❌ LLM调用失败: {e}")
             # 回退到模拟对齐
             return self._mock_alignment(prompt)
-    
+
+    def _extract_instruction_and_content(self, prompt: str) -> Tuple[str, str]:
+        """
+        从完整提示词中提取指令和内容
+
+        Args:
+            prompt: 完整的提示词
+
+        Returns:
+            (instruction, content) 元组
+        """
+        try:
+            # 查找源文档内容部分
+            content_start = prompt.find("## 源文档内容")
+            if content_start == -1:
+                # 如果没有找到标准格式，尝试其他模式
+                content_start = prompt.find("原文内容：")
+                if content_start != -1:
+                    content_start = prompt.find("\n", content_start) + 1
+            else:
+                # 找到```后的内容
+                content_start = prompt.find("```", content_start) + 3
+                content_start = prompt.find("\n", content_start) + 1
+
+            if content_start == -1:
+                # 如果都没找到，返回整个prompt作为内容
+                return "请格式化以下内容", prompt
+
+            # 查找内容结束位置
+            content_end = prompt.find("```", content_start)
+            if content_end == -1:
+                content_end = len(prompt)
+
+            content = prompt[content_start:content_end].strip()
+
+            # 提取指令部分（内容之前的部分）
+            instruction_part = prompt[:content_start]
+
+            # 简化指令
+            instruction = "请按照以下要求格式化文档内容：\n" + instruction_part
+
+            return instruction, content
+
+        except Exception as e:
+            print(f"⚠️ 提取指令和内容失败: {e}")
+            return "请格式化以下内容", prompt
+
     def _get_llm_client(self):
         """获取LLM客户端"""
         try:

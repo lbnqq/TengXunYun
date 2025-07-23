@@ -907,10 +907,10 @@ class UIManager {
                     await this.handleExportReviewReport(element);
                     break;
                 case 'preview_result':
-                    await this.handlePreview(element);
+                    await this.handleFormatAlignmentPreview(element);
                     break;
                 case 'export_result':
-                    await this.handleExport(element);
+                    await this.handleFormatAlignmentExport(element);
                     break;
                 case 'preview_review':
                     await this.handlePreviewReview(element);
@@ -954,29 +954,158 @@ class UIManager {
     }
 
     async handleFormatAlignment(element) {
+        // 防止重复提交
+        if (this.isProcessing) {
+            errorHandler.createNotification('正在处理中，请稍候...', 'info');
+            return;
+        }
+
+        this.isProcessing = true;
+        element.disabled = true;
+        element.textContent = '处理中...';
+
         const sessionId = appState.createSession('format');
         this.navigateToStep(2);
-        
+
         // 收集文件
         const files = this.collectFiles('format');
         if (files.length < 2) {
             errorHandler.handleError(new Error('请上传参考文件和目标文件'), 'validation');
+            this.resetProcessingState(element);
             return;
         }
 
-        // 调用API
-        const result = await apiManager.request('/api/format-alignment', {
-            method: 'POST',
-            body: JSON.stringify({
-                session_id: sessionId,
-                files: files
-            })
-        });
+        try {
+            // 读取文件内容
+            const filesWithContent = await Promise.all(files.map(async (fileInfo) => {
+                let content = '';
 
-        if (result.success) {
-            this.navigateToStep(3);
-            this.showResult(result.data);
+                if (fileInfo.file && fileInfo.file instanceof File) {
+                    // 读取文件内容
+                    content = await this.readFileContent(fileInfo.file);
+                }
+
+                return {
+                    name: fileInfo.name,
+                    size: fileInfo.size,
+                    type: fileInfo.type,
+                    content: content
+                };
+            }));
+
+            console.log('📝 准备发送的文件数据:', filesWithContent);
+
+            // 显示处理提示
+            errorHandler.createNotification('正在处理文件，请稍候...', 'info');
+
+            // 调用API，增加超时时间
+            const result = await apiManager.request('/api/format-alignment', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    files: filesWithContent
+                }),
+                timeout: 90000  // 90秒超时
+            });
+
+            if (result.success) {
+                this.navigateToStep(3);
+                this.showResult(result.data);
+                errorHandler.createNotification('格式对齐完成', 'success');
+            } else {
+                errorHandler.handleError(new Error(result.error || '格式对齐失败'), 'api');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'processing');
+        } finally {
+            this.resetProcessingState(element);
         }
+    }
+
+    resetProcessingState(element) {
+        this.isProcessing = false;
+        if (element) {
+            element.disabled = false;
+            element.textContent = '应用格式对齐';
+        }
+    }
+
+    async handleFormatAlignmentPreview(element) {
+        try {
+            // 获取最近的格式对齐任务ID
+            const taskId = this.getLatestFormatAlignmentTaskId();
+            if (!taskId) {
+                errorHandler.handleError(new Error('没有找到格式对齐任务，请先执行格式对齐'), 'validation');
+                return;
+            }
+
+            console.log('🔍 预览格式对齐结果，任务ID:', taskId);
+            await this.handlePreviewResult(taskId);
+        } catch (error) {
+            errorHandler.handleError(error, 'preview');
+        }
+    }
+
+    async handleFormatAlignmentExport(element) {
+        try {
+            // 获取最近的格式对齐任务ID
+            const taskId = this.getLatestFormatAlignmentTaskId();
+            if (!taskId) {
+                errorHandler.handleError(new Error('没有找到格式对齐任务，请先执行格式对齐'), 'validation');
+                return;
+            }
+
+            console.log('📥 导出格式对齐结果，任务ID:', taskId);
+            this.showExportOptions(taskId);
+        } catch (error) {
+            errorHandler.handleError(error, 'export');
+        }
+    }
+
+    getLatestFormatAlignmentTaskId() {
+        // 从结果显示区域获取任务ID，或者从全局状态获取
+        const resultContent = document.getElementById('format-preview-content');
+        if (resultContent && resultContent.dataset.taskId) {
+            return resultContent.dataset.taskId;
+        }
+
+        // 如果没有找到，返回null
+        return null;
+    }
+
+    async readFileContent(file) {
+        return new Promise((resolve, reject) => {
+            // 对于DOCX等二进制文件，我们不在前端读取内容
+            // 而是发送文件基本信息，让后端处理
+            if (file.name.endsWith('.docx') ||
+                file.name.endsWith('.doc') ||
+                file.type.includes('officedocument') ||
+                file.type.includes('msword')) {
+
+                // 对于Office文档，返回文件信息而不是内容
+                resolve(`[DOCX文件: ${file.name}, 大小: ${file.size} 字节]`);
+                return;
+            }
+
+            // 对于文本文件，正常读取内容
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                resolve(e.target.result);
+            };
+
+            reader.onerror = function(e) {
+                reject(new Error('文件读取失败'));
+            };
+
+            // 只对文本文件读取内容
+            if (file.type.includes('text') || file.name.endsWith('.txt')) {
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                // 其他未知文件类型，尝试读取为文本
+                reader.readAsText(file, 'UTF-8');
+            }
+        });
     }
 
     async handleStyleAlignment(element) {
@@ -1257,6 +1386,12 @@ class UIManager {
             const content = resultArea.querySelector(`#${this.currentScene}-preview-content`);
             if (content) {
                 content.innerHTML = this.formatResult(data);
+
+                // 如果是格式对齐结果，存储任务ID
+                if (data && data.task_id && this.currentScene === 'format') {
+                    content.dataset.taskId = data.task_id;
+                    console.log('📝 存储格式对齐任务ID:', data.task_id);
+                }
             }
         }
     }
@@ -1266,9 +1401,147 @@ class UIManager {
             return `<pre>${data}</pre>`;
         }
         if (typeof data === 'object') {
+            // 特殊处理格式对齐结果
+            if (data.aligned_content) {
+                return `
+                    <div class="format-alignment-result">
+                        <div class="result-header">
+                            <h3>格式对齐结果</h3>
+                            <div class="result-meta">
+                                <span class="task-id">任务ID: ${data.task_id || 'N/A'}</span>
+                                <span class="alignment-score">对齐分数: ${data.alignment_score || 'N/A'}</span>
+                                <span class="status">状态: ${data.status || 'completed'}</span>
+                            </div>
+                        </div>
+                        <div class="aligned-content">
+                            <h4>格式化内容:</h4>
+                            <div class="content-preview">${data.aligned_content.replace(/\n/g, '<br>')}</div>
+                        </div>
+                        <div class="suggestions">
+                            <h4>处理建议:</h4>
+                            <ul>
+                                ${(data.suggestions || []).map(s => `<li>${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            // 默认JSON显示
             return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
         }
         return `<div>${data}</div>`;
+    }
+
+    async handlePreviewResult(taskId) {
+        try {
+            console.log('🔍 预览结果，任务ID:', taskId);
+
+            // 获取任务结果
+            const result = await apiManager.request(`/api/format-alignment/result/${taskId}`, {
+                method: 'GET'
+            });
+
+            if (result.code === 0) {
+                // 创建预览模态框
+                this.showPreviewModal(result.data);
+            } else {
+                errorHandler.handleError(new Error(result.message || '获取预览结果失败'), 'api');
+            }
+        } catch (error) {
+            errorHandler.handleError(error, 'preview');
+        }
+    }
+
+    async handleExportResult(taskId, format = 'txt') {
+        try {
+            console.log('📥 导出结果，任务ID:', taskId, '格式:', format);
+
+            // 构建下载URL
+            const downloadUrl = `/api/format-alignment/download/${taskId}?format=${format}`;
+
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+
+            // 根据格式设置文件名
+            const extension = format === 'docx' ? 'docx' : 'txt';
+            link.download = `formatted_document_${taskId}.${extension}`;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            const formatName = format === 'docx' ? 'Word文档' : '文本文档';
+            errorHandler.createNotification(`${formatName}导出成功`, 'success');
+        } catch (error) {
+            errorHandler.handleError(error, 'export');
+        }
+    }
+
+    showExportOptions(taskId) {
+        // 创建导出选项模态框
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content export-options-modal">
+                <div class="modal-header">
+                    <h3>选择导出格式</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="export-options">
+                        <div class="export-option" onclick="uiManager.handleExportResult('${taskId}', 'txt'); this.closest('.modal').remove();">
+                            <div class="option-icon">📄</div>
+                            <div class="option-info">
+                                <h4>文本文档 (.txt)</h4>
+                                <p>纯文本格式，兼容性最好</p>
+                            </div>
+                        </div>
+                        <div class="export-option" onclick="uiManager.handleExportResult('${taskId}', 'docx'); this.closest('.modal').remove();">
+                            <div class="option-icon">📝</div>
+                            <div class="option-info">
+                                <h4>Word文档 (.docx)</h4>
+                                <p>Microsoft Word格式，支持丰富格式</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">取消</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    }
+
+    showPreviewModal(data) {
+        // 创建预览模态框
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>格式对齐结果预览</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="preview-content">
+                        ${data.processing_log ? `<p><strong>处理日志:</strong> ${data.processing_log}</p>` : ''}
+                        <div class="formatted-content">
+                            <h4>格式化内容:</h4>
+                            <pre>${data.formatted_content || '暂无内容'}</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">关闭</button>
+                    <button class="btn btn-primary" onclick="this.closest('.modal').remove(); uiManager.showExportOptions('${data.task_id}')">导出文档</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
     }
 
     handleResponsiveChange(mediaQuery) {

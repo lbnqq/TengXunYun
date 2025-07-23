@@ -14,23 +14,61 @@ License: MIT
 
 import os
 import json
+import uuid
 from typing import Dict, Any, List, Tuple, Optional
 from .document_format_extractor import DocumentFormatExtractor
+# 使用绝对导入避免相对导入问题
+import sys
+import os
+
+# 添加src目录到路径
+current_dir = os.path.dirname(__file__)
+src_dir = os.path.dirname(os.path.dirname(current_dir))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
+try:
+    from llm_clients.spark_x1_client import SparkX1Client
+    from llm_clients.spark_x1_config import get_config
+    print("✅ SparkX1Client导入成功")
+except ImportError as e:
+    # 如果导入失败，设置为None，稍后处理
+    print(f"⚠️ SparkX1Client导入失败: {e}")
+    SparkX1Client = None
+    get_config = None
 
 class FormatAlignmentCoordinator:
     
-    def __init__(self, llm_client=None):
+    def __init__(self, llm_client=None, spark_x1_config=None):
         self.tool_name = "文档格式对齐协调器"
-        self.description = "智能处理文档格式对齐请求，支持自然语言交互"
+        self.description = "智能处理文档格式对齐请求，支持自然语言交互和多轮对话"
         self.llm_client = llm_client
         self.format_extractor = DocumentFormatExtractor()
-        
+
+        # 初始化星火X1客户端
+        try:
+            if SparkX1Client is not None:
+                # 使用现有的API密钥配置
+                api_password = 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+                self.spark_x1_client = SparkX1Client(api_password=api_password)
+                print("✅ 星火X1客户端初始化成功")
+            else:
+                print("⚠️ SparkX1Client类未导入")
+                self.spark_x1_client = None
+        except Exception as e:
+            print(f"⚠️ 星火X1客户端初始化失败: {e}")
+            self.spark_x1_client = None
+
         # 用户会话状态
         self.session_state = {
             "uploaded_documents": {},  # 存储上传的文档
             "format_templates": {},    # 存储提取的格式模板
-            "current_operation": None  # 当前操作状态
+            "current_operation": None, # 当前操作状态
+            "conversations": {}        # 多轮对话会话
         }
+
+        # 任务管理
+        self.active_tasks = {}  # 存储活跃的格式对齐任务
     
     def process_user_request(self, user_input: str, uploaded_files: Dict[str, str] = None) -> Dict[str, Any]:
         """
@@ -366,3 +404,160 @@ class FormatAlignmentCoordinator:
             "entities": {"documents": {"source": source_doc, "target": target_doc}}
         }
         return self._handle_format_alignment(intent_analysis, "")
+
+    # 新增：星火X1格式对齐方法
+    def format_with_spark_x1(self, content: str, instruction: str, **kwargs) -> Dict[str, Any]:
+        """
+        使用星火X1进行格式对齐
+
+        Args:
+            content: 要格式化的内容
+            instruction: 格式化指令
+            **kwargs: 其他参数
+
+        Returns:
+            格式化结果
+        """
+        try:
+            if not self.spark_x1_client:
+                return {"error": "星火X1客户端未初始化"}
+
+            # 调用星火X1进行格式化
+            formatted_content = self.spark_x1_client.format_text(instruction, content, **kwargs)
+
+            # 生成任务ID
+            task_id = str(uuid.uuid4())
+
+            # 存储任务结果
+            self.active_tasks[task_id] = {
+                "task_id": task_id,
+                "status": "completed",
+                "original_content": content,
+                "instruction": instruction,
+                "formatted_content": formatted_content,
+                "created_at": json.dumps({"timestamp": "now"}),
+                "processing_log": "使用星火X1格式化完成"
+            }
+
+            return {
+                "success": True,
+                "task_id": task_id,
+                "status": "completed",
+                "formatted_content": formatted_content,
+                "processing_log": "使用星火X1格式化完成"
+            }
+
+        except Exception as e:
+            return {"error": f"星火X1格式化失败: {str(e)}"}
+
+    def start_conversation_task(self, instruction: str, content: str) -> Dict[str, Any]:
+        """
+        开始多轮对话格式化任务
+
+        Args:
+            instruction: 初始格式化指令
+            content: 要格式化的内容
+
+        Returns:
+            任务信息
+        """
+        try:
+            if not self.spark_x1_client:
+                return {"error": "星火X1客户端未初始化"}
+
+            # 生成任务ID
+            task_id = str(uuid.uuid4())
+
+            # 构建初始消息
+            initial_message = f"{instruction}\n\n原文内容：\n{content}"
+
+            # 开始对话会话
+            conversation_id = self.spark_x1_client.start_conversation(initial_message)
+
+            # 获取初始回复
+            response = self.spark_x1_client.continue_conversation(conversation_id, "请开始格式化")
+
+            # 存储任务信息
+            self.active_tasks[task_id] = {
+                "task_id": task_id,
+                "conversation_id": conversation_id,
+                "status": "processing",
+                "original_content": content,
+                "instruction": instruction,
+                "formatted_content": response,
+                "created_at": json.dumps({"timestamp": "now"}),
+                "processing_log": "多轮对话格式化进行中"
+            }
+
+            return {
+                "success": True,
+                "task_id": task_id,
+                "conversation_id": conversation_id,
+                "status": "processing",
+                "initial_response": response
+            }
+
+        except Exception as e:
+            return {"error": f"开始对话任务失败: {str(e)}"}
+
+    def continue_conversation_task(self, task_id: str, message: str) -> Dict[str, Any]:
+        """
+        继续多轮对话任务
+
+        Args:
+            task_id: 任务ID
+            message: 用户消息
+
+        Returns:
+            AI回复
+        """
+        try:
+            if task_id not in self.active_tasks:
+                return {"error": f"任务 {task_id} 不存在"}
+
+            task = self.active_tasks[task_id]
+            conversation_id = task.get("conversation_id")
+
+            if not conversation_id:
+                return {"error": "任务不支持多轮对话"}
+
+            # 继续对话
+            response = self.spark_x1_client.continue_conversation(conversation_id, message)
+
+            # 更新任务状态
+            task["formatted_content"] = response
+            task["processing_log"] = "多轮对话继续中"
+
+            return {
+                "success": True,
+                "task_id": task_id,
+                "response": response,
+                "status": "processing"
+            }
+
+        except Exception as e:
+            return {"error": f"继续对话失败: {str(e)}"}
+
+    def get_task_result(self, task_id: str) -> Dict[str, Any]:
+        """
+        获取任务结果
+
+        Args:
+            task_id: 任务ID
+
+        Returns:
+            任务结果
+        """
+        if task_id not in self.active_tasks:
+            return {"error": f"任务 {task_id} 不存在"}
+
+        task = self.active_tasks[task_id]
+        return {
+            "success": True,
+            "task_id": task_id,
+            "status": task["status"],
+            "formatted_content": task["formatted_content"],
+            "processing_log": task["processing_log"],
+            "original_content": task.get("original_content", ""),
+            "instruction": task.get("instruction", "")
+        }

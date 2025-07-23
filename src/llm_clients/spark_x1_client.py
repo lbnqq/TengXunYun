@@ -18,7 +18,8 @@ import logging
 import requests
 import re
 import tempfile
-from typing import Dict, Any, Optional, List
+import uuid
+from typing import Dict, Any, Optional, List, Iterator
 from datetime import datetime
 from docx import Document
 
@@ -39,10 +40,13 @@ class SparkX1Client:
         self.base_url = "https://spark-api-open.xf-yun.com/v2/chat/completions"
         self.model = "x1"
         self.logger = logging.getLogger(__name__)
-        
+
         # 验证APIPassword格式
         if ':' not in self.api_password:
             raise ValueError("APIPassword格式错误，应为 AK:SK 格式")
+
+        # 多轮对话会话管理
+        self.conversations = {}  # 存储会话历史
     
     def _call_api(self, messages: List[Dict[str, str]], stream: bool = False, **kwargs) -> Dict[str, Any]:
         """
@@ -333,6 +337,167 @@ class SparkX1Client:
         except Exception as e:
             self.logger.error(f"创建简历文档失败: {e}")
             raise
+
+    def format_text(self, instruction: str, content: str, **kwargs) -> str:
+        """
+        格式化文本内容
+
+        Args:
+            instruction: 格式化指令
+            content: 要格式化的内容
+            **kwargs: 其他参数 (temperature, max_tokens等)
+
+        Returns:
+            格式化后的文本
+        """
+        try:
+            messages = [
+                {"role": "user", "content": f"{instruction}\n\n原文内容：\n{content}"}
+            ]
+
+            result = self._call_api(messages, **kwargs)
+
+            # 从API响应中提取内容
+            if result.get("choices") and len(result["choices"]) > 0:
+                formatted_content = result["choices"][0]["message"]["content"]
+                return formatted_content
+            else:
+                raise Exception("API响应格式错误，未找到choices字段")
+
+        except Exception as e:
+            self.logger.error(f"格式化文本失败: {str(e)}")
+            raise Exception(f"格式化文本失败: {str(e)}")
+
+    def format_text_stream(self, instruction: str, content: str, **kwargs) -> Iterator[str]:
+        """
+        流式格式化文本内容
+
+        Args:
+            instruction: 格式化指令
+            content: 要格式化的内容
+            **kwargs: 其他参数
+
+        Yields:
+            格式化后的文本片段
+        """
+        try:
+            messages = [
+                {"role": "user", "content": f"{instruction}\n\n原文内容：\n{content}"}
+            ]
+
+            result = self._call_api(messages, stream=True, **kwargs)
+
+            if result.get('success'):
+                yield result['content']
+            else:
+                raise Exception(result.get('error', '流式格式化失败'))
+
+        except Exception as e:
+            self.logger.error(f"流式格式化失败: {str(e)}")
+            raise Exception(f"流式格式化失败: {str(e)}")
+
+    def multi_turn_chat(self, messages: List[Dict], **kwargs) -> str:
+        """
+        多轮对话
+
+        Args:
+            messages: 对话消息列表
+            **kwargs: 其他参数
+
+        Returns:
+            AI回复内容
+        """
+        try:
+            result = self._call_api(messages, **kwargs)
+
+            # 从API响应中提取内容
+            if result.get("choices") and len(result["choices"]) > 0:
+                response_content = result["choices"][0]["message"]["content"]
+                return response_content
+            else:
+                raise Exception("API响应格式错误，未找到choices字段")
+
+        except Exception as e:
+            self.logger.error(f"多轮对话失败: {str(e)}")
+            raise Exception(f"多轮对话失败: {str(e)}")
+
+    def start_conversation(self, initial_message: str) -> str:
+        """
+        开始新的对话会话
+
+        Args:
+            initial_message: 初始消息
+
+        Returns:
+            会话ID
+        """
+        conversation_id = str(uuid.uuid4())
+        self.conversations[conversation_id] = [
+            {"role": "user", "content": initial_message}
+        ]
+        return conversation_id
+
+    def continue_conversation(self, conversation_id: str, message: str, **kwargs) -> str:
+        """
+        继续对话会话
+
+        Args:
+            conversation_id: 会话ID
+            message: 用户消息
+            **kwargs: 其他参数
+
+        Returns:
+            AI回复内容
+        """
+        try:
+            if conversation_id not in self.conversations:
+                raise ValueError(f"会话ID {conversation_id} 不存在")
+
+            # 添加用户消息到会话历史
+            self.conversations[conversation_id].append({"role": "user", "content": message})
+
+            # 调用API
+            result = self._call_api(self.conversations[conversation_id], **kwargs)
+
+            # 从API响应中提取内容
+            if result.get("choices") and len(result["choices"]) > 0:
+                response_content = result["choices"][0]["message"]["content"]
+                # 添加AI回复到会话历史
+                self.conversations[conversation_id].append({"role": "assistant", "content": response_content})
+                return response_content
+            else:
+                raise Exception("API响应格式错误，未找到choices字段")
+
+        except Exception as e:
+            self.logger.error(f"继续对话失败: {str(e)}")
+            raise Exception(f"继续对话失败: {str(e)}")
+
+    def get_conversation_history(self, conversation_id: str) -> List[Dict]:
+        """
+        获取对话历史
+
+        Args:
+            conversation_id: 会话ID
+
+        Returns:
+            对话历史列表
+        """
+        return self.conversations.get(conversation_id, [])
+
+    def clear_conversation(self, conversation_id: str) -> bool:
+        """
+        清除对话会话
+
+        Args:
+            conversation_id: 会话ID
+
+        Returns:
+            是否成功清除
+        """
+        if conversation_id in self.conversations:
+            del self.conversations[conversation_id]
+            return True
+        return False
 
     def is_available(self) -> bool:
         """检查服务是否可用"""
