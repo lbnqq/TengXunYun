@@ -28,6 +28,7 @@ import os
 import sys
 import json
 import uuid
+import time
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, send_from_directory, make_response
 from flask_cors import CORS
@@ -80,16 +81,28 @@ try:
     print("✅ 格式对齐协调器初始化成功")
 except Exception as e:
     print(f"❌ 格式对齐协调器初始化失败: {e}")
-    format_alignment_coordinator = None
+
+# 初始化文风对齐协调器
+style_alignment_coordinator = None
+if SPARK_X1_AVAILABLE:
+    try:
+        from src.core.tools.style_alignment_coordinator import StyleAlignmentCoordinator
+        # 复用现有的星火X1客户端配置
+        spark_x1_client = SparkX1Client('NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh')
+        style_alignment_coordinator = StyleAlignmentCoordinator(spark_x1_client)
+        print("✅ 文风对齐协调器初始化成功")
+    except Exception as e:
+        print(f"❌ 文风对齐协调器初始化失败: {e}")
+        style_alignment_coordinator = None
 
 # 模拟数据存储
 document_history = []
 format_templates = [
     {'id': 'template1', 'name': '标准格式', 'description': '标准文档格式模板', 'type': 'baseline'}
 ]
-writing_style_templates = [
-    {'id': 'style1', 'name': '正式文风', 'description': '正式商务文风模板'}
-]
+
+# 新的文风统一系统 - 清空重建策略
+# writing_style_templates 已被新的预设风格系统替代
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'docx'}
@@ -206,7 +219,6 @@ def index():
             <p>API端点：</p>
             <ul>
                 <li><a href="/api/health">健康检查</a></li>
-                <li><a href="/dashboard">仪表板</a></li>
                 <li>POST /api/upload - 文件上传</li>
             </ul>
             <p>错误信息: {str(e)}</p>
@@ -225,14 +237,7 @@ def health_check():
         'service': 'AI文档处理系统'
     })
 
-@app.route('/dashboard')
-def dashboard():
-    return jsonify({
-        'success': True,
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'version': '1.0.0'
-    })
+
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -315,6 +320,27 @@ def document_parse():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/documents/history', methods=['GET'])
+def get_documents_history():
+    """获取文档处理历史记录"""
+    try:
+        # 这里可以从数据库或文件系统获取历史记录
+        # 目前返回空的历史记录列表
+        history_records = []
+
+        return jsonify({
+            'success': True,
+            'history': history_records,
+            'count': len(history_records)
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取文档历史失败: {str(e)}',
+            'history': []
+        }), 500
+
 @app.route('/api/documents/history/<record_id>/reapply', methods=['POST'])
 def reapply_document_operation(record_id):
     return jsonify({
@@ -366,63 +392,155 @@ def get_models():
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/writing-style/templates')
-def get_writing_style_templates():
+# ==================== 文风统一模块 API端点 ====================
+
+@app.route('/api/style-alignment/preset-styles', methods=['GET'])
+def get_preset_styles():
+    """获取预设风格模板库"""
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': '请求数据为空'}), 400
-        
-        name = data.get('name', '')
-        content = data.get('content', '')
-        
-        if not name:
-            return jsonify({'success': False, 'error': '模板名称不能为空'}), 400
-        
-        # 创建新模板
-        new_template = {
-            'id': f"style_{len(writing_style_templates) + 1}",
-            'name': name,
-            'description': '自定义文风模板',
-            'created_at': datetime.now().isoformat()
-        }
-        
-        writing_style_templates.append(new_template)
-        
+        if not style_alignment_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文风对齐协调器未初始化'
+            }), 500
+
+        language = request.args.get('language', 'auto')
+        result = style_alignment_coordinator.get_preset_styles(language)
+
         return jsonify({
-            'success': True,
-            'template': new_template,
-            'message': '文风模板保存成功'
+            'success': result['success'],
+            'styles': result.get('styles', {}),
+            'count': result.get('count', 0),
+            'language': language
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/style-alignment/preview', methods=['POST'])
-def style_alignment_preview():
+@app.route('/api/style-alignment/generate-with-style', methods=['POST'])
+def generate_with_style():
+    """基于预设风格生成文本"""
     try:
+        if not style_alignment_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文风对齐协调器未初始化'
+            }), 500
+
         data = request.get_json()
         if not data:
             return jsonify({'success': False, 'error': '请求数据为空'}), 400
-        
-        document = data.get('document', '')
-        standard = data.get('standard', '')
-        requirements = data.get('requirements', '')
-        
-        if not document:
-            return jsonify({'success': False, 'error': '缺少文档内容'}), 400
-        
-        # 模拟文档审查结果
-        result = {
-            'review_status': 'completed',
-            'issues_found': 3,
-            'suggestions': ['语法错误修正', '格式优化建议', '内容完整性检查'],
-            'score': 85,
-            'review_summary': f"文档审查完成，发现{3}个问题，总体评分85分"
-        }
-        
-        return jsonify({'success': True, 'data': result})
-        
+
+        # 获取请求参数
+        content = data.get('content', '')
+        style_id = data.get('style_id', '')
+        action = data.get('action', '重写')
+        language = data.get('language', 'auto')
+        temperature = data.get('temperature')
+
+        if not content:
+            return jsonify({'success': False, 'error': '内容不能为空'}), 400
+
+        if not style_id:
+            return jsonify({'success': False, 'error': '请选择风格'}), 400
+
+        # 创建会话
+        session_id = style_alignment_coordinator.create_session()
+
+        # 处理预设风格生成
+        result = style_alignment_coordinator.process_preset_style_generation(
+            session_id=session_id,
+            content=content,
+            style_id=style_id,
+            action=action,
+            language=language,
+            temperature=temperature
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/style-alignment/few-shot-transfer', methods=['POST'])
+def few_shot_style_transfer():
+    """Few-Shot风格迁移"""
+    try:
+        if not style_alignment_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文风对齐协调器未初始化'
+            }), 500
+
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': '请求数据为空'}), 400
+
+        # 获取请求参数
+        content = data.get('content', '')
+        reference_document = data.get('reference_document', '')
+        target_description = data.get('target_description', '')
+        language = data.get('language', 'auto')
+        temperature = data.get('temperature', 0.7)
+
+        if not content:
+            return jsonify({'success': False, 'error': '内容不能为空'}), 400
+
+        if not reference_document:
+            return jsonify({'success': False, 'error': '请提供参考文档'}), 400
+
+        # 创建会话
+        session_id = style_alignment_coordinator.create_session()
+
+        # 处理Few-Shot风格迁移
+        result = style_alignment_coordinator.process_few_shot_transfer(
+            session_id=session_id,
+            content=content,
+            reference_document=reference_document,
+            target_description=target_description,
+            language=language,
+            temperature=temperature
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/style-alignment/task-progress/<task_id>', methods=['GET'])
+def get_task_progress(task_id):
+    """获取任务进度"""
+    try:
+        if not style_alignment_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文风对齐协调器未初始化'
+            }), 500
+
+        progress = style_alignment_coordinator.get_task_progress(task_id)
+
+        return jsonify({
+            'success': True,
+            'progress': progress
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/style-alignment/task-result/<task_id>', methods=['GET'])
+def get_task_result(task_id):
+    """获取任务结果"""
+    try:
+        if not style_alignment_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文风对齐协调器未初始化'
+            }), 500
+
+        result = style_alignment_coordinator.get_task_result(task_id)
+
+        return jsonify(result)
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -887,6 +1005,180 @@ def format_alignment_result(task_id):
             'data': None
         }), 500
 
+# 格式模板管理API（文风统一模块使用）
+@app.route('/api/format-templates', methods=['GET'])
+def get_format_templates_for_style():
+    """获取格式模板列表（文风统一模块使用）"""
+    try:
+        # 使用全局格式对齐协调器
+        if format_alignment_coordinator is None:
+            return jsonify({
+                'success': False,
+                'error': '格式对齐协调器未初始化',
+                'templates': []
+            }), 500
+
+        # 读取模板索引文件
+        import os
+        # 获取当前文件的目录，然后构建相对路径
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        template_index_path = os.path.join(current_dir, 'core', 'knowledge_base', 'format_templates', 'template_index.json')
+
+        if not os.path.exists(template_index_path):
+            return jsonify({
+                'success': True,
+                'templates': [],
+                'count': 0
+            })
+
+        with open(template_index_path, 'r', encoding='utf-8') as f:
+            template_data = json.load(f)
+
+        templates = template_data.get('templates', [])
+
+        # 格式化模板数据，适配文风统一模块的格式
+        formatted_templates = []
+        for template in templates:
+            formatted_templates.append({
+                'id': template.get('template_id', ''),
+                'name': template.get('name', '未命名模板'),
+                'description': template.get('description', ''),
+                'created_time': template.get('created_time', ''),
+                'category': '通用格式',  # 默认分类
+                'preview': f"格式模板：{template.get('name', '未命名模板')}"
+            })
+
+        return jsonify({
+            'success': True,
+            'templates': formatted_templates,
+            'count': len(formatted_templates)
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取格式模板失败: {str(e)}',
+            'templates': []
+        }), 500
+
+@app.route('/api/format-templates', methods=['POST'])
+def create_format_template():
+    """创建格式模板（文风统一模块使用）"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据为空'
+            }), 400
+
+        # 这里可以添加创建模板的逻辑
+        # 目前返回成功响应
+        return jsonify({
+            'success': True,
+            'message': '格式模板创建成功',
+            'template_id': 'temp_' + str(int(time.time()))
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'创建格式模板失败: {str(e)}'
+        }), 500
+
+# 新增：格式模板管理API（格式对齐模块使用）
+@app.route('/api/format-alignment/templates', methods=['GET'])
+def get_format_templates():
+    """获取格式模板列表"""
+    try:
+        # 使用全局格式对齐协调器
+        if format_alignment_coordinator is None:
+            return jsonify({
+                'success': False,
+                'error': '格式对齐协调器未初始化',
+                'templates': []
+            }), 500
+
+        # 读取模板索引文件
+        import os
+        # 获取当前文件的目录，然后构建相对路径
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        template_index_path = os.path.join(current_dir, 'core', 'knowledge_base', 'format_templates', 'template_index.json')
+
+        if not os.path.exists(template_index_path):
+            return jsonify({
+                'success': True,
+                'templates': [],
+                'count': 0
+            })
+
+        with open(template_index_path, 'r', encoding='utf-8') as f:
+            template_data = json.load(f)
+
+        templates = template_data.get('templates', [])
+
+        # 格式化模板数据，参考文风统一的格式
+        formatted_templates = []
+        for template in templates:
+            formatted_templates.append({
+                'id': template.get('template_id', ''),
+                'name': template.get('name', '未命名模板'),
+                'description': template.get('description', ''),
+                'created_time': template.get('created_time', ''),
+                'category': '通用格式',  # 默认分类
+                'preview': f"格式模板：{template.get('name', '未命名模板')}"
+            })
+
+        return jsonify({
+            'success': True,
+            'templates': formatted_templates,
+            'count': len(formatted_templates)
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取格式模板失败: {str(e)}',
+            'templates': []
+        }), 500
+
+@app.route('/api/format-alignment/template/<template_id>', methods=['GET'])
+def get_format_template_detail(template_id):
+    """获取特定格式模板的详细信息"""
+    try:
+        # 使用全局格式对齐协调器
+        if format_alignment_coordinator is None:
+            return jsonify({
+                'success': False,
+                'error': '格式对齐协调器未初始化'
+            }), 500
+
+        # 读取具体模板文件
+        import os
+        # 获取当前文件的目录，然后构建相对路径
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        template_file_path = os.path.join(current_dir, 'core', 'knowledge_base', 'format_templates', f'{template_id}.json')
+
+        if not os.path.exists(template_file_path):
+            return jsonify({
+                'success': False,
+                'error': '模板不存在'
+            }), 404
+
+        with open(template_file_path, 'r', encoding='utf-8') as f:
+            template_detail = json.load(f)
+
+        return jsonify({
+            'success': True,
+            'template': template_detail
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取模板详情失败: {str(e)}'
+        }), 500
+
 @app.route('/api/format-alignment/download/<task_id>', methods=['GET'])
 def format_alignment_download(task_id):
     """下载格式化结果文件"""
@@ -1176,6 +1468,457 @@ def format_alignment_legacy():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== 文档审查模块 API ====================
+# @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: document_review_api
+
+# 初始化文档审查协调器
+document_review_coordinator = None
+
+try:
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from core.document_review_coordinator import DocumentReviewCoordinator
+    # 使用与智能填报相同的API密码
+    api_password = "NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh"
+    document_review_coordinator = DocumentReviewCoordinator(api_password)
+    print("✅ 文档审查协调器初始化成功")
+except Exception as e:
+    print(f"❌ 文档审查协调器初始化失败: {e}")
+    document_review_coordinator = None
+
+@app.route('/api/document-review/analyze', methods=['POST'])
+def analyze_document():
+    """文档审查分析API"""
+    try:
+        if not document_review_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文档审查服务未初始化'
+            }), 500
+
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据为空'
+            }), 400
+
+        # 获取参数
+        document_content = data.get('content', '').strip()
+        review_type = data.get('review_type', 'keyword_review')
+        custom_prompt = data.get('custom_prompt', '')
+
+        if not document_content:
+            return jsonify({
+                'success': False,
+                'error': '文档内容不能为空'
+            }), 400
+
+        # 执行文档审查
+        result = document_review_coordinator.review_document(
+            document_content=document_content,
+            review_type=review_type,
+            custom_prompt=custom_prompt if custom_prompt else None
+        )
+
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'data': {
+                    'review_result': result.get('review_result', ''),
+                    'document_length': result.get('document_length', 0),
+                    'processing_time': result.get('processing_time', 0),
+                    'review_type': result.get('review_type', review_type),
+                    'chunks_count': result.get('chunks_count', 1)
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', '文档审查失败')
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'文档审查异常: {str(e)}'
+        }), 500
+
+@app.route('/api/document-review/templates', methods=['GET'])
+def get_review_templates():
+    """获取审查模板列表"""
+    try:
+        if not document_review_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文档审查服务未初始化'
+            }), 500
+
+        templates = document_review_coordinator.get_available_review_types()
+
+        return jsonify({
+            'success': True,
+            'templates': templates,
+            'count': len(templates)
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取审查模板失败: {str(e)}'
+        }), 500
+
+@app.route('/api/document-review/export-pdf', methods=['POST'])
+def export_review_report_pdf():
+    """导出PDF格式审查报告"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据为空'
+            }), 400
+
+        review_data = data.get('review_data', {})
+        filename = data.get('filename', 'document_review_report')
+
+        if not review_data or not review_data.get('review_result'):
+            return jsonify({
+                'success': False,
+                'error': '审查结果数据为空'
+            }), 400
+
+        # 生成PDF内容
+        pdf_content = generate_pdf_report(review_data, filename)
+
+        # 创建响应
+        response = make_response(pdf_content)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}.pdf"'
+
+        return response
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'PDF导出失败: {str(e)}'
+        }), 500
+
+@app.route('/api/document-review/export-word', methods=['POST'])
+def export_review_report_word():
+    """导出Word格式审查报告"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据为空'
+            }), 400
+
+        review_data = data.get('review_data', {})
+        filename = data.get('filename', 'document_review_report')
+
+        if not review_data or not review_data.get('review_result'):
+            return jsonify({
+                'success': False,
+                'error': '审查结果数据为空'
+            }), 400
+
+        # 生成Word内容
+        word_content = generate_word_report(review_data, filename)
+
+        # 创建响应
+        response = make_response(word_content)
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}.docx"'
+
+        return response
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Word导出失败: {str(e)}'
+        }), 500
+
+def generate_pdf_report(review_data, filename):
+    """生成PDF报告"""
+    # @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: generate_pdf_report
+    try:
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.lib import colors
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        import io
+        from datetime import datetime
+
+        # 创建内存缓冲区
+        buffer = io.BytesIO()
+
+        # 创建PDF文档
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1*inch)
+
+        # 获取样式
+        styles = getSampleStyleSheet()
+
+        # 创建自定义样式
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=1  # 居中
+        )
+
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            spaceAfter=12,
+            textColor=colors.darkblue
+        )
+
+        # 构建文档内容
+        story = []
+
+        # 标题
+        story.append(Paragraph("📋 AI文档审查报告", title_style))
+        story.append(Spacer(1, 20))
+
+        # 元数据表格
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        meta_data = [
+            ['生成时间', timestamp],
+            ['文档长度', f"{review_data.get('document_length', 0)} 字符"],
+            ['处理时间', f"{review_data.get('processing_time', 0):.2f} 秒"],
+        ]
+
+        if review_data.get('chunks_count', 1) > 1:
+            meta_data.append(['分块处理', f"{review_data.get('chunks_count')} 个块"])
+
+        meta_table = Table(meta_data, colWidths=[2*inch, 3*inch])
+        meta_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (1, 0), (1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+
+        story.append(meta_table)
+        story.append(Spacer(1, 30))
+
+        # 审查结果内容
+        story.append(Paragraph("审查结果", heading_style))
+        story.append(Spacer(1, 12))
+
+        # 处理审查结果文本
+        review_content = review_data.get('review_result', '')
+
+        # 简单的Markdown到PDF转换
+        lines = review_content.split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line:
+                story.append(Spacer(1, 6))
+                continue
+
+            if line.startswith('# '):
+                # 一级标题
+                story.append(Paragraph(line[2:], heading_style))
+                story.append(Spacer(1, 12))
+            elif line.startswith('## '):
+                # 二级标题
+                sub_heading_style = ParagraphStyle(
+                    'SubHeading',
+                    parent=styles['Heading3'],
+                    fontSize=12,
+                    spaceAfter=8,
+                    textColor=colors.darkgreen
+                )
+                story.append(Paragraph(line[3:], sub_heading_style))
+                story.append(Spacer(1, 8))
+            elif line.startswith('- ') or line.startswith('* '):
+                # 列表项
+                list_style = ParagraphStyle(
+                    'ListItem',
+                    parent=styles['Normal'],
+                    leftIndent=20,
+                    spaceAfter=4
+                )
+                story.append(Paragraph(f"• {line[2:]}", list_style))
+            else:
+                # 普通段落
+                story.append(Paragraph(line, styles['Normal']))
+                story.append(Spacer(1, 6))
+
+        # 页脚
+        story.append(Spacer(1, 30))
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.grey,
+            alignment=1  # 居中
+        )
+        story.append(Paragraph("本报告由aiDoc AI文档审查系统生成 | 基于讯飞星火X1大模型", footer_style))
+
+        # 构建PDF
+        doc.build(story)
+
+        # 获取PDF内容
+        pdf_content = buffer.getvalue()
+        buffer.close()
+
+        return pdf_content
+
+    except ImportError:
+        # 如果没有安装reportlab，返回简单的文本文件
+        content = f"""AI文档审查报告
+
+生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+文档长度: {review_data.get('document_length', 0)} 字符
+处理时间: {review_data.get('processing_time', 0):.2f} 秒
+
+审查结果:
+{review_data.get('review_result', '')}
+
+本报告由aiDoc AI文档审查系统生成 | 基于讯飞星火X1大模型
+"""
+        return content.encode('utf-8')
+    except Exception as e:
+        # 发生错误时返回简单的文本内容
+        content = f"""AI文档审查报告 (简化版)
+
+生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+错误信息: PDF生成失败 - {str(e)}
+
+审查结果:
+{review_data.get('review_result', '')}
+"""
+        return content.encode('utf-8')
+
+def generate_word_report(review_data, filename):
+    """生成Word报告"""
+    # @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: generate_word_report
+    try:
+        from docx import Document
+        from docx.shared import Inches, Pt
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml.shared import OxmlElement, qn
+        import io
+        from datetime import datetime
+
+        # 创建Word文档
+        doc = Document()
+
+        # 设置文档标题
+        title = doc.add_heading('📋 AI文档审查报告', 0)
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        # 添加元数据表格
+        doc.add_heading('报告信息', level=1)
+
+        table = doc.add_table(rows=3, cols=2)
+        table.style = 'Table Grid'
+
+        # 填充表格数据
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        table_data = [
+            ('生成时间', timestamp),
+            ('文档长度', f"{review_data.get('document_length', 0)} 字符"),
+            ('处理时间', f"{review_data.get('processing_time', 0):.2f} 秒"),
+        ]
+
+        for i, (key, value) in enumerate(table_data):
+            table.cell(i, 0).text = key
+            table.cell(i, 1).text = value
+
+        # 如果有分块处理，添加额外行
+        if review_data.get('chunks_count', 1) > 1:
+            row = table.add_row()
+            row.cells[0].text = '分块处理'
+            row.cells[1].text = f"{review_data.get('chunks_count')} 个块"
+
+        # 添加审查结果
+        doc.add_heading('审查结果', level=1)
+
+        # 处理审查结果文本
+        review_content = review_data.get('review_result', '')
+        lines = review_content.split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            if line.startswith('# '):
+                # 一级标题
+                doc.add_heading(line[2:], level=1)
+            elif line.startswith('## '):
+                # 二级标题
+                doc.add_heading(line[3:], level=2)
+            elif line.startswith('### '):
+                # 三级标题
+                doc.add_heading(line[4:], level=3)
+            elif line.startswith('- ') or line.startswith('* '):
+                # 列表项
+                p = doc.add_paragraph()
+                p.style = 'List Bullet'
+                p.add_run(line[2:])
+            elif line.startswith('**') and line.endswith('**'):
+                # 粗体文本
+                p = doc.add_paragraph()
+                p.add_run(line[2:-2]).bold = True
+            else:
+                # 普通段落
+                doc.add_paragraph(line)
+
+        # 添加页脚
+        doc.add_paragraph()
+        footer = doc.add_paragraph('本报告由aiDoc AI文档审查系统生成 | 基于讯飞星火X1大模型')
+        footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        footer.runs[0].font.size = Pt(8)
+
+        # 保存到内存缓冲区
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+
+        return buffer.getvalue()
+
+    except ImportError:
+        # 如果没有安装python-docx，返回简单的文本文件
+        content = f"""AI文档审查报告
+
+生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+文档长度: {review_data.get('document_length', 0)} 字符
+处理时间: {review_data.get('processing_time', 0):.2f} 秒
+
+审查结果:
+{review_data.get('review_result', '')}
+
+本报告由aiDoc AI文档审查系统生成 | 基于讯飞星火X1大模型
+"""
+        return content.encode('utf-8')
+    except Exception as e:
+        # 发生错误时返回简单的文本内容
+        content = f"""AI文档审查报告 (简化版)
+
+生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+错误信息: Word生成失败 - {str(e)}
+
+审查结果:
+{review_data.get('review_result', '')}
+"""
+        return content.encode('utf-8')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

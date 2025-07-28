@@ -509,3 +509,163 @@ class SparkX1Client:
         except Exception as e:
             self.logger.error(f"健康检查失败: {e}")
             return False
+
+    # ==================== 文风统一专用方法 ====================
+
+    def generate_with_style(self, prompt_instruction: str, user_id: str = "user_style_transfer",
+                          temperature: float = 0.7, max_tokens: int = 3000, timeout: int = 60) -> str:
+        """
+        【AI文风统一】调用星火大模型 X1，生成指定风格文本
+
+        Args:
+            prompt_instruction: 包含风格描述和内容的Prompt
+            user_id: 用户ID（可选，默认"user_style_transfer"）
+            temperature: 生成文本的随机性（0.0-1.0，默认0.7）
+            max_tokens: 最大生成token数
+            timeout: 超时时间（秒）
+
+        Returns:
+            生成的文本内容或错误信息
+        """
+        try:
+            self.logger.info(f"🎨 开始文风统一生成，用户: {user_id}")
+
+            headers = {
+                "Authorization": f"Bearer {self.api_password}",
+                "Content-Type": "application/json"
+            }
+
+            data = {
+                "model": self.model,
+                "user": user_id,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt_instruction
+                    }
+                ],
+                "temperature": temperature,
+                "max_tokens": max_tokens
+            }
+
+            response = requests.post(self.base_url, headers=headers,
+                                   data=json.dumps(data), timeout=timeout)
+            response.raise_for_status()
+            response_json = response.json()
+
+            # 解析官方接口返回格式
+            if response_json and response_json.get("choices"):
+                # 兼容openai风格，取第一个choice的message内容
+                result = response_json["choices"][0]["message"]["content"].strip()
+                self.logger.info(f"✅ 文风统一生成成功，长度: {len(result)}")
+                return result
+            elif response_json and response_json.get("error"):
+                error_msg = f"API 返回错误: {response_json['error']}"
+                self.logger.error(error_msg)
+                return f"[错误] {error_msg}"
+            else:
+                error_msg = "无法解析的 API 响应格式"
+                self.logger.error(error_msg)
+                return f"[错误] {error_msg}"
+
+        except requests.exceptions.RequestException as e:
+            error_msg = f"API 请求失败: {e}"
+            self.logger.error(error_msg)
+            return f"[错误] {error_msg}"
+        except json.JSONDecodeError:
+            error_msg = "API 响应不是有效的 JSON 格式"
+            self.logger.error(error_msg)
+            return f"[错误] {error_msg}"
+        except Exception as e:
+            error_msg = f"文风统一生成异常: {e}"
+            self.logger.error(error_msg)
+            return f"[错误] {error_msg}"
+
+    def few_shot_generate(self, examples: List[str], content: str, style_description: str = "",
+                         user_id: str = "user_few_shot", temperature: float = 0.7,
+                         max_tokens: int = 3000, timeout: int = 60) -> str:
+        """
+        Few-Shot风格生成
+
+        Args:
+            examples: 风格示例列表
+            content: 要转换的内容
+            style_description: 风格描述
+            user_id: 用户ID
+            temperature: 温度参数
+            max_tokens: 最大token数
+            timeout: 超时时间
+
+        Returns:
+            生成的文本内容
+        """
+        try:
+            self.logger.info(f"🔄 开始Few-Shot风格生成，示例数: {len(examples)}")
+
+            # 构建Few-Shot提示词
+            prompt = "请参考以下示例的写作风格，将给定内容转换为相同的风格。\n\n"
+
+            if style_description:
+                prompt += f"风格描述：{style_description}\n\n"
+
+            prompt += "参考示例：\n"
+            for i, example in enumerate(examples, 1):
+                prompt += f"示例{i}：{example}\n"
+
+            prompt += f"\n请将以下内容转换为上述示例的风格：\n{content}"
+
+            # 调用生成方法
+            return self.generate_with_style(
+                prompt_instruction=prompt,
+                user_id=user_id,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout
+            )
+
+        except Exception as e:
+            error_msg = f"Few-Shot生成异常: {e}"
+            self.logger.error(error_msg)
+            return f"[错误] {error_msg}"
+
+    def analyze_style(self, document_content: str, user_id: str = "user_style_analysis",
+                     temperature: float = 0.3, timeout: int = 60) -> str:
+        """
+        分析文档风格特征
+
+        Args:
+            document_content: 文档内容
+            user_id: 用户ID
+            temperature: 温度参数（使用较低值确保分析一致性）
+            timeout: 超时时间
+
+        Returns:
+            风格分析结果
+        """
+        try:
+            self.logger.info(f"🔍 开始文档风格分析，内容长度: {len(document_content)}")
+
+            analysis_prompt = """请分析以下文档的写作风格特征，包括：
+1. 语言风格（正式/非正式、严谨/轻松等）
+2. 句式特点（长短句比例、复杂度等）
+3. 词汇选择（专业术语、口语化程度等）
+4. 表达方式（直接/委婉、客观/主观等）
+5. 整体语调和情感色彩
+
+请提供详细的风格分析报告：
+
+文档内容：
+""" + document_content
+
+            return self.generate_with_style(
+                prompt_instruction=analysis_prompt,
+                user_id=user_id,
+                temperature=temperature,
+                max_tokens=2000,
+                timeout=timeout
+            )
+
+        except Exception as e:
+            error_msg = f"风格分析异常: {e}"
+            self.logger.error(error_msg)
+            return f"[错误] {error_msg}"
