@@ -192,9 +192,34 @@ python -m src.web_app
 ```
 
 ### 配置说明
-1. 复制 `config/config.yaml.example` 为 `config/config.yaml`
-2. 配置LLM API密钥和参数
-3. 根据需要调整系统参数
+
+#### 1. 配置星火X1 API密钥
+```bash
+# 复制密钥配置模板
+cp config/spark_x1_keys.template.yaml config/spark_x1_keys.yaml
+
+# 编辑配置文件，将 YOUR_ACCESS_KEY:YOUR_SECRET_KEY 替换为您的实际密钥
+```
+
+#### 2. 验证配置
+```bash
+# 查看当前密钥配置
+python tools/manage_spark_x1_keys.py --list
+
+# 测试密钥有效性
+python tools/manage_spark_x1_keys.py --test
+```
+
+#### 3. 密钥管理
+```bash
+# 更新主密钥
+python tools/manage_spark_x1_keys.py --update "新的AK:新的SK"
+
+# 查看配置文件路径
+python tools/manage_spark_x1_keys.py --config-path
+```
+
+详细的密钥管理说明请参考：[星火X1密钥管理文档](SPARK_X1_KEY_MANAGEMENT.md)
 
 ## 🎮 使用指南
 

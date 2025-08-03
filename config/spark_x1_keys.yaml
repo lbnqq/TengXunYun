@@ -1,0 +1,134 @@
+# 星火X1大模型API密钥配置文件
+# 
+# 说明：
+# 1. 这是项目中所有星火X1 API密钥的统一配置文件
+# 2. 更换密钥时只需修改此文件，无需修改代码
+# 3. 支持主密钥和备用密钥配置
+# 4. 密钥格式：AK:SK (Access Key : Secret Key)
+#
+# 安全提示：
+# - 请妥善保管此文件，不要提交到公共代码仓库
+# - 建议将此文件添加到 .gitignore 中
+# - 定期更换密钥以确保安全
+
+# 主要配置
+primary:
+  # 主密钥 - 默认使用的密钥
+  api_key: "NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh"
+  
+  # 密钥描述
+  description: "主要的星火X1 API密钥"
+  
+  # 密钥状态 (active/inactive/expired)
+  status: "active"
+  
+  # 创建时间
+  created_at: "2025-08-03"
+  
+  # 过期时间 (可选)
+  expires_at: null
+  
+  # 使用限制 (可选)
+  rate_limit:
+    requests_per_minute: 60
+    requests_per_day: 1000
+
+# 备用密钥配置
+backup:
+  # 备用密钥1
+  key1:
+    api_key: ""  # 备用密钥1，暂时为空
+    description: "备用密钥1"
+    status: "inactive"
+    created_at: null
+    expires_at: null
+  
+  # 备用密钥2
+  key2:
+    api_key: ""  # 备用密钥2，暂时为空
+    description: "备用密钥2"
+    status: "inactive"
+    created_at: null
+    expires_at: null
+
+# 模块特定配置
+modules:
+  # 智能填报模块
+  smart_fill:
+    use_key: "primary"  # 使用主密钥
+    fallback_keys: ["backup.key1", "backup.key2"]  # 备用密钥顺序
+  
+  # 文风统一模块
+  style_alignment:
+    use_key: "primary"
+    fallback_keys: ["backup.key1", "backup.key2"]
+  
+  # 格式对齐模块
+  format_alignment:
+    use_key: "primary"
+    fallback_keys: ["backup.key1", "backup.key2"]
+  
+  # 文档审查模块
+  document_review:
+    use_key: "primary"
+    fallback_keys: ["backup.key1", "backup.key2"]
+
+# 全局设置
+settings:
+  # 自动切换备用密钥
+  auto_fallback: true
+  
+  # 密钥验证
+  validate_on_load: true
+  
+  # 错误重试次数
+  max_retries: 3
+  
+  # 重试间隔（秒）
+  retry_interval: 1
+  
+  # 日志记录
+  log_key_usage: true
+  
+  # 密钥轮换
+  rotation:
+    enabled: false
+    interval_days: 30
+    notify_before_days: 7
+
+# API配置
+api:
+  # 基础URL
+  base_url: "https://spark-api-open.xf-yun.com/v2/chat/completions"
+  
+  # 超时设置
+  timeout: 30
+  
+  # 模型配置
+  model: "x1"
+  
+  # 默认参数
+  default_params:
+    temperature: 0.7
+    max_tokens: 32768
+    top_p: 0.95
+
+# 环境配置
+environments:
+  # 开发环境
+  development:
+    use_primary: true
+    enable_logging: true
+    validate_keys: true
+  
+  # 生产环境
+  production:
+    use_primary: true
+    enable_logging: false
+    validate_keys: true
+  
+  # 测试环境
+  testing:
+    use_primary: false
+    use_backup: true
+    enable_logging: true
