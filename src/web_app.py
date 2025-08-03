@@ -37,6 +37,9 @@ from werkzeug.utils import secure_filename
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# 导入密钥管理器
+from src.core.config.spark_x1_key_manager import get_spark_x1_key, get_spark_x1_config
+
 # 导入智能填报模块
 try:
     from llm_clients.spark_x1_client import SparkX1Client
@@ -60,12 +63,33 @@ CORS(app)
 # 确保上传目录存在
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# 添加uploads文件下载路由
+@app.route('/uploads/<filename>')
+def download_uploaded_file(filename):
+    """下载uploads目录中的文件"""
+    try:
+        return send_from_directory(
+            app.config['UPLOAD_FOLDER'],
+            filename,
+            as_attachment=True
+        )
+    except FileNotFoundError:
+        return jsonify({
+            'success': False,
+            'error': '文件不存在'
+        }), 404
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'文件下载失败: {str(e)}'
+        }), 500
+
 # 初始化智能填报管理器
 integrated_manager = None
 if SPARK_X1_AVAILABLE:
     try:
         smart_fill_config = {
-            'spark_x1_api_password': 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+            'spark_x1_api_password': get_spark_x1_key('smart_fill')
         }
         integrated_manager = SimpleSmartFillManager(smart_fill_config)
         print("✅ 简化智能填报管理器初始化成功")
@@ -77,7 +101,8 @@ if SPARK_X1_AVAILABLE:
 format_alignment_coordinator = None
 try:
     from src.core.tools.format_alignment_coordinator import FormatAlignmentCoordinator
-    format_alignment_coordinator = FormatAlignmentCoordinator()
+    # 使用密钥管理器获取API密钥
+    format_alignment_coordinator = FormatAlignmentCoordinator(get_spark_x1_key('format_alignment'))
     print("✅ 格式对齐协调器初始化成功")
 except Exception as e:
     print(f"❌ 格式对齐协调器初始化失败: {e}")
@@ -87,8 +112,8 @@ style_alignment_coordinator = None
 if SPARK_X1_AVAILABLE:
     try:
         from src.core.tools.style_alignment_coordinator import StyleAlignmentCoordinator
-        # 复用现有的星火X1客户端配置
-        spark_x1_client = SparkX1Client('NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh')
+        # 使用密钥管理器获取API密钥
+        spark_x1_client = SparkX1Client(get_spark_x1_key('style_alignment'))
         style_alignment_coordinator = StyleAlignmentCoordinator(spark_x1_client)
         print("✅ 文风对齐协调器初始化成功")
     except Exception as e:
@@ -543,6 +568,62 @@ def get_task_result(task_id):
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/style-alignment/export', methods=['POST'])
+def export_style_result():
+    """导出文风统一结果"""
+    try:
+        if not style_alignment_coordinator:
+            return jsonify({
+                'success': False,
+                'error': '文风对齐协调器未初始化'
+            }), 500
+
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据为空'
+            }), 400
+
+        task_id = data.get('task_id')
+        format_type = data.get('format', 'txt').lower()
+
+        if not task_id:
+            return jsonify({
+                'success': False,
+                'error': '缺少任务ID'
+            }), 400
+
+        # 验证格式类型
+        if format_type not in ['txt', 'docx', 'pdf']:
+            return jsonify({
+                'success': False,
+                'error': f'不支持的导出格式: {format_type}'
+            }), 400
+
+        # 调用协调器的导出方法
+        result = style_alignment_coordinator.export_result(task_id, format_type)
+
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': f'{format_type.upper()}文件导出成功',
+                'filename': result.get('filename'),
+                'download_url': result.get('download_url'),
+                'format': result.get('format')
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', '导出失败')
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'导出失败: {str(e)}'
+        }), 500
 
 # ==================== 智能填报模块 ====================
 
@@ -1480,8 +1561,8 @@ try:
     import os
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     from core.document_review_coordinator import DocumentReviewCoordinator
-    # 使用与智能填报相同的API密码
-    api_password = "NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh"
+    # 使用密钥管理器获取API密钥
+    api_password = get_spark_x1_key('document_review')
     document_review_coordinator = DocumentReviewCoordinator(api_password)
     print("✅ 文档审查协调器初始化成功")
 except Exception as e:

@@ -39,7 +39,7 @@ except ImportError as e:
 
 class FormatAlignmentCoordinator:
     
-    def __init__(self, llm_client=None, spark_x1_config=None):
+    def __init__(self, api_password=None, llm_client=None, spark_x1_config=None):
         self.tool_name = "文档格式对齐协调器"
         self.description = "智能处理文档格式对齐请求，支持自然语言交互和多轮对话"
         self.llm_client = llm_client
@@ -48,8 +48,9 @@ class FormatAlignmentCoordinator:
         # 初始化星火X1客户端
         try:
             if SparkX1Client is not None:
-                # 使用现有的API密钥配置
-                api_password = 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+                # 使用传入的API密钥，如果没有则使用默认值
+                if api_password is None:
+                    api_password = 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
                 self.spark_x1_client = SparkX1Client(api_password=api_password)
                 print("✅ 星火X1客户端初始化成功")
             else:

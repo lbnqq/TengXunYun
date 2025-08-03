@@ -13,11 +13,13 @@ License: MIT
 
 import uuid
 import json
+import os
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
 import threading
 import time
+from io import BytesIO
 
 # 导入核心模块
 from .style_transfer import StyleTransferEngine
@@ -379,6 +381,62 @@ class StyleAlignmentCoordinator:
                 'error': str(e)
             }
 
+    def export_result(self, task_id: str, format_type: str = 'txt') -> Dict[str, Any]:
+        """
+        导出任务结果
+
+        Args:
+            task_id: 任务ID
+            format_type: 导出格式 ('txt', 'docx', 'pdf')
+
+        Returns:
+            Dict[str, Any]: 导出结果
+        """
+        try:
+            # 获取任务结果
+            task_result = self.get_task_result(task_id)
+
+            if not task_result.get('success'):
+                logger.error(f"❌ 任务结果获取失败: {task_result.get('error')}")
+                return {
+                    'success': False,
+                    'error': '任务结果不存在或获取失败'
+                }
+
+            result_data = task_result.get('data', {})
+            content = result_data.get('generated_content', '') or result_data.get('generated', '')
+
+            if not content:
+                logger.error(f"❌ 没有可导出的内容，任务ID: {task_id}")
+                return {
+                    'success': False,
+                    'error': '没有可导出的内容'
+                }
+
+            # 生成文件名
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"style_result_{timestamp}.{format_type}"
+
+            # 根据格式类型处理导出
+            if format_type.lower() == 'txt':
+                return self._export_txt(content, filename)
+            elif format_type.lower() == 'docx':
+                return self._export_docx(content, filename)
+            elif format_type.lower() == 'pdf':
+                return self._export_pdf(content, filename)
+            else:
+                return {
+                    'success': False,
+                    'error': f'不支持的导出格式: {format_type}'
+                }
+
+        except Exception as e:
+            logger.error(f"❌ 导出失败: {str(e)}")
+            return {
+                'success': False,
+                'error': f'导出失败: {str(e)}'
+            }
+
     def _init_task_progress(self, task_id: str, task_type: str):
         """初始化任务进度"""
         with self.progress_lock:
@@ -411,6 +469,140 @@ class StyleAlignmentCoordinator:
                     self.task_progress[task_id]['status'] = 'processing'
 
                 logger.info(f"📊 任务进度更新 {task_id}: {progress}% - {message}")
+
+    def _export_txt(self, content: str, filename: str) -> Dict[str, Any]:
+        """导出TXT格式"""
+        try:
+            # 确保上传目录存在
+            upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+
+            file_path = os.path.join(upload_dir, filename)
+
+            # 写入文件
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+
+            return {
+                'success': True,
+                'filename': filename,
+                'file_path': file_path,
+                'download_url': f'/uploads/{filename}',
+                'format': 'txt'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'TXT导出失败: {str(e)}'
+            }
+
+    def _export_docx(self, content: str, filename: str) -> Dict[str, Any]:
+        """导出DOCX格式"""
+        try:
+            # 尝试导入python-docx
+            try:
+                from docx import Document
+                from docx.shared import Inches
+            except ImportError:
+                return {
+                    'success': False,
+                    'error': 'python-docx库未安装，无法导出DOCX格式'
+                }
+
+            # 创建文档
+            doc = Document()
+
+            # 添加标题
+            doc.add_heading('文风统一处理结果', 0)
+
+            # 添加内容
+            paragraphs = content.split('\n\n')
+            for paragraph in paragraphs:
+                if paragraph.strip():
+                    doc.add_paragraph(paragraph.strip())
+
+            # 确保上传目录存在
+            upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+
+            file_path = os.path.join(upload_dir, filename)
+
+            # 保存文档
+            doc.save(file_path)
+
+            return {
+                'success': True,
+                'filename': filename,
+                'file_path': file_path,
+                'download_url': f'/uploads/{filename}',
+                'format': 'docx'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'DOCX导出失败: {str(e)}'
+            }
+
+    def _export_pdf(self, content: str, filename: str) -> Dict[str, Any]:
+        """导出PDF格式"""
+        try:
+            # 尝试导入reportlab
+            try:
+                from reportlab.lib.pagesizes import letter, A4
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.lib.units import inch
+                from reportlab.pdfbase import pdfmetrics
+                from reportlab.pdfbase.ttfonts import TTFont
+            except ImportError:
+                return {
+                    'success': False,
+                    'error': 'reportlab库未安装，无法导出PDF格式'
+                }
+
+            # 确保上传目录存在
+            upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+
+            file_path = os.path.join(upload_dir, filename)
+
+            # 创建PDF文档
+            doc = SimpleDocTemplate(file_path, pagesize=A4)
+            story = []
+
+            # 获取样式
+            styles = getSampleStyleSheet()
+            title_style = styles['Title']
+            normal_style = styles['Normal']
+
+            # 添加标题
+            title = Paragraph("文风统一处理结果", title_style)
+            story.append(title)
+            story.append(Spacer(1, 12))
+
+            # 添加内容
+            paragraphs = content.split('\n\n')
+            for paragraph in paragraphs:
+                if paragraph.strip():
+                    p = Paragraph(paragraph.strip(), normal_style)
+                    story.append(p)
+                    story.append(Spacer(1, 12))
+
+            # 构建PDF
+            doc.build(story)
+
+            return {
+                'success': True,
+                'filename': filename,
+                'file_path': file_path,
+                'download_url': f'/uploads/{filename}',
+                'format': 'pdf'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'PDF导出失败: {str(e)}'
+            }
 
     def _split_document_to_examples(self, document: str, max_examples: int = 3) -> List[str]:
         """

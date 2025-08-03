@@ -12,10 +12,10 @@
 - **[项目状态 (PROJECT_STATUS.md)](PROJECT_STATUS.md)** - 当前开发状态和功能完成情况
 
 ### 📖 详细文档 (docs目录)
-- **[用户指南 (docs/UserGuide.md)](docs/UserGuide.md)** - 完整的用户操作指南
-- **[开发者指南 (docs/DeveloperGuide.md)](docs/DeveloperGuide.md)** - 开发环境配置和代码规范
-- **[API参考 (docs/APIReference.md)](docs/APIReference.md)** - 完整的API接口文档
-- **[AI编程实践手册 (docs/AI编程项目终极实践手册.md)](docs/AI编程项目终极实践手册.md)** - 项目开发规范
+- **[用户指南 (docs/UserGuide.md)](../docs/UserGuide.md)** - 完整的用户操作指南
+- **[开发者指南 (docs/DeveloperGuide.md)](../docs/DeveloperGuide.md)** - 开发环境配置和代码规范
+- **[API参考 (docs/APIReference.md)](../docs/APIReference.md)** - 完整的API接口文档
+- **[AI编程实践手册 (docs/AI编程项目终极实践手册.md)](../docs/AI编程项目终极实践手册.md)** - 项目开发规范
 
 ## 🚀 快速导航
 
@@ -26,9 +26,9 @@
 4. 查看 [项目结构](PROJECT_STRUCTURE.md) 了解代码组织
 
 ### 开发者
-1. 阅读 [开发者指南](docs/DeveloperGuide.md) 配置开发环境
-2. 查看 [API参考](docs/APIReference.md) 了解接口设计
-3. 参考 [AI编程实践手册](docs/AI编程项目终极实践手册.md) 遵循开发规范
+1. 阅读 [开发者指南](../docs/DeveloperGuide.md) 配置开发环境
+2. 查看 [API参考](../docs/APIReference.md) 了解接口设计
+3. 参考 [AI编程实践手册](../docs/AI编程项目终极实践手册.md) 遵循开发规范
 4. 使用 [密钥管理工具](SPARK_X1_KEY_MANAGEMENT.md) 管理API密钥
 
 ### 系统管理员
@@ -78,8 +78,8 @@
 ## 📋 测试文档
 
 ### CLI测试套件 (cliTests目录)
-- **[测试说明 (cliTests/README.md)](cliTests/README.md)** - 测试套件使用说明
-- **[使用指南 (cliTests/USAGE.md)](cliTests/USAGE.md)** - 测试执行指南
+- **[测试说明 (cliTests/README.md)](../cliTests/README.md)** - 测试套件使用说明
+- **[使用指南 (cliTests/USAGE.md)](../cliTests/USAGE.md)** - 测试执行指南
 - **`run_all_tests.py`** - 运行所有测试
 - **`test_*.py`** - 各模块功能测试
 
@@ -117,9 +117,9 @@ cd cliTests && python run_all_tests.py
 - 检查 [项目状态文档](PROJECT_STATUS.md) 了解已知问题
 
 ### 开发支持
-- 遵循 [AI编程实践手册](docs/AI编程项目终极实践手册.md) 的开发规范
+- 遵循 [AI编程实践手册](../docs/AI编程项目终极实践手册.md) 的开发规范
 - 使用项目提供的开发工具进行代码质量检查
-- 参考 [API文档](docs/APIReference.md) 进行接口开发
+- 参考 [API文档](../docs/APIReference.md) 进行接口开发
 
 ---
 

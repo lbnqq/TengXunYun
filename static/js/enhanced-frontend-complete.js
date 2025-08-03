@@ -3089,7 +3089,7 @@ function showExportOptions() {
     }
 }
 
-function performExport(format) {
+async function performExport(format) {
     if (!uiManager.currentStyleResult) {
         errorHandler.handleError(new Error('没有可导出的结果'), 'validation');
         return;
@@ -3099,14 +3099,59 @@ function performExport(format) {
     const filename = `style_result_${Date.now()}.${format}`;
 
     if (format === 'txt') {
-        // 导出为TXT
+        // 导出为TXT（本地处理）
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         apiManager.createDownloadLink(blob, filename);
         errorHandler.createNotification('TXT文件导出成功', 'success');
     } else {
         // 其他格式通过API导出
-        console.log(`导出${format}格式功能待实现`);
-        errorHandler.createNotification(`${format.toUpperCase()}格式导出功能开发中`, 'info');
+        try {
+            // 显示加载状态
+            errorHandler.createNotification(`正在导出${format.toUpperCase()}格式...`, 'info');
+
+            // 获取当前任务ID
+            const taskId = uiManager.currentStyleResult.taskId || uiManager.currentStyleResult.task_id;
+
+            if (!taskId) {
+                console.error('❌ 无法获取任务ID，当前结果:', uiManager.currentStyleResult);
+                throw new Error('无法获取任务ID');
+            }
+
+            // 调用导出API
+            const requestData = {
+                task_id: taskId,
+                format: format
+            };
+
+            const response = await fetch('/api/style-alignment/export', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 创建下载链接
+                const downloadUrl = result.download_url;
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = result.filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                errorHandler.createNotification(`${format.toUpperCase()}文件导出成功`, 'success');
+            } else {
+                throw new Error(result.error || '导出失败');
+            }
+        } catch (error) {
+            console.error('导出失败:', error);
+            errorHandler.createNotification(`${format.toUpperCase()}格式导出失败: ${error.message}`, 'error');
+        }
     }
 }
 
@@ -3320,6 +3365,12 @@ class FormatAlignmentManager {
 
         // 模式切换事件 - 支持点击模式选项容器（限制在格式对齐场景内）
         document.addEventListener('click', (e) => {
+            // 只在格式对齐场景中处理和输出日志
+            const formatScene = document.getElementById('scene-format');
+            if (!formatScene || !formatScene.contains(e.target)) {
+                return; // 不在格式对齐场景中，直接返回
+            }
+
             console.log('🖱️ 点击事件触发，目标元素:', e.target);
 
             const modeOption = e.target.closest('#scene-format .mode-option');
