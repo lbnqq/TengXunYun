@@ -330,32 +330,19 @@
             <div class="workflow-block" id="format-document-upload">
                 <h3 class="workflow-title">📄 上传待处理文档</h3>
 
-                <div class="content-input-tabs">
-                    <button class="tab-button active" data-tab="file-upload">文件上传</button>
-                    <button class="tab-button" data-tab="sample-doc">示例文档</button>
-                </div>
+                <!-- 移除标签页，直接显示文件上传 -->
 
-                <div class="tab-content" id="file-upload-tab">
-                    <div class="input-group">
-                        <label for="upload-format-document">选择文档:</label>
-                        <div class="file-upload-area" id="format-document-upload-area">
-                            <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-document"
-                                   title="选择待处理文档" aria-label="上传待处理文档">
-                            <div class="file-upload-text">点击或拖拽上传待处理文档</div>
-                            <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
-                        </div>
+                <div class="input-group">
+                    <label for="upload-format-document">选择文档:</label>
+                    <div class="file-upload-area" id="format-document-upload-area">
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-document"
+                               title="选择待处理文档" aria-label="上传待处理文档">
+                        <div class="file-upload-text">点击或拖拽上传待处理文档</div>
+                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
                     </div>
                 </div>
 
-                <div class="tab-content" id="sample-doc-tab" style="display: none;">
-                    <div class="input-group">
-                        <label>示例文档:</label>
-                        <div class="action-buttons">
-                            <button class="btn btn-secondary" id="use-sample-format-doc">📝 使用示例文档</button>
-                        </div>
-                        <div class="file-upload-hint">使用预设的示例文档进行格式对齐测试</div>
-                    </div>
-                </div>
+
             </div>
 
             <!-- 步骤4: 开始处理 -->
@@ -586,7 +573,7 @@
                     <button class="tab-button" data-tab="file-upload">文件上传</button>
                 </div>
 
-                <div class="tab-content" id="text-input-tab">
+                <div class="tab-content" id="style-text-input-tab">
                     <div class="input-group">
                         <label for="style-content-text">输入文本内容:</label>
                         <textarea id="style-content-text" class="input-textarea content-textarea" rows="8"
@@ -597,7 +584,7 @@
                     </div>
                 </div>
 
-                <div class="tab-content" id="file-upload-tab" style="display: none;">
+                <div class="tab-content" id="style-file-upload-tab" style="display: none;">
                     <div class="input-group">
                         <label for="upload-content-file">上传文档:</label>
                         <div class="file-upload-area" id="content-file-upload">
@@ -750,55 +737,64 @@
         <section id="scene-fill" class="scene-section hidden">
             <h2 class="scene-title">🤖 智能填报 - 星火X1增强版</h2>
             <p class="scene-description">基于星火X1大模型的智能填报系统，专注于年度总结和简历生成功能</p>
-            
-            <!-- 系统状态 -->
-            <div class="workflow-block">
-                <h3 class="workflow-title">系统状态</h3>
-                <div class="status-info" id="smart-fill-status">
-                    <button class="btn btn-secondary" onclick="checkSmartFillStatus()">
-                        <span>🔍</span> 检查系统状态
-                    </button>
-                    <div id="status-display" class="status-display"></div>
+
+            <!-- 3步工作流程指示器 -->
+            <div class="step-indicator" role="progressbar" aria-label="智能填报进度">
+                <div class="step-item active">
+                    <div class="step-number">1</div>
+                    <span>选择生成方式</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <span>输入内容</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <span>生成导出</span>
                 </div>
             </div>
 
+            <!-- 步骤1: 生成方式选择 -->
+            <div class="workflow-block" id="fill-mode-selection">
+                <h3 class="workflow-title">📋 选择生成方式</h3>
 
+                <div class="mode-selector">
+                    <div class="mode-option" data-mode="resume">
+                        <div class="mode-icon">👤</div>
+                        <div class="mode-info">
+                            <h4>简历生成</h4>
+                            <p>根据个人信息自动生成格式化的专业简历</p>
+                        </div>
+                        <input type="radio" name="fill-mode" value="resume" id="mode-resume" checked>
+                        <label for="mode-resume" class="mode-radio"></label>
+                    </div>
 
-            <!-- 年度总结生成 -->
-            <div class="workflow-block">
-                <h3 class="workflow-title">年度总结生成</h3>
-                <p>请输入您的工作内容描述，系统将自动生成专业的年度工作总结：</p>
-
-                <div class="input-group">
-                    <label for="summary-input">工作内容:</label>
-                    <textarea class="input-textarea" id="summary-input" rows="6"
-                              placeholder="请输入工作内容，例如：
-今年我主要负责了公司核心产品的技术升级工作，成功完成了从单体架构到微服务架构的转型。
-在项目管理方面，我带领5人团队完成了3个重要项目，项目按时交付率达到100%。
-技术方面，我深入学习了云原生技术，包括Docker、Kubernetes等。
-遇到的主要挑战是系统迁移过程中的数据一致性问题，通过设计分布式事务方案得到解决。
-明年计划继续深化在AI和大数据方向的技术能力。"
-                              title="输入工作内容" aria-label="输入工作内容"></textarea>
+                    <div class="mode-option" data-mode="summary">
+                        <div class="mode-icon">📝</div>
+                        <div class="mode-info">
+                            <h4>年度总结生成</h4>
+                            <p>基于工作内容描述生成专业的年度工作总结</p>
+                        </div>
+                        <input type="radio" name="fill-mode" value="summary" id="mode-summary">
+                        <label for="mode-summary" class="mode-radio"></label>
+                    </div>
                 </div>
 
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="generateSummary()" id="summary-btn">
-                        <span>📝</span> 生成年度总结
+                    <button class="btn btn-primary" onclick="selectFillMode()">
+                        <span>➡️</span> 下一步
                     </button>
                 </div>
-
-                <div class="loading-indicator" id="summary-loading" style="display: none;">
-                    <div class="spinner"></div>
-                    <span>正在生成年度总结，请稍候...</span>
-                </div>
-
-                <div class="feedback-message" id="summary-result" role="status" aria-live="polite"></div>
             </div>
 
-            <!-- 简历生成 -->
-            <div class="workflow-block">
-                <h3 class="workflow-title">简历生成</h3>
-                <p>请输入您的个人信息，系统将自动生成格式化的个人简历：</p>
+
+
+            <!-- 步骤2: 简历生成输入 -->
+            <div class="workflow-block" id="resume-input-section" style="display: none;">
+                <h3 class="workflow-title">👤 简历信息输入</h3>
+                <p>请输入您的个人信息，系统将自动生成格式化的专业简历：</p>
 
                 <div class="input-group">
                     <label for="resume-input">个人信息:</label>
@@ -829,6 +825,9 @@
                 </div>
 
                 <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="goBackToModeSelection()">
+                        <span>⬅️</span> 上一步
+                    </button>
                     <button class="btn btn-primary" onclick="generateResume()" id="resume-btn">
                         <span>👤</span> 生成简历
                     </button>
@@ -840,6 +839,65 @@
                 </div>
 
                 <div class="feedback-message" id="resume-result" role="status" aria-live="polite"></div>
+            </div>
+
+            <!-- 步骤2: 年度总结生成输入 -->
+            <div class="workflow-block" id="summary-input-section" style="display: none;">
+                <h3 class="workflow-title">📝 年度总结信息输入</h3>
+                <p>请输入您的工作内容描述，系统将自动生成专业的年度工作总结：</p>
+
+                <div class="input-group">
+                    <label for="summary-input">工作内容:</label>
+                    <textarea class="input-textarea" id="summary-input" rows="6"
+                              placeholder="请输入工作内容，例如：
+今年我主要负责了公司核心产品的技术升级工作，成功完成了从单体架构到微服务架构的转型。
+在项目管理方面，我带领5人团队完成了3个重要项目，项目按时交付率达到100%。
+技术方面，我深入学习了云原生技术，包括Docker、Kubernetes等。
+遇到的主要挑战是系统迁移过程中的数据一致性问题，通过设计分布式事务方案得到解决。
+明年计划继续深化在AI和大数据方向的技术能力。"
+                              title="输入工作内容" aria-label="输入工作内容"></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="goBackToModeSelection()">
+                        <span>⬅️</span> 上一步
+                    </button>
+                    <button class="btn btn-primary" onclick="generateSummary()" id="summary-btn">
+                        <span>📝</span> 生成年度总结
+                    </button>
+                </div>
+
+                <div class="loading-indicator" id="summary-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>正在生成年度总结，请稍候...</span>
+                </div>
+
+                <div class="feedback-message" id="summary-result" role="status" aria-live="polite"></div>
+            </div>
+
+            <!-- 步骤3: 统一导出区域 -->
+            <div class="workflow-block" id="fill-export-section" style="display: none;">
+                <h3 class="workflow-title">📥 导出生成结果</h3>
+
+                <div class="export-options">
+                    <div class="export-format-selector">
+                        <label>导出格式:</label>
+                        <div class="format-buttons">
+                            <button class="btn btn-outline" data-format="txt">📄 TXT</button>
+                            <button class="btn btn-outline" data-format="docx">📘 DOCX</button>
+                            <button class="btn btn-outline" data-format="pdf">📕 PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-success" id="download-fill-result">
+                        <span>📥</span> 下载文件
+                    </button>
+                    <button class="btn btn-secondary" onclick="restartFillProcess()">
+                        <span>🔄</span> 重新开始
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -930,9 +988,9 @@
                         <button class="tab-button" data-tab="file-upload">文件上传</button>
                     </div>
 
-                    <div class="tab-content">
+                    <div class="tab-content review-tab-content">
                         <!-- 文本输入标签页 -->
-                        <div class="tab-pane active" id="text-input-tab">
+                        <div class="tab-pane active" id="review-text-input-tab">
                             <div class="input-group">
                                 <label for="review-content-text">文档内容:</label>
                                 <textarea class="input-textarea" id="review-content-text"
@@ -943,7 +1001,7 @@
                         </div>
 
                         <!-- 文件上传标签页 -->
-                        <div class="tab-pane" id="file-upload-tab">
+                        <div class="tab-pane" id="review-file-upload-tab">
                             <div class="input-group">
                                 <label for="upload-review-content-file">上传文档:</label>
                                 <div class="file-upload-area" id="review-content-upload">
@@ -1056,7 +1114,71 @@
             }
         }
 
+        // 智能填报模块的全局变量
+        let currentFillMode = 'resume'; // 默认选中简历生成
+        let currentFillResult = null;
 
+        // 选择生成方式
+        function selectFillMode() {
+            const selectedMode = document.querySelector('input[name="fill-mode"]:checked').value;
+            currentFillMode = selectedMode;
+
+            // 隐藏模式选择区域
+            document.getElementById('fill-mode-selection').style.display = 'none';
+
+            // 显示对应的输入区域
+            if (selectedMode === 'resume') {
+                document.getElementById('resume-input-section').style.display = 'block';
+            } else if (selectedMode === 'summary') {
+                document.getElementById('summary-input-section').style.display = 'block';
+            }
+
+            // 更新步骤指示器
+            updateFillStepIndicator(2);
+        }
+
+        // 返回模式选择
+        function goBackToModeSelection() {
+            // 隐藏所有输入区域
+            document.getElementById('resume-input-section').style.display = 'none';
+            document.getElementById('summary-input-section').style.display = 'none';
+            document.getElementById('fill-export-section').style.display = 'none';
+
+            // 显示模式选择区域
+            document.getElementById('fill-mode-selection').style.display = 'block';
+
+            // 更新步骤指示器
+            updateFillStepIndicator(1);
+        }
+
+        // 重新开始流程
+        function restartFillProcess() {
+            // 重置所有区域
+            document.getElementById('fill-export-section').style.display = 'none';
+            document.getElementById('resume-input-section').style.display = 'none';
+            document.getElementById('summary-input-section').style.display = 'none';
+            document.getElementById('fill-mode-selection').style.display = 'block';
+
+            // 清空结果
+            document.getElementById('resume-result').innerHTML = '';
+            document.getElementById('summary-result').innerHTML = '';
+            currentFillResult = null;
+
+            // 重置步骤指示器
+            updateFillStepIndicator(1);
+        }
+
+        // 更新步骤指示器
+        function updateFillStepIndicator(activeStep) {
+            const steps = document.querySelectorAll('#scene-fill .step-item');
+            steps.forEach((step, index) => {
+                if (index + 1 <= activeStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        }
 
         // 生成年度总结
         async function generateSummary() {
@@ -1074,6 +1196,21 @@
             btn.disabled = true;
             loading.style.display = 'block';
             result.style.display = 'none';
+
+            // 添加进度条效果
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                loading.innerHTML = `
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="progress-text">正在生成年度总结... ${Math.round(progress)}%</div>
+                    </div>
+                `;
+            }, 500);
 
             try {
                 const response = await fetch('/api/smart-fill/generate-summary', {
@@ -1094,9 +1231,22 @@
                     result.innerHTML = `
                         <h4>✅ 年度总结生成成功</h4>
                         <p><strong>文件名:</strong> ${data.filename}</p>
-                        <a href="/api/smart-fill/download/${data.filename}" class="btn btn-success" target="_blank">📥 下载年度总结</a>
                         ${data.usage ? `<p><strong>Token使用:</strong> ${data.usage.total_tokens}</p>` : ''}
                     `;
+
+                    // 保存结果信息
+                    currentFillResult = {
+                        type: 'summary',
+                        filename: data.filename,
+                        downloadUrl: `/api/smart-fill/download/${data.filename}`
+                    };
+
+                    // 隐藏输入区域，显示导出区域
+                    document.getElementById('summary-input-section').style.display = 'none';
+                    document.getElementById('fill-export-section').style.display = 'block';
+
+                    // 更新步骤指示器
+                    updateFillStepIndicator(3);
                 } else {
                     result.className = 'feedback-message error';
                     result.innerHTML = `<h4>❌ 生成失败</h4><p>${data.error}</p>`;
@@ -1105,8 +1255,13 @@
                 result.className = 'feedback-message error';
                 result.innerHTML = `<h4>❌ 请求异常</h4><p>${error.message}</p>`;
             } finally {
+                clearInterval(progressInterval);
                 btn.disabled = false;
                 loading.style.display = 'none';
+                loading.innerHTML = `
+                    <div class="spinner"></div>
+                    <span>正在生成年度总结，请稍候...</span>
+                `;
                 result.style.display = 'block';
             }
         }
@@ -1128,6 +1283,21 @@
             loading.style.display = 'block';
             result.style.display = 'none';
 
+            // 添加进度条效果
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                loading.innerHTML = `
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="progress-text">正在生成简历... ${Math.round(progress)}%</div>
+                    </div>
+                `;
+            }, 500);
+
             try {
                 const response = await fetch('/api/smart-fill/generate-resume', {
                     method: 'POST',
@@ -1135,8 +1305,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        content: content,
-                        api_password: 'NJFASGuFsRYYjeyLpZFk:jhjQJHHgIeoKVzbAORPh'
+                        content: content
                     })
                 });
 
@@ -1147,9 +1316,22 @@
                     result.innerHTML = `
                         <h4>✅ 简历生成成功</h4>
                         <p><strong>文件名:</strong> ${data.filename}</p>
-                        <a href="/api/smart-fill/download/${data.filename}" class="btn btn-success" target="_blank">📥 下载简历</a>
                         ${data.usage ? `<p><strong>Token使用:</strong> ${data.usage.total_tokens}</p>` : ''}
                     `;
+
+                    // 保存结果信息
+                    currentFillResult = {
+                        type: 'resume',
+                        filename: data.filename,
+                        downloadUrl: `/api/smart-fill/download/${data.filename}`
+                    };
+
+                    // 隐藏输入区域，显示导出区域
+                    document.getElementById('resume-input-section').style.display = 'none';
+                    document.getElementById('fill-export-section').style.display = 'block';
+
+                    // 更新步骤指示器
+                    updateFillStepIndicator(3);
                 } else {
                     result.className = 'feedback-message error';
                     result.innerHTML = `<h4>❌ 生成失败</h4><p>${data.error}</p>`;
@@ -1158,11 +1340,139 @@
                 result.className = 'feedback-message error';
                 result.innerHTML = `<h4>❌ 请求异常</h4><p>${error.message}</p>`;
             } finally {
+                clearInterval(progressInterval);
                 btn.disabled = false;
                 loading.style.display = 'none';
+                loading.innerHTML = `
+                    <div class="spinner"></div>
+                    <span>正在生成简历，请稍候...</span>
+                `;
                 result.style.display = 'block';
             }
         }
+
+        // 导出功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 智能填报模式选择点击事件
+            const fillModeOptions = document.querySelectorAll('#scene-fill .mode-option');
+            fillModeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const radio = this.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                        // 更新视觉状态
+                        fillModeOptions.forEach(opt => opt.classList.remove('selected'));
+                        this.classList.add('selected');
+                    }
+                });
+            });
+
+            // 导出格式选择
+            const formatButtons = document.querySelectorAll('#scene-fill .format-buttons .btn');
+            formatButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除其他按钮的选中状态
+                    formatButtons.forEach(btn => btn.classList.remove('active'));
+                    // 添加当前按钮的选中状态
+                    this.classList.add('active');
+                });
+            });
+
+            // 下载按钮点击事件
+            document.getElementById('download-fill-result').addEventListener('click', async function() {
+                console.log('🖱️ 下载按钮被点击');
+                console.log('📋 当前填报结果:', currentFillResult);
+
+                if (currentFillResult) {
+                    // 获取选中的格式
+                    const selectedFormat = document.querySelector('#scene-fill .format-buttons .btn.active');
+                    const format = selectedFormat ? selectedFormat.dataset.format : 'txt';
+                    console.log('📄 选择的导出格式:', format);
+
+                    if (format === 'txt') {
+                        // 直接下载原文件
+                        try {
+                            const response = await fetch(currentFillResult.downloadUrl);
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = currentFillResult.filename;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(link.href);
+                            } else {
+                                alert('文件下载失败，请重试');
+                            }
+                        } catch (error) {
+                            console.error('下载失败:', error);
+                            alert('文件下载失败: ' + error.message);
+                        }
+                    } else {
+                        // DOCX和PDF格式导出
+                        console.log('🔄 开始调用导出API');
+                        try {
+                            this.disabled = true;
+                            this.innerHTML = '<span>⏳</span> 正在生成...';
+
+                            const requestData = {
+                                filename: currentFillResult.filename,
+                                format: format,
+                                type: currentFillResult.type
+                            };
+                            console.log('📤 发送API请求:', requestData);
+
+                            const response = await fetch('/api/smart-fill/export', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+
+                            console.log('📥 API响应状态:', response.status);
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+
+                            const result = await response.json();
+                            console.log('📋 API响应结果:', result);
+
+                            if (result.success) {
+                                console.log('✅ 导出成功，开始下载文件');
+                                // 下载生成的文件
+                                const link = document.createElement('a');
+                                link.href = result.download_url;
+                                link.download = result.filename;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                console.log('📥 文件下载触发完成');
+                            } else {
+                                console.error('❌ 导出失败:', result.error);
+                                alert('导出失败: ' + result.error);
+                            }
+                        } catch (error) {
+                            console.error('导出失败:', error);
+                            alert('导出失败: ' + error.message);
+                        } finally {
+                            this.disabled = false;
+                            this.innerHTML = '<span>📥</span> 下载文件';
+                        }
+                    }
+                } else {
+                    alert('没有可导出的结果');
+                }
+            });
+
+            // 默认选中TXT格式
+            const txtButton = document.querySelector('#scene-fill .format-buttons .btn[data-format="txt"]');
+            if (txtButton) {
+                txtButton.classList.add('active');
+            }
+        });
     </script>
 </body>
 </html>

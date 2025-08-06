@@ -1584,6 +1584,43 @@ input:focus, textarea:focus, select:focus {
     animation: fadeIn var(--transition-normal);
 }
 
+/* 标签页面板样式 */
+.tab-pane {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-pane.active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* 文档审查模块专用样式 */
+.review-tab-content {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.review-tab-content .tab-pane {
+    opacity: 1;
+}
+
+.review-tab-content .tab-pane.active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* 文风统一模块和格式对齐模块的.tab-content样式 */
+#scene-style .tab-content,
+#scene-format .tab-content {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+}
+
 .content-textarea {
     min-height: 200px;
     font-family: inherit;

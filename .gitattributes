@@ -1,0 +1,58 @@
+# Git属性配置文件
+# 确保跨平台的文件处理一致性
+
+# 自动检测文本文件并标准化行结束符
+* text=auto
+
+# 源代码文件
+*.py text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+
+# 配置文件
+*.cfg text eol=lf
+*.ini text eol=lf
+*.conf text eol=lf
+
+# 脚本文件
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# 二进制文件
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.docx binary
+*.doc binary
+*.xlsx binary
+*.xls binary
+*.zip binary
+*.tar binary
+*.gz binary
+
+# 字体文件
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+# 语言文件统计（GitHub语言检测）
+*.html linguist-language=HTML
+*.css linguist-language=CSS
+*.js linguist-language=JavaScript
+*.py linguist-language=Python
+
+# 排除某些文件不参与语言统计
+static/js/vendor/* linguist-vendored
+static/css/vendor/* linguist-vendored
+examples/* linguist-documentation
+docs/* linguist-documentation

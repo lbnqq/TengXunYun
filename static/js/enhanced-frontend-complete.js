@@ -783,6 +783,8 @@ class UIManager {
                 this.initializeStyleScene();
             } else if (sceneId === 'format') {
                 this.initializeFormatScene();
+            } else if (sceneId === 'review') {
+                this.initializeReviewScene();
             }
         }
 
@@ -827,6 +829,26 @@ class UIManager {
         } catch (error) {
             console.error('❌ 格式对齐场景初始化失败:', error);
             errorHandler.handleError(error, 'format_scene_initialization');
+        }
+    }
+
+    async initializeReviewScene() {
+        try {
+            console.log('📋 初始化文档审查场景...');
+
+            // 确保文档审查管理器已初始化
+            if (window.documentReviewManager) {
+                // 重新初始化文档审查管理器以确保事件绑定正常
+                await documentReviewManager.initialize();
+                console.log('✅ 文档审查管理器重新初始化完成');
+            } else {
+                console.warn('⚠️ 文档审查管理器未找到');
+            }
+
+            console.log('✅ 文档审查场景初始化完成');
+        } catch (error) {
+            console.error('❌ 文档审查场景初始化失败:', error);
+            errorHandler.handleError(error, 'review_scene_initialization');
         }
     }
 
@@ -1338,11 +1360,13 @@ class UIManager {
 
             // 显示进度
             this.showProcessingProgress();
+            this.updateProcessingText('正在生成预设风格内容...');
 
             // 调用API
             const result = await apiManager.request('/api/style-alignment/generate-with-style', {
                 method: 'POST',
-                body: JSON.stringify(requestData)
+                body: JSON.stringify(requestData),
+                timeout: 120000  // 2分钟超时，预设风格生成可能需要较长时间
             });
 
             if (result.success) {
@@ -1355,14 +1379,26 @@ class UIManager {
 
         } catch (error) {
             this.hideProcessingProgress();
-            // 根据错误类型选择合适的上下文
+            console.error('❌ 预设风格生成失败:', error);
+
+            // 根据错误类型提供更友好的错误信息
+            let errorMessage = '预设风格生成失败';
             let context = 'preset_style_generation';
-            if (error.message && error.message.includes('文件读取')) {
+
+            if (error.name === 'AbortError') {
+                errorMessage = '请求超时，风格生成需要较长时间，请检查网络连接或稍后重试';
+                context = 'network_timeout';
+            } else if (error.message && error.message.includes('文件读取')) {
+                errorMessage = '文件读取失败，请检查文件格式';
                 context = 'file_reading';
             } else if (error.message && error.message.includes('内容')) {
+                errorMessage = '输入内容验证失败，请检查输入内容';
                 context = 'content_validation';
+            } else if (error.message) {
+                errorMessage = '预设风格生成失败: ' + error.message;
             }
-            errorHandler.handleError(error, context);
+
+            errorHandler.handleError(new Error(errorMessage), context);
         }
     }
 
@@ -1392,6 +1428,7 @@ class UIManager {
 
             // 显示进度
             this.showProcessingProgress();
+            this.updateProcessingText('正在进行Few-Shot风格学习和转换...');
 
             // 调用API
             const result = await apiManager.request('/api/style-alignment/few-shot-transfer', {
@@ -1402,7 +1439,8 @@ class UIManager {
                     target_description: targetDescription,
                     language: language,
                     temperature: temperature
-                })
+                }),
+                timeout: 120000  // 2分钟超时，文风转换可能需要较长时间
             });
 
             if (result.success) {
@@ -1415,14 +1453,26 @@ class UIManager {
 
         } catch (error) {
             this.hideProcessingProgress();
-            // 根据错误类型选择合适的上下文
+            console.error('❌ Few-Shot风格迁移失败:', error);
+
+            // 根据错误类型提供更友好的错误信息
+            let errorMessage = 'Few-Shot风格迁移失败';
             let context = 'few_shot_transfer';
-            if (error.message && error.message.includes('文件读取')) {
+
+            if (error.name === 'AbortError') {
+                errorMessage = '请求超时，文风转换需要较长时间，请检查网络连接或稍后重试';
+                context = 'network_timeout';
+            } else if (error.message && error.message.includes('文件读取')) {
+                errorMessage = '参考文档读取失败，请检查文件格式';
                 context = 'file_reading';
             } else if (error.message && error.message.includes('内容')) {
+                errorMessage = '输入内容验证失败，请检查输入内容';
                 context = 'content_validation';
+            } else if (error.message) {
+                errorMessage = 'Few-Shot风格迁移失败: ' + error.message;
             }
-            errorHandler.handleError(error, context);
+
+            errorHandler.handleError(new Error(errorMessage), context);
         }
     }
 
@@ -1529,6 +1579,13 @@ class UIManager {
         const processingArea = document.getElementById('style-processing-area');
         if (processingArea) {
             processingArea.style.display = 'none';
+        }
+    }
+
+    updateProcessingText(text) {
+        const processingText = document.querySelector('#style-processing-area .processing-text');
+        if (processingText) {
+            processingText.textContent = text;
         }
     }
 
@@ -1950,7 +2007,8 @@ class UIManager {
             body: JSON.stringify({
                 reference_file: files[0],
                 target_file: files[1]
-            })
+            }),
+            timeout: 60000  // 1分钟超时，预览功能
         });
 
         if (result.success) {
@@ -2810,7 +2868,9 @@ async function reapplyOperation(recordId) {
 
 async function loadPresetStyles() {
     try {
-        const result = await apiManager.request('/api/style-alignment/preset-styles');
+        const result = await apiManager.request('/api/style-alignment/preset-styles', {
+            timeout: 30000  // 30秒超时，加载预设风格
+        });
         if (result.success) {
             displayPresetStyles(result.styles);
         }
@@ -2889,8 +2949,8 @@ function initializeStyleInterface() {
         });
     });
 
-    // 初始化标签页切换
-    const tabButtons = document.querySelectorAll('.tab-button');
+    // 初始化标签页切换（排除文档审查模块，它有自己的处理）
+    const tabButtons = document.querySelectorAll('.tab-button:not(#scene-review .tab-button)');
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const tabId = button.dataset.tab;
@@ -2970,17 +3030,38 @@ function toggleConfigPanels(mode) {
 }
 
 function switchTab(tabId) {
-    // 更新标签按钮状态
-    document.querySelectorAll('.tab-button').forEach(btn => {
+    // 更新标签按钮状态（排除文档审查模块）
+    document.querySelectorAll('.tab-button:not(#scene-review .tab-button)').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    const targetButton = document.querySelector(`[data-tab="${tabId}"]:not(#scene-review [data-tab="${tabId}"])`);
+    if (targetButton) {
+        targetButton.classList.add('active');
+    }
 
-    // 更新标签内容显示
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.style.display = 'none';
-    });
-    document.getElementById(`${tabId}-tab`).style.display = 'block';
+    // 获取当前场景
+    const currentScene = document.querySelector('.scene-section:not(.hidden)');
+    const sceneId = currentScene?.id;
+
+    // 只隐藏当前场景内的.tab-content（排除文档审查模块）
+    if (currentScene) {
+        currentScene.querySelectorAll('.tab-content:not(.review-tab-content)').forEach(content => {
+            content.style.display = 'none';
+        });
+    }
+
+    // 根据当前场景确定正确的标签页ID
+    let targetId = `${tabId}-tab`;
+    if (sceneId === 'scene-style') {
+        targetId = `style-${tabId}-tab`;
+    } else if (sceneId === 'scene-format') {
+        targetId = `format-${tabId}-tab`;
+    }
+
+    const targetContent = document.getElementById(targetId);
+    if (targetContent && !targetContent.closest('#scene-review')) {
+        targetContent.style.display = 'block';
+    }
 }
 
 function clearAllContent() {
@@ -3365,38 +3446,29 @@ class FormatAlignmentManager {
 
         // 模式切换事件 - 支持点击模式选项容器（限制在格式对齐场景内）
         document.addEventListener('click', (e) => {
-            // 只在格式对齐场景中处理和输出日志
+            // 只在格式对齐场景中处理
             const formatScene = document.getElementById('scene-format');
             if (!formatScene || !formatScene.contains(e.target)) {
                 return; // 不在格式对齐场景中，直接返回
             }
 
-            console.log('🖱️ 点击事件触发，目标元素:', e.target);
-
+            // 只处理模式选项的点击，忽略其他元素
             const modeOption = e.target.closest('#scene-format .mode-option');
-            console.log('🎯 找到的模式选项元素:', modeOption);
+            if (!modeOption || !modeOption.dataset.mode) {
+                return; // 不是模式选项，直接返回
+            }
 
-            if (modeOption && modeOption.dataset.mode) {
-                const mode = modeOption.dataset.mode;
-                console.log('📋 模式数据:', mode);
-                console.log('📋 当前模式:', self.currentMode);
+            const mode = modeOption.dataset.mode;
+            const radioButton = modeOption.querySelector('input[type="radio"]');
 
-                const radioButton = modeOption.querySelector('input[type="radio"]');
-                console.log('🔘 单选按钮:', radioButton, '是否已选中:', radioButton?.checked);
-
-                // 检查是否需要切换模式（基于当前模式而不是单选按钮状态）
-                if (mode !== self.currentMode) {
-                    // 更新单选按钮状态
-                    if (radioButton) {
-                        radioButton.checked = true;
-                    }
-                    console.log('🔄 通过点击容器切换格式对齐模式:', mode);
-                    self.handleModeSwitch(mode);
-                } else {
-                    console.log('ℹ️ 已经是当前模式，无需切换');
+            // 检查是否需要切换模式（基于当前模式而不是单选按钮状态）
+            if (mode !== self.currentMode) {
+                // 更新单选按钮状态
+                if (radioButton) {
+                    radioButton.checked = true;
                 }
-            } else {
-                console.log('⚠️ 未找到有效的模式选项元素');
+                console.log('🔄 通过点击容器切换格式对齐模式:', mode);
+                self.handleModeSwitch(mode);
             }
         });
 
@@ -3431,13 +3503,7 @@ class FormatAlignmentManager {
             }
         });
 
-        // 示例文档按钮
-        const sampleDocBtn = document.getElementById('use-sample-format-doc');
-        if (sampleDocBtn) {
-            sampleDocBtn.addEventListener('click', () => {
-                this.useSampleDocument();
-            });
-        }
+
 
         // 开始格式对齐按钮
         const startBtn = document.getElementById('start-format-alignment');
@@ -3569,17 +3635,17 @@ class FormatAlignmentManager {
     }
 
     handleTabSwitch(button) {
-        // 移除所有活动状态
-        document.querySelectorAll('.tab-button').forEach(btn => {
+        // 移除格式对齐模块内的活动状态
+        document.querySelectorAll('#scene-format .tab-button').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelectorAll('.tab-content').forEach(content => {
+        document.querySelectorAll('#scene-format .tab-content').forEach(content => {
             content.style.display = 'none';
         });
 
         // 激活当前标签
         button.classList.add('active');
-        const tabId = button.dataset.tab + '-tab';
+        const tabId = 'format-' + button.dataset.tab + '-tab';
         const tabContent = document.getElementById(tabId);
         if (tabContent) {
             tabContent.style.display = 'block';
@@ -3718,45 +3784,7 @@ class FormatAlignmentManager {
         });
     }
 
-    useSampleDocument() {
-        const sampleContent = `# 项目进度报告
 
-## 项目概述
-本项目旨在开发一个智能文档处理系统，提供格式对齐、文风统一等功能。
-
-## 当前进展
-1. 需求分析已完成
-2. 系统设计进行中
-3. 核心功能开发待启动
-
-## 主要成果
-- 完成了用户需求调研
-- 制定了技术方案
-- 搭建了开发环境
-
-## 下一步计划
-1. 完成系统架构设计
-2. 开始核心模块开发
-3. 进行功能测试
-
-## 风险与挑战
-目前项目进展顺利，暂无重大风险。
-
-## 总结
-项目按计划推进，预计能够按时完成既定目标。`;
-
-        this.uploadedDocument = {
-            name: 'sample_document.txt',
-            content: sampleContent,
-            size: sampleContent.length
-        };
-
-        this.updateUploadStatus('sample_document.txt (示例文档)');
-        this.updateStepStatus(2, true);
-        this.checkReadyToProcess();
-
-        console.log('✅ 使用示例文档');
-    }
 
     updateUploadStatus(fileName) {
         const uploadArea = document.getElementById('format-document-upload-area');
@@ -3807,6 +3835,9 @@ class FormatAlignmentManager {
             this.updateStepStatus(4, true);
             this.showProgress();
 
+            // 显示详细的进度提示
+            this.updateProgressText('正在准备文件上传...');
+
             // 步骤1: 准备上传文件
             const uploadFormData = new FormData();
             const blob = new Blob([this.uploadedDocument.content], { type: 'text/plain' });
@@ -3818,10 +3849,17 @@ class FormatAlignmentManager {
                 uploadFormData.append('files', templateBlob, this.uploadedTemplateDocument.name);
             }
 
+            // 使用AbortController来控制超时
+            const uploadController = new AbortController();
+            const uploadTimeoutId = setTimeout(() => uploadController.abort(), 60000); // 1分钟超时
+
             const uploadResponse = await fetch('/api/format-alignment/upload', {
                 method: 'POST',
-                body: uploadFormData
+                body: uploadFormData,
+                signal: uploadController.signal
             });
+
+            clearTimeout(uploadTimeoutId);
 
             if (!uploadResponse.ok) {
                 throw new Error('文件上传失败');
@@ -3834,6 +3872,9 @@ class FormatAlignmentManager {
 
             const uploadId = uploadResult.data.upload_id;
             console.log('✅ 文件上传成功，upload_id:', uploadId);
+
+            // 更新进度提示
+            this.updateProgressText('正在进行格式对齐处理...');
 
             // 步骤2: 根据模式调用不同的处理API
             let formatInstruction = '';
@@ -3855,7 +3896,8 @@ class FormatAlignmentManager {
                     upload_id: uploadId,
                     format_instruction: formatInstruction,
                     options: processOptions
-                })
+                }),
+                timeout: 120000  // 2分钟超时，格式对齐可能需要较长时间
             });
 
             if (processResponse.code === 0) {
@@ -3870,7 +3912,22 @@ class FormatAlignmentManager {
 
         } catch (error) {
             console.error('❌ 格式对齐失败:', error);
-            errorHandler.createNotification('格式对齐失败: ' + error.message, 'error');
+
+            // 重置步骤状态
+            this.updateStepStatus(4, false);
+            this.updateStepStatus(5, false);
+
+            // 根据错误类型提供更友好的错误信息
+            let errorMessage = '格式对齐失败';
+            if (error.name === 'AbortError') {
+                errorMessage = '请求超时，请检查网络连接或稍后重试';
+            } else if (error.message.includes('上传失败')) {
+                errorMessage = '文件上传失败，请检查文件格式或网络连接';
+            } else if (error.message) {
+                errorMessage = '格式对齐失败: ' + error.message;
+            }
+
+            errorHandler.createNotification(errorMessage, 'error');
         } finally {
             this.hideProgress();
         }
@@ -3943,6 +4000,13 @@ class FormatAlignmentManager {
         const progressContainer = document.getElementById('format-progress-container');
         if (progressContainer) {
             progressContainer.style.display = 'none';
+        }
+    }
+
+    updateProgressText(text) {
+        const progressText = document.querySelector('#format-progress-container .progress-text');
+        if (progressText) {
+            progressText.textContent = text;
         }
     }
 
@@ -4128,6 +4192,19 @@ class DocumentReviewManager {
         console.log('✅ 文档审查管理器初始化完成');
     }
 
+    async initialize() {
+        // 重新初始化方法，用于场景切换时调用
+        console.log('🔄 重新初始化文档审查管理器...');
+
+        // 重新加载模板
+        await this.loadReviewTemplates();
+
+        // 重新初始化模式选择
+        this.initializeModeSelection();
+
+        console.log('✅ 文档审查管理器重新初始化完成');
+    }
+
     initializeModeSelection() {
         // 设置默认模式为预设模板审查
         this.reviewMode = 'preset';
@@ -4205,6 +4282,15 @@ class DocumentReviewManager {
                 this.handleTemplateSelection(e.target.closest('.template-card'));
             }
         });
+
+        // 重置按钮
+        const resetButton = document.querySelector('[data-action="reset_review"]');
+        if (resetButton) {
+            resetButton.addEventListener('click', () => {
+                console.log('🔄 重置文档审查');
+                self.resetReview();
+            });
+        }
     }
 
     async loadReviewTemplates() {
@@ -4359,20 +4445,45 @@ class DocumentReviewManager {
     }
 
     handleTabSwitch(button) {
+        console.log('🔄 文档审查标签页切换:', button.dataset.tab);
+
         // 移除所有活动状态
         document.querySelectorAll('#scene-review .tab-button').forEach(btn => {
             btn.classList.remove('active');
+            console.log('❌ 移除标签按钮活动状态:', btn.dataset.tab);
         });
         document.querySelectorAll('#scene-review .tab-pane').forEach(pane => {
             pane.classList.remove('active');
+            console.log('❌ 移除标签页活动状态:', pane.id);
         });
 
         // 激活当前标签
         button.classList.add('active');
-        const tabId = button.dataset.tab + '-tab';
+        const tabId = 'review-' + button.dataset.tab + '-tab';
         const tabContent = document.getElementById(tabId);
+        console.log('🎯 目标标签页ID:', tabId);
+        console.log('🎯 目标标签页元素:', tabContent);
+
         if (tabContent) {
             tabContent.classList.add('active');
+            console.log('✅ 激活标签页:', tabId);
+
+            // 调试：检查元素的实际样式
+            const computedStyle = window.getComputedStyle(tabContent);
+            console.log('🔍 标签页计算样式 display:', computedStyle.display);
+            console.log('🔍 标签页计算样式 visibility:', computedStyle.visibility);
+            console.log('🔍 标签页计算样式 opacity:', computedStyle.opacity);
+
+            // 检查父元素的样式
+            const parentElement = tabContent.parentElement;
+            if (parentElement) {
+                const parentStyle = window.getComputedStyle(parentElement);
+                console.log('🔍 父元素类名:', parentElement.className);
+                console.log('🔍 父元素计算样式 display:', parentStyle.display);
+                console.log('🔍 父元素计算样式 visibility:', parentStyle.visibility);
+            }
+        } else {
+            console.log('❌ 未找到目标标签页:', tabId);
         }
     }
 
@@ -4438,8 +4549,14 @@ class DocumentReviewManager {
     }
 
     async getReviewContent() {
+        console.log('🔍 开始获取审查内容...');
+
         // 优先从文本输入框获取内容
         const textInput = document.getElementById('review-content-text');
+        console.log('📝 文本输入框元素:', textInput);
+        console.log('📝 文本输入框值:', textInput?.value);
+        console.log('📝 文本输入框是否可见:', textInput?.offsetParent !== null);
+
         if (textInput && textInput.value && textInput.value.trim()) {
             console.log('📝 从文本输入框获取审查内容');
             return textInput.value.trim();
@@ -4447,6 +4564,10 @@ class DocumentReviewManager {
 
         // 然后检查文件上传
         const fileInput = document.getElementById('upload-review-content-file');
+        console.log('📁 文件输入框元素:', fileInput);
+        console.log('📁 文件输入框文件数量:', fileInput?.files?.length);
+        console.log('📁 文件输入框是否可见:', fileInput?.offsetParent !== null);
+
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
             const file = fileInput.files[0];
             try {
@@ -4458,6 +4579,7 @@ class DocumentReviewManager {
             }
         }
 
+        console.log('❌ 未找到任何审查内容');
         throw new Error('请在文本框中输入内容或上传文件');
     }
 
@@ -4588,6 +4710,67 @@ class DocumentReviewManager {
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/\n/g, '<br>');
+    }
+
+    resetReview() {
+        // @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: reset_review
+        console.log('🔄 开始重置文档审查...');
+
+        // 重置模式选择
+        this.reviewMode = 'preset';
+        this.selectedTemplate = null;
+
+        // 重置模式选择UI
+        this.updateModeSelectionUI('preset');
+
+        // 清空文本输入框
+        const textInput = document.getElementById('review-content-text');
+        if (textInput) {
+            textInput.value = '';
+        }
+
+        // 清空自定义审查要求
+        const customInput = document.getElementById('custom-review-requirements');
+        if (customInput) {
+            customInput.value = '';
+        }
+
+        // 重置文件上传
+        const fileInput = document.getElementById('upload-review-content-file');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        // 重置文件上传显示
+        const uploadText = document.querySelector('#review-content-upload .file-upload-text');
+        if (uploadText) {
+            uploadText.textContent = '点击或拖拽上传文档文件';
+        }
+
+        // 隐藏结果区域
+        const resultArea = document.getElementById('review-result-area');
+        if (resultArea) {
+            resultArea.style.display = 'none';
+        }
+
+        // 清空结果内容
+        const resultContent = document.getElementById('review-result-content');
+        if (resultContent) {
+            resultContent.innerHTML = '';
+        }
+
+        // 重置标签页到文本输入
+        const textTab = document.querySelector('#scene-review [data-tab="text-input"]');
+        if (textTab) {
+            this.handleTabSwitch(textTab);
+        }
+
+        // 重置模板选择
+        document.querySelectorAll('#review-templates-container .template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+
+        console.log('✅ 文档审查重置完成');
     }
 }
 
