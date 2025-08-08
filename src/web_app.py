@@ -848,20 +848,31 @@ def export_smart_fill_result():
 
         print("✅ 参数验证通过，开始处理...")
 
-        # 简化处理：创建一个示例内容
-        sample_content = f"""
-这是一个{result_type}的示例内容。
+        # 读取原始文件内容
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        original_file_path = os.path.join(temp_dir, filename)
 
-原始文件名: {filename}
-导出格式: {format_type}
-生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-这是第一段内容。
-
-这是第二段内容。
-
-这是第三段内容。
-        """.strip()
+        content = ""
+        if os.path.exists(original_file_path):
+            try:
+                if filename.endswith('.docx'):
+                    # 读取Word文档内容
+                    from docx import Document
+                    doc = Document(original_file_path)
+                    content = '\n'.join([paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip()])
+                elif filename.endswith('.txt'):
+                    # 读取文本文件内容
+                    with open(original_file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                else:
+                    content = f"无法读取文件格式: {filename}"
+            except Exception as e:
+                print(f"❌ 读取原始文件失败: {e}")
+                content = f"读取原始文件失败: {str(e)}"
+        else:
+            print(f"❌ 原始文件不存在: {original_file_path}")
+            content = f"原始文件不存在: {filename}"
 
         # 生成新格式文件
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -884,7 +895,7 @@ def export_smart_fill_result():
                 doc.add_heading(title, 0)
 
                 # 添加内容
-                paragraphs = sample_content.split('\n\n')
+                paragraphs = content.split('\n\n')
                 for paragraph in paragraphs:
                     if paragraph.strip():
                         doc.add_paragraph(paragraph.strip())
@@ -924,7 +935,7 @@ def export_smart_fill_result():
                 story.append(Spacer(1, 12))
 
                 # 添加内容
-                paragraphs = sample_content.split('\n\n')
+                paragraphs = content.split('\n\n')
                 for paragraph in paragraphs:
                     if paragraph.strip():
                         # 处理特殊字符
@@ -951,7 +962,7 @@ def export_smart_fill_result():
             # TXT格式
             try:
                 with open(new_file_path, 'w', encoding='utf-8') as f:
-                    f.write(sample_content)
+                    f.write(content)
                 print(f"✅ TXT文件生成成功")
             except Exception as e:
                 print(f"❌ TXT生成失败: {e}")
@@ -1456,6 +1467,12 @@ def format_alignment_download(task_id):
             if file_format == 'docx':
                 # 生成Word格式文件
                 return generate_word_document(formatted_content, task_id)
+            elif file_format == 'html':
+                # 生成HTML格式文件
+                return generate_html_document(formatted_content, task_id)
+            elif file_format == 'pdf':
+                # 生成PDF格式文件
+                return generate_pdf_document(formatted_content, task_id)
             else:
                 # 默认生成文本文件
                 response = make_response(formatted_content)
@@ -1529,6 +1546,195 @@ def generate_word_document(content, task_id):
         response.headers['Content-Type'] = 'text/plain; charset=utf-8'
         response.headers['Content-Disposition'] = f'attachment; filename=formatted_document_{task_id}.txt'
         return response
+    except Exception as e:
+        # 出错时回退到文本格式
+        response = make_response(content)
+        response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+        response.headers['Content-Disposition'] = f'attachment; filename=formatted_document_{task_id}.txt'
+        return response
+
+def generate_html_document(content, task_id):
+    """生成HTML文档"""
+    try:
+        # 将Markdown格式的内容转换为HTML
+        html_content = markdown_to_html(content)
+
+        # 创建完整的HTML文档
+        full_html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>格式化文档</title>
+    <style>
+        body {{
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }}
+        h1, h2, h3, h4, h5, h6 {{
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }}
+        h1 {{ font-size: 2.5em; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
+        h2 {{ font-size: 2em; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }}
+        h3 {{ font-size: 1.5em; }}
+        p {{ margin-bottom: 15px; text-align: justify; }}
+        ul, ol {{ margin-bottom: 15px; padding-left: 30px; }}
+        li {{ margin-bottom: 5px; }}
+        .header {{ text-align: center; margin-bottom: 40px; }}
+        .footer {{ text-align: center; margin-top: 40px; color: #7f8c8d; font-size: 0.9em; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>格式化文档</h1>
+        <p>生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    </div>
+    <div class="content">
+        {html_content}
+    </div>
+    <div class="footer">
+        <p>由 aiDoc 智能文档处理系统生成</p>
+    </div>
+</body>
+</html>"""
+
+        # 创建响应
+        response = make_response(full_html)
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+        response.headers['Content-Disposition'] = f'attachment; filename=formatted_document_{task_id}.html'
+
+        return response
+
+    except Exception as e:
+        # 出错时回退到文本格式
+        response = make_response(content)
+        response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+        response.headers['Content-Disposition'] = f'attachment; filename=formatted_document_{task_id}.txt'
+        return response
+
+def markdown_to_html(content):
+    """将Markdown格式的内容转换为HTML"""
+    import re
+
+    # 简单的Markdown到HTML转换
+    html = content
+
+    # 转换标题
+    html = re.sub(r'^### (.*?)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+    html = re.sub(r'^## (.*?)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+    html = re.sub(r'^# (.*?)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+
+    # 转换段落
+    paragraphs = html.split('\n\n')
+    html_paragraphs = []
+
+    for para in paragraphs:
+        para = para.strip()
+        if para:
+            # 检查是否已经是HTML标签
+            if not (para.startswith('<') and para.endswith('>')):
+                # 处理列表
+                if para.startswith('- ') or para.startswith('* '):
+                    items = para.split('\n')
+                    list_html = '<ul>\n'
+                    for item in items:
+                        if item.strip().startswith(('- ', '* ')):
+                            list_html += f'<li>{item.strip()[2:]}</li>\n'
+                    list_html += '</ul>'
+                    html_paragraphs.append(list_html)
+                elif re.match(r'^\d+\. ', para):
+                    items = para.split('\n')
+                    list_html = '<ol>\n'
+                    for item in items:
+                        if re.match(r'^\d+\. ', item.strip()):
+                            list_html += f'<li>{re.sub(r"^\d+\. ", "", item.strip())}</li>\n'
+                    list_html += '</ol>'
+                    html_paragraphs.append(list_html)
+                else:
+                    # 普通段落
+                    html_paragraphs.append(f'<p>{para}</p>')
+            else:
+                html_paragraphs.append(para)
+
+    return '\n'.join(html_paragraphs)
+
+def generate_pdf_document(content, task_id):
+    """生成PDF文档"""
+    try:
+        # 尝试使用reportlab生成PDF
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        import io
+
+        # 创建PDF文档
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+        # 获取样式
+        styles = getSampleStyleSheet()
+
+        # 创建内容
+        story = []
+
+        # 添加标题
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            alignment=1  # 居中
+        )
+        story.append(Paragraph('格式化文档', title_style))
+        story.append(Spacer(1, 20))
+
+        # 处理内容
+        lines = content.split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line:
+                story.append(Spacer(1, 12))
+                continue
+
+            if line.startswith('###'):
+                style = styles['Heading3']
+                text = line[3:].strip()
+            elif line.startswith('##'):
+                style = styles['Heading2']
+                text = line[2:].strip()
+            elif line.startswith('#'):
+                style = styles['Heading1']
+                text = line[1:].strip()
+            else:
+                style = styles['Normal']
+                text = line
+
+            story.append(Paragraph(text, style))
+            story.append(Spacer(1, 6))
+
+        # 构建PDF
+        doc.build(story)
+
+        # 创建响应
+        buffer.seek(0)
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=formatted_document_{task_id}.pdf'
+
+        return response
+
+    except ImportError:
+        # 如果没有安装reportlab，回退到HTML格式
+        return generate_html_document(content, task_id)
     except Exception as e:
         # 出错时回退到文本格式
         response = make_response(content)

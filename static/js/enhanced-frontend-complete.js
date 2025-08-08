@@ -3529,10 +3529,14 @@ class FormatAlignmentManager {
             });
         }
 
-        // 导出格式选择
+        // 导出格式选择 - 只针对格式对齐模块
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.format-buttons .btn')) {
-                this.handleFormatSelection(e.target.closest('.btn'));
+            const formatScene = document.getElementById('scene-format');
+            if (formatScene && formatScene.contains(e.target)) {
+                const formatButton = e.target.closest('.format-buttons .btn');
+                if (formatButton) {
+                    this.handleFormatSelection(formatButton);
+                }
             }
         });
 
@@ -4044,8 +4048,14 @@ class FormatAlignmentManager {
     }
 
     handleFormatSelection(button) {
-        // 移除其他选中状态
-        document.querySelectorAll('.format-buttons .btn').forEach(btn => {
+        // 只处理格式对齐模块内的格式按钮
+        const formatScene = document.getElementById('scene-format');
+        if (!formatScene || !formatScene.contains(button)) {
+            return;
+        }
+
+        // 移除格式对齐模块内其他按钮的选中状态
+        formatScene.querySelectorAll('.format-buttons .btn').forEach(btn => {
             btn.classList.remove('btn-primary');
             btn.classList.add('btn-outline');
         });
@@ -4055,7 +4065,7 @@ class FormatAlignmentManager {
         button.classList.add('btn-primary');
 
         this.selectedExportFormat = button.dataset.format;
-        console.log('✅ 选择导出格式:', this.selectedExportFormat);
+        console.log('✅ 格式对齐模块选择导出格式:', this.selectedExportFormat);
     }
 
     async downloadFormattedDocument() {

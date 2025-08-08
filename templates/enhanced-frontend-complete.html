@@ -1389,27 +1389,8 @@
                     const format = selectedFormat ? selectedFormat.dataset.format : 'txt';
                     console.log('📄 选择的导出格式:', format);
 
-                    if (format === 'txt') {
-                        // 直接下载原文件
-                        try {
-                            const response = await fetch(currentFillResult.downloadUrl);
-                            if (response.ok) {
-                                const blob = await response.blob();
-                                const link = document.createElement('a');
-                                link.href = URL.createObjectURL(blob);
-                                link.download = currentFillResult.filename;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                URL.revokeObjectURL(link.href);
-                            } else {
-                                alert('文件下载失败，请重试');
-                            }
-                        } catch (error) {
-                            console.error('下载失败:', error);
-                            alert('文件下载失败: ' + error.message);
-                        }
-                    } else {
+                    // 所有格式都通过导出API处理，确保格式正确
+                    {
                         // DOCX和PDF格式导出
                         console.log('🔄 开始调用导出API');
                         try {
