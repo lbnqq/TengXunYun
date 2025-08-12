@@ -513,7 +513,7 @@ class SparkX1Client:
     # ==================== 文风统一专用方法 ====================
 
     def generate_with_style(self, prompt_instruction: str, user_id: str = "user_style_transfer",
-                          temperature: float = 0.7, max_tokens: int = 3000, timeout: int = 120) -> str:
+                          temperature: float = 0.7, max_tokens: int = 3000, timeout: int = 60) -> str:
         """
         【AI文风统一】调用星火大模型 X1，生成指定风格文本
 
@@ -583,7 +583,7 @@ class SparkX1Client:
 
     def few_shot_generate(self, examples: List[str], content: str, style_description: str = "",
                          user_id: str = "user_few_shot", temperature: float = 0.7,
-                         max_tokens: int = 3000, timeout: int = 120) -> str:
+                         max_tokens: int = 3000, timeout: int = 60) -> str:
         """
         Few-Shot风格生成
 

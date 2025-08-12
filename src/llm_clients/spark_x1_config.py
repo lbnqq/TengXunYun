@@ -24,7 +24,7 @@ class SparkX1Config:
     # API配置
     api_password: str = None
     base_url: str = "https://spark-api-open.xf-yun.com/v2/chat/completions"
-    timeout: int = 120
+    timeout: int = 30
     max_retries: int = 3
     retry_delay: int = 1
     

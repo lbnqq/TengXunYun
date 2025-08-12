@@ -596,7 +596,7 @@ def export_style_result():
             }), 400
 
         # 验证格式类型
-        if format_type not in ['txt', 'docx']:
+        if format_type not in ['txt', 'docx', 'pdf']:
             return jsonify({
                 'success': False,
                 'error': f'不支持的导出格式: {format_type}'
@@ -839,7 +839,7 @@ def export_smart_fill_result():
             }), 400
 
         # 验证格式类型
-        if format_type not in ['docx']:
+        if format_type not in ['txt', 'docx', 'pdf']:
             print(f"❌ 不支持的格式: {format_type}")
             return jsonify({
                 'success': False,

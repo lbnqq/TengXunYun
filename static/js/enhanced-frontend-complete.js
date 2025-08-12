@@ -599,11 +599,9 @@ class UIManager {
     setupEventListeners() {
         // 导航事件
         document.querySelectorAll('.nav-item').forEach(item => {
-            console.log('🔗 绑定导航事件:', item.getAttribute('data-scene'));
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const sceneId = item.getAttribute('data-scene');
-                console.log('🎯 点击导航项:', sceneId);
                 if (sceneId === 'dashboard') {
                     window.open('/dashboard', '_blank');
                     return;
@@ -636,7 +634,7 @@ class UIManager {
         // 文风统一模块模式切换
         document.addEventListener('change', (e) => {
             if (e.target.name === 'style-mode') {
-                console.log('🔄 文风统一模式切换（单选按钮）:', e.target.value);
+                console.log('🔄 文风统一模式切换:', e.target.value);
                 this.handleStyleModeSwitch(e.target.value);
             }
         });
@@ -655,15 +653,17 @@ class UIManager {
 
                 const radioButton = modeOption.querySelector('input[type="radio"]');
 
-                // 更新单选按钮状态
-                if (radioButton) {
-                    radioButton.checked = true;
-                    console.log('✅ 单选按钮状态已更新');
+                // 检查是否需要切换模式（基于当前模式而不是单选按钮状态）
+                if (mode !== currentMode) {
+                    // 更新单选按钮状态
+                    if (radioButton) {
+                        radioButton.checked = true;
+                    }
+                    console.log('🔄 通过点击卡片切换文风统一模式:', mode);
+                    this.handleStyleModeSwitch(mode);
+                } else {
+                    console.log('ℹ️ 已经是当前文风统一模式，无需切换');
                 }
-
-                // 总是执行模式切换和界面重置，确保界面状态正确
-                console.log('🔄 通过点击卡片切换文风统一模式:', mode);
-                this.handleStyleModeSwitch(mode);
             }
         });
 
@@ -675,9 +675,6 @@ class UIManager {
     handleStyleModeSwitch(mode) {
         // @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: handle_style_mode_switch
         console.log('🔄 文风统一模式切换处理:', mode);
-
-        // 重置界面状态 - 清理之前的处理结果
-        this.resetStyleInterfaceState();
 
         const presetConfig = document.getElementById('style-preset-config');
         const fewShotConfig = document.getElementById('style-few-shot-config');
@@ -695,57 +692,6 @@ class UIManager {
 
         // 更新模式选择的视觉状态
         this.updateStyleModeSelectionUI(mode);
-    }
-
-    resetStyleInterfaceState() {
-        // @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: reset_style_interface_state
-        console.log('🔄 重置文风统一界面状态...');
-
-        // 清理当前结果数据
-        this.currentStyleResult = null;
-        console.log('✅ 已清理结果数据');
-
-        // 强制隐藏所有相关元素
-        const elementsToHide = [
-            'style-processing-area',
-            'style-export-area',
-            'style-completion-message'
-        ];
-
-        elementsToHide.forEach(elementId => {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.style.display = 'none';
-                element.style.visibility = 'hidden';
-                element.classList.add('hidden');
-                console.log(`✅ 已强制隐藏元素: ${elementId}`);
-            } else {
-                console.log(`⚠️ 未找到元素: ${elementId}`);
-            }
-        });
-
-        // 清理进度条定时器
-        if (this.progressInterval) {
-            clearInterval(this.progressInterval);
-            this.progressInterval = null;
-            console.log('✅ 已清理进度条定时器');
-        }
-
-        // 重置步骤导航到第一步
-        this.navigateToStep(1);
-        console.log('✅ 已重置步骤导航');
-
-        // 额外检查：确保步骤指示器正确重置
-        const stepItems = document.querySelectorAll('#scene-style .step-item');
-        stepItems.forEach((item, index) => {
-            item.classList.remove('active', 'completed');
-            if (index === 0) {
-                item.classList.add('active');
-            }
-        });
-        console.log('✅ 已重置步骤指示器');
-
-        console.log('✅ 文风统一界面状态重置完成');
     }
 
     updateStyleModeSelectionUI(mode) {
@@ -821,8 +767,6 @@ class UIManager {
     }
 
     switchScene(sceneId) {
-        console.log('🔄 切换场景:', sceneId);
-
         // 隐藏所有场景
         document.querySelectorAll('.scene-section').forEach(scene => {
             scene.classList.add('hidden');
@@ -830,12 +774,9 @@ class UIManager {
 
         // 显示目标场景
         const targetScene = document.getElementById(`scene-${sceneId}`);
-        console.log('🎯 目标场景元素:', targetScene);
-
         if (targetScene) {
             targetScene.classList.remove('hidden');
             this.currentScene = sceneId;
-            console.log('✅ 场景切换成功:', sceneId);
 
             // 根据场景初始化相关功能
             if (sceneId === 'style') {
@@ -845,8 +786,6 @@ class UIManager {
             } else if (sceneId === 'review') {
                 this.initializeReviewScene();
             }
-        } else {
-            console.error('❌ 未找到目标场景:', `scene-${sceneId}`);
         }
 
         // 更新导航状态
@@ -1292,21 +1231,16 @@ class UIManager {
     }
 
     async handleFormatAlignmentPreview(element) {
-        // 预览功能已取消，直接提示用户到导出处理结果中下载
         try {
+            // 获取最近的格式对齐任务ID
             const taskId = this.getLatestFormatAlignmentTaskId();
             if (!taskId) {
                 errorHandler.handleError(new Error('没有找到格式对齐任务，请先执行格式对齐'), 'validation');
                 return;
             }
 
-            console.log('🔍 格式对齐预览功能已取消，请到导出处理结果中下载');
-            errorHandler.createNotification('预览功能已取消，请到下方"导出处理结果"中下载文件', 'info');
-            // 滚动到导出处理结果部分
-            const exportSection = document.getElementById('format-export-results');
-            if (exportSection) {
-                exportSection.scrollIntoView({ behavior: 'smooth' });
-            }
+            console.log('🔍 预览格式对齐结果，任务ID:', taskId);
+            await this.handlePreviewResult(taskId);
         } catch (error) {
             errorHandler.handleError(error, 'preview');
         }
@@ -1391,10 +1325,6 @@ class UIManager {
 
     async handlePresetStyleGeneration(element) {
         try {
-            // 开始前清空上次结果并隐藏导出区，避免导出旧内容
-            this.currentStyleResult = null;
-            this.hideStyleExportSection();
-
             // 获取选中的风格
             const selectedStyle = document.querySelector('.style-card.selected');
             if (!selectedStyle) {
@@ -1428,9 +1358,6 @@ class UIManager {
 
             console.log('📤 发送请求数据:', requestData);
 
-            // 开始新的处理时，先隐藏之前的导出结果
-            this.hideStyleExportSection();
-
             // 显示进度
             this.showProcessingProgress();
             this.updateProcessingText('正在生成预设风格内容...');
@@ -1443,45 +1370,24 @@ class UIManager {
             });
 
             if (result.success) {
-                // 验证生成的内容是否有效
-                if (result.generated_content && result.generated_content.trim()) {
-                    // 直接跳过预览，显示完成提示和导出选项
-                    this.showStyleCompletionAndExport(result, content);
-                    this.navigateToStep(4);
-                } else {
-                    this.hideProcessingProgress();
-                    this.hideStyleExportSection();
-                    this.hideStyleCompletionMessage();
-                    errorHandler.handleError(new Error('生成的内容为空，请重试'), 'api');
-                }
+                this.showStyleResult(result, content);
+                this.navigateToStep(4);
             } else {
                 this.hideProcessingProgress();
-                this.hideStyleExportSection();
-                this.hideStyleCompletionMessage();
                 errorHandler.handleError(new Error(result.error || '风格生成失败'), 'api');
             }
 
         } catch (error) {
             this.hideProcessingProgress();
-            // 处理失败时也要隐藏导出结果和完成提示
-            this.hideStyleExportSection();
-            this.hideStyleCompletionMessage();
-
             console.error('❌ 预设风格生成失败:', error);
 
             // 根据错误类型提供更友好的错误信息
             let errorMessage = '预设风格生成失败';
             let context = 'preset_style_generation';
 
-            if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('超时')) {
-                errorMessage = '处理超时，技术文档风格生成需要较长时间，请稍后重试';
+            if (error.name === 'AbortError') {
+                errorMessage = '请求超时，风格生成需要较长时间，请检查网络连接或稍后重试';
                 context = 'network_timeout';
-            } else if (error.message && error.message.includes('Read timed out')) {
-                errorMessage = 'AI服务响应超时，请稍后重试或选择其他风格模板';
-                context = 'api_timeout';
-            } else if (error.message && error.message.includes('HTTPSConnectionPool')) {
-                errorMessage = 'AI服务连接超时，请检查网络连接后重试';
-                context = 'connection_timeout';
             } else if (error.message && error.message.includes('文件读取')) {
                 errorMessage = '文件读取失败，请检查文件格式';
                 context = 'file_reading';
@@ -1505,31 +1411,6 @@ class UIManager {
                 return;
             }
 
-            // 验证文件格式 - 只允许TXT格式
-            const fileExtension = '.' + referenceFile.name.split('.').pop().toLowerCase();
-            if (fileExtension !== '.txt') {
-                errorHandler.handleError(new Error('参考文档只支持TXT格式，请上传.txt文件'), 'validation');
-                return;
-            }
-
-            // 验证文件MIME类型
-            if (referenceFile.type && !referenceFile.type.startsWith('text/')) {
-                errorHandler.handleError(new Error('文件类型不正确，请确保上传的是纯文本文件'), 'validation');
-                return;
-            }
-
-            // 验证文件大小
-            const maxSize = 10 * 1024 * 1024; // 10MB
-            if (referenceFile.size > maxSize) {
-                errorHandler.handleError(new Error('文件大小不能超过10MB'), 'validation');
-                return;
-            }
-
-            if (referenceFile.size === 0) {
-                errorHandler.handleError(new Error('文件为空，请选择有效的TXT文件'), 'validation');
-                return;
-            }
-
             // 获取内容
             const content = await this.getInputContent();
             if (!content) {
@@ -1544,9 +1425,6 @@ class UIManager {
             const targetDescription = document.getElementById('style-description')?.value || '';
             const temperature = parseFloat(document.getElementById('few-shot-temperature')?.value || '0.7');
             const language = document.getElementById('style-language')?.value || 'auto';
-
-            // 开始新的处理时，先隐藏之前的导出结果
-            this.hideStyleExportSection();
 
             // 显示进度
             this.showProcessingProgress();
@@ -1566,8 +1444,7 @@ class UIManager {
             });
 
             if (result.success) {
-                // 直接跳过预览，显示完成提示和导出选项
-                this.showStyleCompletionAndExport(result, content);
+                this.showStyleResult(result, content);
                 this.navigateToStep(4);
             } else {
                 this.hideProcessingProgress();
@@ -1576,10 +1453,6 @@ class UIManager {
 
         } catch (error) {
             this.hideProcessingProgress();
-            // 处理失败时也要隐藏导出结果和完成提示
-            this.hideStyleExportSection();
-            this.hideStyleCompletionMessage();
-
             console.error('❌ Few-Shot风格迁移失败:', error);
 
             // 根据错误类型提供更友好的错误信息
@@ -1657,19 +1530,6 @@ class UIManager {
                         return;
                     }
 
-                    // 验证内容是否为纯文本（检查是否包含二进制字符）
-                    if (typeof content !== 'string') {
-                        reject(new Error('文件内容格式不正确，请确保是纯文本文件'));
-                        return;
-                    }
-
-                    // 检查是否包含过多的控制字符（可能是二进制文件）
-                    const controlCharCount = (content.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g) || []).length;
-                    if (controlCharCount > content.length * 0.01) { // 如果控制字符超过1%，可能不是纯文本
-                        reject(new Error('文件可能不是纯文本格式，请上传标准的TXT文件'));
-                        return;
-                    }
-
                     resolve(content.trim());
                 } catch (error) {
                     reject(new Error(`文件解析失败: ${error.message}`));
@@ -1706,9 +1566,6 @@ class UIManager {
         const processingArea = document.getElementById('style-processing-area');
         if (processingArea) {
             processingArea.style.display = 'block';
-            processingArea.style.visibility = 'visible';
-            processingArea.classList.remove('hidden');
-            console.log('✅ 已显示处理进度区域');
         }
 
         // 重置进度
@@ -1960,229 +1817,39 @@ class UIManager {
     }
 
     showStyleResult(result, originalContent) {
-        // 保留原方法以防其他地方调用，但现在使用新的方法
-        this.showStyleCompletionAndExport(result, originalContent);
-    }
-
-    showStyleCompletionAndExport(result, originalContent) {
         // 清理进度模拟
         if (this.progressInterval) {
             clearInterval(this.progressInterval);
         }
 
-        // 验证生成内容的有效性
-        if (!result.generated_content || !result.generated_content.trim()) {
-            console.error('❌ 生成的内容为空或无效');
-            this.hideProcessingProgress();
-            this.hideStyleExportSection();
-            this.hideStyleCompletionMessage();
-            errorHandler.handleError(new Error('生成的内容为空，请重试'), 'content_validation');
-            return;
-        }
-
-        // 检查生成内容是否包含错误信息
-        const generatedContent = result.generated_content.trim();
-        if (generatedContent.includes('[错误]') || generatedContent.includes('API 请求失败') ||
-            generatedContent.includes('超时') || generatedContent.length < 10) {
-            console.error('❌ 生成的内容包含错误信息:', generatedContent);
-            this.hideProcessingProgress();
-            this.hideStyleExportSection();
-            this.hideStyleCompletionMessage();
-            errorHandler.handleError(new Error('AI生成失败，请重试'), 'content_validation');
-            return;
-        }
-
         // 完成进度
         this.updateStyleProgress(100, '处理完成');
 
-        // 存储结果数据
-        this.currentStyleResult = {
-            original: originalContent,
-            generated: result.generated_content,
-            taskId: result.task_id,
-            styleName: result.style_name,
-            comparison: result.comparison,
-            language: result.language
-        };
-
-        console.log('✅ 文风统一处理成功，生成内容长度:', generatedContent.length);
-
-        // 延迟显示完成提示和导出选项
+        // 隐藏进度区域，显示结果区域
         setTimeout(() => {
-            // 显示完成提示
-            this.showStyleCompletionMessage();
+            this.hideProcessingProgress();
 
-            // 显示导出选项
-            this.showStyleExportSection();
+            const resultArea = document.getElementById('style-result-area');
+            if (resultArea) {
+                resultArea.style.display = 'block';
 
-            errorHandler.createNotification('文风统一完成，请选择导出格式', 'success');
+                // 存储结果数据
+                this.currentStyleResult = {
+                    original: originalContent,
+                    generated: result.generated_content,
+                    taskId: result.task_id,
+                    styleName: result.style_name,
+                    comparison: result.comparison,
+                    language: result.language
+                };
+
+                // 显示对比内容
+                this.displayStyleComparison();
+
+                // 初始化撤销/重做功能
+                this.initializeUndoRedo();
+            }
         }, 1000);
-    }
-
-    showStyleCompletionMessage() {
-        // 显示文风统一完成提示
-        const completionMessage = document.getElementById('style-completion-message');
-        if (completionMessage) {
-            completionMessage.style.display = 'block';
-            completionMessage.style.visibility = 'visible';
-            completionMessage.classList.remove('hidden');
-            console.log('✅ 已显示完成提示消息');
-        }
-    }
-
-    hideStyleCompletionMessage() {
-        // 隐藏文风统一完成提示
-        const completionMessage = document.getElementById('style-completion-message');
-        if (completionMessage) {
-            completionMessage.style.display = 'none';
-        }
-    }
-
-    showStyleExportSection() {
-        // 显示文风统一导出选项并初始化事件绑定
-        const exportArea = document.getElementById('style-export-area');
-        if (exportArea) {
-            exportArea.style.display = 'block';
-            exportArea.style.visibility = 'visible';
-            exportArea.classList.remove('hidden');
-            console.log('✅ 已显示导出选项区域');
-
-            // 初始化导出按钮事件绑定
-            this.initializeStyleExportButtons();
-        }
-    }
-
-    initializeStyleExportButtons() {
-        // 初始化文风统一导出按钮的事件绑定
-        const confirmButton = document.getElementById('confirm-export');
-        const backButton = document.getElementById('back-to-result');
-
-        if (confirmButton) {
-            // 移除之前的事件监听器，避免重复绑定
-            confirmButton.onclick = null;
-            confirmButton.onclick = () => {
-                const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value;
-                if (selectedFormat) {
-                    // 调用原有的导出函数
-                    performExport(selectedFormat);
-                } else {
-                    errorHandler.createNotification('请选择导出格式', 'warning');
-                }
-            };
-        }
-
-        if (backButton) {
-            backButton.onclick = null;
-            backButton.onclick = () => {
-                // 返回按钮功能已取消，因为我们不再有预览界面
-                errorHandler.createNotification('已完成处理，请选择导出格式', 'info');
-            };
-        }
-    }
-
-
-
-    hideStyleExportSection() {
-        // 隐藏文风统一导出选项，避免显示上一次的结果
-        const exportArea = document.getElementById('style-export-area');
-        if (exportArea) {
-            exportArea.style.display = 'none';
-        }
-    }
-
-    async handleReferenceDocumentUpload(file) {
-        if (!file) return;
-
-        try {
-            console.log('📄 上传参考文档:', file.name);
-
-            // 验证文件格式 - 只允许TXT格式
-            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            if (fileExtension !== '.txt') {
-                errorHandler.createNotification('参考文档只支持TXT格式，请上传.txt文件', 'error');
-                // 清空文件输入
-                const input = document.getElementById('upload-reference-doc');
-                if (input) input.value = '';
-                return;
-            }
-
-            // 验证文件MIME类型
-            if (file.type && !file.type.startsWith('text/')) {
-                errorHandler.createNotification('文件类型不正确，请确保上传的是纯文本文件', 'error');
-                // 清空文件输入
-                const input = document.getElementById('upload-reference-doc');
-                if (input) input.value = '';
-                return;
-            }
-
-            // 验证文件大小
-            const maxSize = 10 * 1024 * 1024; // 10MB
-            if (file.size > maxSize) {
-                errorHandler.createNotification('文件大小不能超过10MB', 'error');
-                const input = document.getElementById('upload-reference-doc');
-                if (input) input.value = '';
-                return;
-            }
-
-            if (file.size === 0) {
-                errorHandler.createNotification('文件为空，请选择有效的TXT文件', 'error');
-                const input = document.getElementById('upload-reference-doc');
-                if (input) input.value = '';
-                return;
-            }
-
-            // 读取文件内容
-            const content = await this.readFileContent(file);
-
-            // 验证内容不为空
-            if (!content.trim()) {
-                errorHandler.createNotification('文件内容为空，请选择包含文本内容的TXT文件', 'error');
-                const input = document.getElementById('upload-reference-doc');
-                if (input) input.value = '';
-                return;
-            }
-
-            // 存储参考文档信息
-            this.uploadedReferenceDocument = {
-                name: file.name,
-                content: content,
-                size: file.size
-            };
-
-            // 更新UI显示
-            this.updateReferenceDocUploadStatus(file.name);
-
-            errorHandler.createNotification('参考文档上传成功', 'success');
-            console.log('✅ 参考文档上传成功');
-
-        } catch (error) {
-            console.error('❌ 参考文档上传失败:', error);
-            errorHandler.createNotification('参考文档上传失败: ' + error.message, 'error');
-            // 清空文件输入
-            const input = document.getElementById('upload-reference-doc');
-            if (input) input.value = '';
-        }
-    }
-
-    updateReferenceDocUploadStatus(fileName) {
-        // 更新上传区域的显示状态
-        const uploadArea = document.getElementById('reference-doc-upload');
-        if (uploadArea) {
-            const uploadText = uploadArea.querySelector('.file-upload-text');
-            const uploadHint = uploadArea.querySelector('.file-upload-hint');
-
-            if (uploadText) {
-                uploadText.textContent = `已上传: ${fileName}`;
-                uploadText.style.color = '#10b981';
-            }
-
-            if (uploadHint) {
-                uploadHint.textContent = '✅ TXT格式参考文档已就绪';
-                uploadHint.style.color = '#10b981';
-            }
-
-            uploadArea.classList.add('file-uploaded');
-        }
     }
 
     displayStyleComparison() {
@@ -3585,20 +3252,15 @@ class FormatAlignmentManager {
     }
 
     async initialize() {
-        console.log('🎯 ===== 开始初始化格式对齐管理器 =====');
-        console.log('🎯 initialize方法被调用');
+        console.log('🎯 初始化格式对齐管理器...');
 
         // 加载模板（每次都重新加载以确保最新数据）
         await this.loadFormatTemplates();
 
         // 只在第一次初始化时绑定事件
         if (!this.eventsBound) {
-            console.log('🔗 准备绑定事件...');
             this.bindEvents();
             this.eventsBound = true;
-            console.log('✅ 事件绑定完成');
-        } else {
-            console.log('⚠️ 事件已经绑定过，跳过绑定');
         }
 
         // 初始化界面
@@ -3760,8 +3422,7 @@ class FormatAlignmentManager {
 
     bindEvents() {
         // @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: fix_mode_switch
-        console.log('🔗 ===== 开始绑定格式对齐模块事件 =====');
-        console.log('🔗 bindEvents方法被调用');
+        console.log('🔗 绑定格式对齐模块事件...');
 
         // 保存this引用
         const self = this;
@@ -3835,14 +3496,6 @@ class FormatAlignmentManager {
             });
         }
 
-        // 文风统一模块 - Few-Shot参考文档上传事件
-        const referenceDocInput = document.getElementById('upload-reference-doc');
-        if (referenceDocInput) {
-            referenceDocInput.addEventListener('change', (e) => {
-                self.handleReferenceDocumentUpload(e.target.files[0]);
-            });
-        }
-
         // 标签页切换事件
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('tab-button')) {
@@ -3860,23 +3513,6 @@ class FormatAlignmentManager {
             });
         }
 
-        // 清空内容按钮 - 格式对齐模块专用
-        const clearFormatBtn = document.getElementById('clear-format-content');
-        if (clearFormatBtn) {
-            console.log('✅ 找到清空内容按钮，正在绑定事件...');
-            clearFormatBtn.addEventListener('click', () => {
-                console.log('🖱️ 清空内容按钮被点击');
-                if (confirm('确定要清空所有内容吗？')) {
-                    console.log('✅ 用户确认清空内容');
-                    this.clearFormatContent();
-                } else {
-                    console.log('❌ 用户取消清空操作');
-                }
-            });
-        } else {
-            console.log('❌ 未找到清空内容按钮元素: clear-format-content');
-        }
-
         // 下载按钮
         const downloadBtn = document.getElementById('download-formatted-document');
         if (downloadBtn) {
@@ -3884,8 +3520,6 @@ class FormatAlignmentManager {
                 this.downloadFormattedDocument();
             });
         }
-
-        // 移除格式对齐导出按钮事件绑定，因为已删除该按钮
 
         // 重新开始按钮
         const restartBtn = document.getElementById('restart-format-process');
@@ -4202,16 +3836,6 @@ class FormatAlignmentManager {
 
         try {
             console.log('🚀 开始格式对齐...');
-
-            // 开始新的格式对齐时，先隐藏之前的导出结果和完成提示
-            this.hideExportSection();
-
-            // 隐藏步骤4的完成提示，因为要开始新的处理
-            const previewBlock = document.getElementById('format-comparison-preview');
-            if (previewBlock) {
-                previewBlock.style.display = 'none';
-            }
-
             this.updateStepStatus(4, true);
             this.showProgress();
 
@@ -4282,20 +3906,10 @@ class FormatAlignmentManager {
 
             if (processResponse.code === 0) {
                 this.currentTaskId = processResponse.data.task_id;
-                // 直接跳过预览，显示导出选项
-                this.updateStepStatus(4, true);
+                await this.showComparisonResult(processResponse.data);
+                this.updateStepStatus(5, true);
                 this.showExportSection();
-                // 隐藏对比预览容器
-                const comparisonContainer = document.getElementById('format-comparison-container');
-                if (comparisonContainer) {
-                    comparisonContainer.style.display = 'none';
-                }
-                // 显示完成提示
-                const previewBlock = document.getElementById('format-comparison-preview');
-                if (previewBlock) {
-                    previewBlock.style.display = 'block';
-                }
-                errorHandler.createNotification('格式对齐完成，请在导出处理结果中下载', 'success');
+                errorHandler.createNotification('格式对齐完成', 'success');
             } else {
                 throw new Error(processResponse.message || '格式对齐失败');
             }
@@ -4306,15 +3920,6 @@ class FormatAlignmentManager {
             // 重置步骤状态
             this.updateStepStatus(4, false);
             this.updateStepStatus(5, false);
-
-            // 隐藏导出部分，因为处理失败了
-            this.hideExportSection();
-
-            // 隐藏步骤4的完成提示
-            const previewBlock = document.getElementById('format-comparison-preview');
-            if (previewBlock) {
-                previewBlock.style.display = 'none';
-            }
 
             // 根据错误类型提供更友好的错误信息
             let errorMessage = '格式对齐失败';
@@ -4436,36 +4041,9 @@ class FormatAlignmentManager {
     }
 
     showExportSection() {
-        // 显示原有的导出处理结果部分
         const exportSection = document.getElementById('format-export-results');
         if (exportSection) {
             exportSection.style.display = 'block';
-        }
-
-        const downloadBtn = document.getElementById('download-formatted-document');
-        if (downloadBtn) {
-            downloadBtn.disabled = false;
-        }
-    }
-
-    hideExportSection() {
-        // 隐藏导出处理结果部分，避免显示上一次的结果
-        console.log('🔒 隐藏导出选项...');
-
-        const exportSection = document.getElementById('format-export-results');
-        if (exportSection) {
-            exportSection.style.display = 'none';
-            console.log('✅ 已隐藏导出结果区域');
-        } else {
-            console.log('⚠️ 未找到导出结果区域');
-        }
-
-        const downloadBtn = document.getElementById('download-formatted-document');
-        if (downloadBtn) {
-            downloadBtn.disabled = true;
-            console.log('✅ 已禁用下载按钮');
-        } else {
-            console.log('⚠️ 未找到下载按钮');
         }
     }
 
@@ -4570,115 +4148,6 @@ class FormatAlignmentManager {
         if (exportSection) exportSection.style.display = 'none';
     }
 
-    clearFormatContent() {
-        // 清空格式对齐模块的所有内容和状态
-        console.log('🗑️ ===== 开始执行清空格式对齐模块内容 =====');
-        console.log('🗑️ clearFormatContent方法被调用');
-
-        // 清空文件上传
-        const documentInput = document.getElementById('upload-format-document');
-        if (documentInput) {
-            documentInput.value = '';
-        }
-
-        // 清空格式模板文档（Few-Shot模式）
-        const templateInput = document.getElementById('upload-format-template');
-        if (templateInput) {
-            templateInput.value = '';
-        }
-
-        // 清空格式描述
-        const descInput = document.getElementById('format-description');
-        if (descInput) {
-            descInput.value = '';
-        }
-
-        // 重置文件上传区域的显示文本
-        const uploadText = document.querySelector('#format-document-upload-area .file-upload-text');
-        if (uploadText) {
-            uploadText.textContent = '点击或拖拽上传待处理文档';
-        }
-
-        const templateUploadText = document.querySelector('#format-template-upload .file-upload-text');
-        if (templateUploadText) {
-            templateUploadText.textContent = '点击或拖拽上传格式模板文档';
-        }
-
-        // 重置内部状态
-        this.uploadedDocument = null;
-        this.uploadedTemplateDocument = null;
-        this.selectedTemplate = null;
-        this.currentTaskId = null;
-
-        // 强制隐藏所有处理进度和导出相关的元素
-        console.log('🗑️ 开始隐藏处理进度和导出选项...');
-
-        // 隐藏处理进度区域
-        const comparisonBlock = document.getElementById('format-comparison-preview');
-        if (comparisonBlock) {
-            comparisonBlock.style.display = 'none';
-            console.log('✅ 已隐藏处理进度区域');
-        } else {
-            console.log('⚠️ 未找到处理进度区域元素');
-        }
-
-        // 隐藏导出选项区域
-        this.hideExportSection();
-
-        // 确保导出结果区域也被隐藏
-        const exportResultsBlock = document.getElementById('format-export-results');
-        if (exportResultsBlock) {
-            exportResultsBlock.style.display = 'none';
-            console.log('✅ 已隐藏导出结果区域');
-        } else {
-            console.log('⚠️ 未找到导出结果区域元素');
-        }
-
-        // 强制隐藏所有可能的导出相关元素
-        const allExportElements = [
-            'format-export-results',
-            'format-comparison-preview',
-            'format-progress-container',
-            'format-comparison-container'
-        ];
-
-        allExportElements.forEach(elementId => {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.style.display = 'none';
-                console.log(`✅ 已隐藏元素: ${elementId}`);
-            }
-        });
-
-        // 重置步骤状态
-        this.updateStepStatus(1, true);
-        this.updateStepStatus(2, false);
-        this.updateStepStatus(3, false);
-        this.updateStepStatus(4, false);
-
-        // 禁用开始按钮
-        const startBtn = document.getElementById('start-format-alignment');
-        if (startBtn) {
-            startBtn.disabled = true;
-        }
-
-        // 重置模式选择到预设模式
-        const presetRadio = document.getElementById('format-mode-preset');
-        if (presetRadio) {
-            presetRadio.checked = true;
-            this.currentMode = 'preset';
-            this.updateModeSelectionUI('preset');
-        }
-
-        // 显示预设配置，隐藏Few-Shot配置
-        const presetConfig = document.getElementById('format-preset-config');
-        const fewShotConfig = document.getElementById('format-few-shot-config');
-        if (presetConfig) presetConfig.style.display = 'block';
-        if (fewShotConfig) fewShotConfig.style.display = 'none';
-
-        errorHandler.createNotification('内容已清空', 'success');
-    }
-
     updateStepStatus(step, completed) {
         const stepItems = document.querySelectorAll('.step-item');
         stepItems.forEach((item, index) => {
@@ -4710,12 +4179,8 @@ const formatAlignmentManager = new FormatAlignmentManager();
 
 // 初始化格式对齐管理器
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 DOMContentLoaded事件触发，准备初始化格式对齐管理器...');
     if (formatAlignmentManager) {
-        console.log('✅ 找到formatAlignmentManager实例');
         formatAlignmentManager.initialize();
-    } else {
-        console.log('❌ 未找到formatAlignmentManager实例');
     }
 });
 
@@ -4724,32 +4189,87 @@ document.addEventListener('DOMContentLoaded', () => {
 
 class DocumentReviewManager {
     constructor() {
-        try {
-            this.currentReviewResult = null;
-            this.init();
-        } catch (error) {
-            console.error('❌ 文档审查管理器初始化失败:', error);
-        }
+        this.reviewTemplates = [];
+        this.selectedTemplate = null;
+        this.reviewMode = 'preset'; // preset 或 custom
+        this.init();
     }
 
     init() {
-        try {
-            this.bindEvents();
-            console.log('✅ 文档审查管理器初始化完成');
-        } catch (error) {
-            console.error('❌ 文档审查管理器初始化过程出错:', error);
-        }
+        this.bindEvents();
+        this.loadReviewTemplates();
+        this.initializeModeSelection();
+        console.log('✅ 文档审查管理器初始化完成');
     }
 
     async initialize() {
         // 重新初始化方法，用于场景切换时调用
         console.log('🔄 重新初始化文档审查管理器...');
+
+        // 重新加载模板
+        await this.loadReviewTemplates();
+
+        // 重新初始化模式选择
+        this.initializeModeSelection();
+
         console.log('✅ 文档审查管理器重新初始化完成');
+    }
+
+    initializeModeSelection() {
+        // 设置默认模式为预设模板审查
+        this.reviewMode = 'preset';
+        this.updateModeSelectionUI('preset');
+
+        // 确保预设配置显示，自定义配置隐藏
+        const presetConfig = document.getElementById('review-preset-config');
+        const customConfig = document.getElementById('review-custom-config');
+
+        if (presetConfig) {
+            presetConfig.style.display = 'block';
+            presetConfig.style.opacity = '1';
+            presetConfig.style.transform = 'translateY(0)';
+        }
+
+        if (customConfig) {
+            customConfig.style.display = 'none';
+        }
     }
 
     bindEvents() {
         // 保存this引用
         const self = this;
+
+        // 模式切换事件 - 单选按钮
+        document.addEventListener('change', (e) => {
+            if (e.target.name === 'review-mode') {
+                console.log('🔄 文档审查模式切换事件触发:', e.target.value);
+                self.handleModeSwitch(e.target.value);
+            }
+        });
+
+        // 模式切换事件 - 点击整个模式选项卡片
+        document.addEventListener('click', (e) => {
+            const modeOption = e.target.closest('#review-mode-selection .mode-option');
+            if (modeOption) {
+                const mode = modeOption.dataset.mode;
+                console.log('📋 文档审查模式数据:', mode);
+                console.log('📋 当前审查模式:', self.reviewMode);
+
+                const radioButton = modeOption.querySelector('input[type="radio"]');
+
+                // 检查是否需要切换模式（基于当前模式而不是单选按钮状态）
+                if (mode !== self.reviewMode) {
+                    // 更新单选按钮状态
+                    if (radioButton) {
+                        radioButton.checked = true;
+                    }
+                    console.log('🔄 通过点击卡片切换文档审查模式:', mode);
+                    self.handleModeSwitch(mode);
+                } else {
+                    console.log('ℹ️ 已经是当前审查模式，无需切换');
+                }
+            }
+        });
 
         // 开始审查按钮
         const startButton = document.getElementById('start-review-processing');
@@ -4766,6 +4286,13 @@ class DocumentReviewManager {
             }
         });
 
+        // 模板选择
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.template-card') && e.target.closest('#review-templates-container')) {
+                this.handleTemplateSelection(e.target.closest('.template-card'));
+            }
+        });
+
         // 重置按钮
         const resetButton = document.querySelector('[data-action="reset_review"]');
         if (resetButton) {
@@ -4774,29 +4301,158 @@ class DocumentReviewManager {
                 self.resetReview();
             });
         }
+    }
 
-        // 文件上传验证 - 只支持TXT格式
-        const fileInput = document.getElementById('upload-review-content-file');
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-                    if (fileExtension !== '.txt') {
-                        errorHandler.createNotification('文档审查只支持TXT格式文件', 'error');
-                        e.target.value = '';
-                        return;
-                    }
-                }
+    async loadReviewTemplates() {
+        try {
+            const response = await apiManager.request('/api/document-review/templates', {
+                method: 'GET'
             });
+
+            if (response.success) {
+                this.reviewTemplates = response.templates;
+                this.displayReviewTemplates();
+                console.log('✅ 审查模板加载成功:', this.reviewTemplates.length);
+            } else {
+                throw new Error(response.error || '加载审查模板失败');
+            }
+        } catch (error) {
+            console.error('❌ 加载审查模板失败:', error);
+            errorHandler.handleError(error, 'api');
         }
     }
 
+    displayReviewTemplates() {
+        const container = document.getElementById('review-templates-container');
+        if (!container) return;
 
+        if (this.reviewTemplates.length === 0) {
+            container.innerHTML = '<div class="no-templates">暂无可用的审查模板</div>';
+            return;
+        }
 
+        let html = '';
+        this.reviewTemplates.forEach((template, index) => {
+            const isSelected = index === 0 ? 'selected' : '';
+            const icon = this.getTemplateIcon(template.id);
 
+            html += `
+                <div class="template-card ${isSelected}" data-template-id="${template.id}">
+                    <div class="template-card-header">
+                        <div class="template-icon">${icon}</div>
+                        <h4 class="template-name">${template.name}</h4>
+                    </div>
+                    <div class="template-description">${template.description}</div>
+                </div>
+            `;
+        });
 
+        container.innerHTML = html;
 
+        // 默认选择第一个模板
+        if (this.reviewTemplates.length > 0) {
+            this.selectedTemplate = this.reviewTemplates[0];
+        }
+    }
+
+    getTemplateIcon(templateId) {
+        const icons = {
+            'keyword_review': '🔍',
+            'date_review': '📅',
+            'sensitive_info_review': '🔒',
+            'professional_review': '🎓'
+        };
+        return icons[templateId] || '📋';
+    }
+
+    handleModeSwitch(mode) {
+        console.log('🔄 文档审查模式切换:', mode);
+        this.reviewMode = mode;
+
+        const presetConfig = document.getElementById('review-preset-config');
+        const customConfig = document.getElementById('review-custom-config');
+
+        // 添加平滑的显示/隐藏动画效果
+        if (mode === 'preset') {
+            // 显示预设配置，隐藏自定义配置
+            this.showBlockWithAnimation(presetConfig);
+            this.hideBlockWithAnimation(customConfig);
+        } else if (mode === 'custom') {
+            // 显示自定义配置，隐藏预设配置
+            this.showBlockWithAnimation(customConfig);
+            this.hideBlockWithAnimation(presetConfig);
+        }
+
+        // 更新模式选择的视觉状态
+        this.updateModeSelectionUI(mode);
+    }
+
+    showBlockWithAnimation(element) {
+        // 使用UIManager的通用动画方法
+        if (window.uiManager) {
+            uiManager.showBlockWithAnimation(element);
+        } else {
+            // 降级处理
+            if (element) {
+                element.style.display = 'block';
+            }
+        }
+    }
+
+    hideBlockWithAnimation(element) {
+        // 使用UIManager的通用动画方法
+        if (window.uiManager) {
+            uiManager.hideBlockWithAnimation(element);
+        } else {
+            // 降级处理
+            if (element) {
+                element.style.display = 'none';
+            }
+        }
+    }
+
+    updateModeSelectionUI(mode) {
+        // 更新文档审查模式选择的视觉状态和单选按钮状态
+        console.log('🔄 更新文档审查模式选择UI:', mode);
+
+        const modeOptions = document.querySelectorAll('#review-mode-selection .mode-option');
+        modeOptions.forEach(option => {
+            const optionMode = option.dataset.mode;
+            const radioButton = option.querySelector('input[type="radio"]');
+
+            if (optionMode === mode) {
+                // 选中状态
+                option.classList.add('selected');
+                if (radioButton) {
+                    radioButton.checked = true;
+                    console.log('✅ 设置审查模式单选按钮为选中:', optionMode);
+                }
+            } else {
+                // 未选中状态
+                option.classList.remove('selected');
+                if (radioButton) {
+                    radioButton.checked = false;
+                    console.log('❌ 设置审查模式单选按钮为未选中:', optionMode);
+                }
+            }
+        });
+    }
+
+    handleTemplateSelection(templateCard) {
+        // 移除其他选中状态
+        document.querySelectorAll('#review-templates-container .template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+
+        // 添加选中状态
+        templateCard.classList.add('selected');
+
+        // 更新选中的模板
+        const templateId = templateCard.dataset.templateId;
+        this.selectedTemplate = this.reviewTemplates.find(t => t.id === templateId);
+
+        console.log('✅ 选择审查模板:', this.selectedTemplate?.name);
+    }
 
     handleTabSwitch(button) {
         console.log('🔄 文档审查标签页切换:', button.dataset.tab);
@@ -4851,11 +4507,21 @@ class DocumentReviewManager {
             }
 
             // 获取审查参数
-            const keywords = document.getElementById('review-keywords')?.value?.trim() || '';
-
-            if (!keywords) {
-                errorHandler.handleError(new Error('请输入要审查的关键词'), 'validation');
-                return;
+            let reviewType, customPrompt;
+            if (this.reviewMode === 'preset') {
+                if (!this.selectedTemplate) {
+                    errorHandler.handleError(new Error('请选择审查模板'), 'validation');
+                    return;
+                }
+                reviewType = this.selectedTemplate.id;
+                customPrompt = '';
+            } else {
+                reviewType = 'custom';
+                customPrompt = document.getElementById('custom-review-prompt')?.value?.trim() || '';
+                if (!customPrompt) {
+                    errorHandler.handleError(new Error('请输入自定义审查要求'), 'validation');
+                    return;
+                }
             }
 
             // 显示进度
@@ -4869,7 +4535,8 @@ class DocumentReviewManager {
                 },
                 body: JSON.stringify({
                     content: content,
-                    keywords: keywords
+                    review_type: reviewType,
+                    custom_prompt: customPrompt
                 }),
                 timeout: 120000  // 2分钟超时，因为文档审查可能需要较长时间
             });
@@ -4962,16 +4629,11 @@ class DocumentReviewManager {
         const processingArea = document.getElementById('review-processing-area');
         const resultArea = document.getElementById('review-result-area');
 
-        // 隐藏上一轮的审查结果
-        if (resultArea) {
-            resultArea.classList.add('hidden');
-            console.log('✅ 已隐藏上一轮审查结果');
-        }
-
-        // 显示进度区域
         if (processingArea) {
             processingArea.classList.remove('hidden');
-            console.log('✅ 已显示审查进度区域');
+        }
+        if (resultArea) {
+            resultArea.classList.add('hidden');
         }
 
         // 模拟进度更新
@@ -5064,16 +4726,23 @@ class DocumentReviewManager {
         // @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: reset_review
         console.log('🔄 开始重置文档审查...');
 
-        // 清空审查设置输入框
-        const keywordsInput = document.getElementById('review-keywords');
-        if (keywordsInput) {
-            keywordsInput.value = '';
-        }
+        // 重置模式选择
+        this.reviewMode = 'preset';
+        this.selectedTemplate = null;
+
+        // 重置模式选择UI
+        this.updateModeSelectionUI('preset');
 
         // 清空文本输入框
         const textInput = document.getElementById('review-content-text');
         if (textInput) {
             textInput.value = '';
+        }
+
+        // 清空自定义审查要求
+        const customInput = document.getElementById('custom-review-requirements');
+        if (customInput) {
+            customInput.value = '';
         }
 
         // 重置文件上传
@@ -5106,8 +4775,10 @@ class DocumentReviewManager {
             this.handleTabSwitch(textTab);
         }
 
-        // 清空当前结果
-        this.currentReviewResult = null;
+        // 重置模板选择
+        document.querySelectorAll('#review-templates-container .template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
 
         console.log('✅ 文档审查重置完成');
     }

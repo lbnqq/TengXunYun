@@ -219,6 +219,11 @@
                 <div class="step-line"></div>
                 <div class="step-item">
                     <div class="step-number">4</div>
+                    <span>预览对比</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">5</div>
                     <span>导出结果</span>
                 </div>
             </div>
@@ -369,16 +374,12 @@
                     <button class="btn btn-primary" id="start-format-alignment" disabled>
                         🔍 开始格式对齐
                     </button>
-                    <button class="btn btn-secondary" id="clear-format-content"
-                            aria-label="清空内容">
-                        <span>🗑️</span> 清空内容
-                    </button>
                 </div>
             </div>
 
-            <!-- 步骤4: 处理进度 (取消预览对比功能) -->
+            <!-- 步骤4: 预览对比 -->
             <div class="workflow-block" id="format-comparison-preview" style="display: none;">
-                <h3 class="workflow-title">⚡ 处理进度</h3>
+                <h3 class="workflow-title">👁️ 格式对比预览</h3>
 
                 <!-- 进度条 -->
                 <div class="progress-container" id="format-progress-container" style="display: none;">
@@ -388,20 +389,24 @@
                     <div class="progress-text" id="format-progress-text">正在处理...</div>
                 </div>
 
-                <!-- 隐藏对比预览容器 -->
+                <!-- 分栏对比显示 -->
                 <div class="comparison-container" id="format-comparison-container" style="display: none;">
-                    <!-- 预览功能已取消 -->
-                </div>
-
-                <!-- 处理完成提示 -->
-                <div class="completion-message" style="text-align: center; padding: 20px; background: #f0f9ff; border-radius: 8px; margin: 20px 0;">
-                    <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
-                    <h4 style="color: #0369a1; margin-bottom: 10px;">格式对齐完成</h4>
-                    <p style="color: #64748b;">处理完成，请在下方导出结果</p>
+                    <div class="comparison-panel">
+                        <h4>原始文档</h4>
+                        <div class="document-preview" id="original-document-preview">
+                            <!-- 原始文档内容 -->
+                        </div>
+                    </div>
+                    <div class="comparison-panel">
+                        <h4>格式化后</h4>
+                        <div class="document-preview" id="formatted-document-preview">
+                            <!-- 格式化后的文档内容 -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 步骤4: 导出结果 -->
+            <!-- 步骤5: 导出结果 -->
             <div class="workflow-block" id="format-export-results" style="display: none;">
                 <h3 class="workflow-title">📥 导出处理结果</h3>
 
@@ -451,6 +456,11 @@
                 <div class="step-line"></div>
                 <div class="step-item">
                     <div class="step-number">4</div>
+                    <span>预览结果</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-number">5</div>
                     <span>导出应用</span>
                 </div>
             </div>
@@ -530,10 +540,10 @@
                 <div class="input-group">
                     <label for="upload-reference-doc">参考文档:</label>
                     <div class="file-upload-area" id="reference-doc-upload">
-                        <input type="file" accept=".txt" id="upload-reference-doc"
-                               title="选择TXT格式参考文档" aria-label="上传TXT格式参考文档">
-                        <div class="file-upload-text">点击或拖拽上传纯文本TXT格式参考文档</div>
-                        <div class="file-upload-hint">仅支持纯文本TXT格式，最大10MB，AI将学习此文档的写作风格</div>
+                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-reference-doc"
+                               title="选择参考文档" aria-label="上传参考文档">
+                        <div class="file-upload-text">点击或拖拽上传参考文档</div>
+                        <div class="file-upload-hint">AI将学习此文档的写作风格</div>
                     </div>
                 </div>
 
@@ -600,7 +610,7 @@
                 <div class="feedback-message" id="style-feedback" role="status" aria-live="polite"></div>
             </div>
 
-            <!-- 步骤4: 处理进度 (取消预览对比功能) -->
+            <!-- 步骤4: 处理进度和结果预览 -->
             <div class="workflow-block" id="style-processing-area" style="display: none;">
                 <h3 class="workflow-title">⚡ 处理进度</h3>
 
@@ -619,21 +629,73 @@
                         <span>⏹️</span> 取消处理
                     </button>
                 </div>
+            </div>
 
-                <!-- 处理完成提示 -->
-                <div class="completion-message" id="style-completion-message" style="display: none; text-align: center; padding: 20px; background: #f0f9ff; border-radius: 8px; margin: 20px 0;">
-                    <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
-                    <h4 style="color: #0369a1; margin-bottom: 10px;">文风统一完成</h4>
-                    <p style="color: #64748b;">处理完成，请在下方选择导出格式</p>
+            <!-- 步骤4: 结果预览和对比 -->
+            <div class="workflow-block" id="style-result-area" style="display: none;">
+                <h3 class="workflow-title">📊 结果预览与对比</h3>
+
+                <div class="result-tabs">
+                    <button class="tab-button active" data-tab="comparison-view">对比视图</button>
+                    <button class="tab-button" data-tab="result-only">仅结果</button>
+                    <button class="tab-button" data-tab="analysis-view">分析报告</button>
+                </div>
+
+                <div class="tab-content" id="comparison-view-tab">
+                    <div class="comparison-container">
+                        <div class="comparison-panel">
+                            <h4>📄 原始内容</h4>
+                            <div class="content-display" id="original-content-display"></div>
+                        </div>
+                        <div class="comparison-divider">
+                            <div class="arrow-icon">➡️</div>
+                        </div>
+                        <div class="comparison-panel">
+                            <h4>✨ 风格化结果</h4>
+                            <div class="content-display" id="styled-content-display"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="result-only-tab" style="display: none;">
+                    <div class="result-container">
+                        <div id="style-result-content" class="styled-content"></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="analysis-view-tab" style="display: none;">
+                    <div class="analysis-container">
+                        <div id="style-analysis-content" class="analysis-content"></div>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="undo-changes"
+                                aria-label="撤销更改">
+                            <span>↶</span> 撤销
+                        </button>
+                        <button class="btn btn-secondary" id="redo-changes"
+                                aria-label="重做更改" disabled>
+                            <span>↷</span> 重做
+                        </button>
+                        <button class="btn btn-info" id="regenerate-style"
+                                aria-label="重新生成">
+                            <span>🔄</span> 重新生成
+                        </button>
+                        <button class="btn btn-primary" id="preview-result"
+                                aria-label="预览结果">
+                            <span>👁️</span> 预览
+                        </button>
+                        <button class="btn btn-success" id="export-result"
+                                aria-label="导出文档">
+                            <span>📥</span> 导出文档
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 隐藏原有的结果预览和对比功能 -->
-            <div class="workflow-block" id="style-result-area" style="display: none;">
-                <!-- 预览对比功能已取消 -->
-            </div>
-
-            <!-- 步骤4: 导出选项 -->
+            <!-- 步骤5: 导出选项 -->
             <div class="workflow-block" id="style-export-area" style="display: none;">
                 <h3 class="workflow-title">📥 导出选项</h3>
 
@@ -650,6 +712,11 @@
                                 <input type="radio" name="export-format" value="docx">
                                 <span class="format-icon">📘</span>
                                 <span class="format-name">DOCX</span>
+                            </label>
+                            <label class="format-option">
+                                <input type="radio" name="export-format" value="pdf">
+                                <span class="format-icon">📕</span>
+                                <span class="format-name">PDF</span>
                             </label>
                         </div>
                     </div>
@@ -816,7 +883,9 @@
                     <div class="export-format-selector">
                         <label>导出格式:</label>
                         <div class="format-buttons">
+                            <button class="btn btn-outline" data-format="txt">📄 TXT</button>
                             <button class="btn btn-outline" data-format="docx">📘 DOCX</button>
+                            <button class="btn btn-outline" data-format="pdf">📕 PDF</button>
                         </div>
                     </div>
                 </div>
@@ -835,13 +904,13 @@
         <!-- 文档审查场景 -->
         <section id="scene-review" class="scene-section hidden">
             <h2 class="scene-title">🔍 AI文档审查</h2>
-            <p class="scene-description">智能文档审查系统，自动识别关键词和日期信息</p>
+            <p class="scene-description">基于星火X1大模型的智能文档审查系统，支持关键词、日期、敏感信息和专业性评估</p>
 
             <!-- 步骤指示器 -->
             <div class="step-indicator" role="progressbar" aria-label="文档审查进度">
                 <div class="step-item active">
                     <div class="step-number">1</div>
-                    <span>设置审查</span>
+                    <span>选择模式</span>
                 </div>
                 <div class="step-line"></div>
                 <div class="step-item">
@@ -860,31 +929,56 @@
                 </div>
             </div>
 
-            <!-- 步骤1: 审查设置 -->
-            <div class="workflow-block" id="review-settings">
-                <h3 class="workflow-title">⚙️ 审查设置</h3>
+            <!-- 步骤1: 审查模式选择 -->
+            <div class="workflow-block" id="review-mode-selection">
+                <h3 class="workflow-title">📋 选择审查模式</h3>
 
-                <div class="review-info">
-                    <div class="info-item">
-                        <div class="info-icon">🔍</div>
-                        <div class="info-content">
-                            <h4>关键词审查</h4>
-                            <p>自动识别并标记文档中的指定关键词</p>
+                <div class="mode-selector">
+                    <div class="mode-option" data-mode="preset">
+                        <div class="mode-icon">🎯</div>
+                        <div class="mode-info">
+                            <h4>预设模板审查</h4>
+                            <p>使用内置的专业审查模板（关键词、日期、敏感信息、专业性等）</p>
                         </div>
+                        <input type="radio" name="review-mode" value="preset" id="review-mode-preset" checked>
+                        <label for="review-mode-preset" class="mode-radio"></label>
                     </div>
-                </div>
 
-                <div class="input-group">
-                    <label for="review-keywords">要审查的关键词（用逗号分隔）:</label>
-                    <input type="text" class="input-field" id="review-keywords"
-                           placeholder="例如：合同,协议,金额,截止日期"
-                           title="输入要审查的关键词" aria-label="输入要审查的关键词">
+                    <div class="mode-option" data-mode="custom">
+                        <div class="mode-icon">📚</div>
+                        <div class="mode-info">
+                            <h4>Few-Shot风格学习</h4>
+                            <p>根据特定需求自定义审查重点和要求</p>
+                        </div>
+                        <input type="radio" name="review-mode" value="custom" id="review-mode-custom">
+                        <label for="review-mode-custom" class="mode-radio"></label>
+                    </div>
                 </div>
             </div>
 
+            <!-- 步骤2: 预设模板配置 -->
+            <div class="workflow-block" id="review-preset-config" style="display: block;">
+                <h3 class="workflow-title">🔍 选择审查类型</h3>
 
+                <div class="preset-templates-gallery" id="review-templates-container">
+                    <div class="loading-placeholder">正在加载审查模板...</div>
+                </div>
+            </div>
 
-            <!-- 步骤2: 内容输入 -->
+            <!-- 步骤2: 自定义审查配置 -->
+            <div class="workflow-block" id="review-custom-config" style="display: none;">
+                <h3 class="workflow-title">📝 自定义审查要求</h3>
+
+                <div class="input-group">
+                    <label for="custom-review-prompt">审查提示词:</label>
+                    <textarea class="input-textarea" id="custom-review-prompt"
+                              placeholder="请输入自定义的审查要求和重点..."
+                              rows="6"
+                              title="输入自定义审查提示词" aria-label="输入自定义审查提示词"></textarea>
+                </div>
+            </div>
+
+            <!-- 步骤3: 内容输入 -->
             <div class="workflow-block" id="review-content-input">
                 <h3 class="workflow-title">📄 输入待审查内容</h3>
 
@@ -911,10 +1005,10 @@
                             <div class="input-group">
                                 <label for="upload-review-content-file">上传文档:</label>
                                 <div class="file-upload-area" id="review-content-upload">
-                                    <input type="file" accept=".txt" id="upload-review-content-file"
-                                           title="选择TXT文档文件" aria-label="上传TXT文档文件">
-                                    <div class="file-upload-text">点击或拖拽上传TXT文档文件</div>
-                                    <div class="file-upload-hint">仅支持 .txt 格式</div>
+                                    <input type="file" accept=".txt,.docx,.doc,.pdf,.rtf" id="upload-review-content-file"
+                                           title="选择文档文件" aria-label="上传文档文件">
+                                    <div class="file-upload-text">点击或拖拽上传文档文件</div>
+                                    <div class="file-upload-hint">支持 .txt, .docx, .doc, .pdf, .rtf 格式</div>
                                 </div>
                             </div>
                         </div>
@@ -922,7 +1016,7 @@
                 </div>
             </div>
 
-            <!-- 步骤3: 操作块 -->
+            <!-- 步骤4: 操作块 -->
             <div class="action-block" id="review-action-block">
                 <h3 class="workflow-title">🚀 开始审查</h3>
                 <div class="action-buttons">
@@ -939,7 +1033,7 @@
                 <div class="feedback-message" id="review-feedback" role="status" aria-live="polite"></div>
             </div>
 
-            <!-- 步骤4: 处理进度区域 -->
+            <!-- 步骤5: 处理进度区域 -->
             <div class="workflow-block hidden" id="review-processing-area">
                 <h3 class="workflow-title">⏳ 正在审查文档...</h3>
                 <div class="progress-container">
@@ -950,16 +1044,24 @@
                 </div>
             </div>
 
-            <!-- 步骤5: 结果展示区域 -->
+            <!-- 步骤6: 结果展示区域 -->
             <div class="workflow-block hidden" id="review-result-area">
                 <h3 class="workflow-title">📋 审查结果</h3>
                 <div class="result-container">
                     <div id="review-result-content" role="region" aria-label="文档审查结果"></div>
                 </div>
                 <div class="action-buttons">
+                    <button class="btn btn-success" data-action="export_review_pdf"
+                            aria-label="导出PDF报告">
+                        <span>📄</span> 导出PDF
+                    </button>
                     <button class="btn btn-success" data-action="export_review_word"
                             aria-label="导出Word报告">
-                        <span>📝</span> 导出Word报告
+                        <span>📝</span> 导出Word
+                    </button>
+                    <button class="btn btn-success" data-action="export_review_html"
+                            aria-label="导出HTML报告">
+                        <span>🌐</span> 导出HTML
                     </button>
                 </div>
             </div>
@@ -1346,10 +1448,10 @@
                 }
             });
 
-            // 默认选中DOCX格式
-            const docxButton = document.querySelector('#scene-fill .format-buttons .btn[data-format="docx"]');
-            if (docxButton) {
-                docxButton.classList.add('active');
+            // 默认选中TXT格式
+            const txtButton = document.querySelector('#scene-fill .format-buttons .btn[data-format="txt"]');
+            if (txtButton) {
+                txtButton.classList.add('active');
             }
         });
     </script>

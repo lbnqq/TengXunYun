@@ -119,7 +119,7 @@ class SparkX1KeyManager:
             },
             'api': {
                 'base_url': 'https://spark-api-open.xf-yun.com/v2/chat/completions',
-                'timeout': 120,
+                'timeout': 30,
                 'model': 'x1'
             }
         }

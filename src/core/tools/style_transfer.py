@@ -111,6 +111,23 @@ class StyleTransferEngine:
                     "Learning new knowledge is like collecting gems - every time you learn something, you get a shiny gem!"
                 ]
             },
+            "technical": {
+                "name": "技术文档",
+                "name_en": "Technical Documentation",
+                "description": "准确、详细的技术说明文档风格",
+                "description_en": "Accurate and detailed technical documentation style",
+                "prompt_template_zh": "请用技术文档的规范格式来{action}以下内容，要求：1.术语准确专业 2.步骤清晰详细 3.包含必要的注意事项 4.便于技术人员理解和操作",
+                "prompt_template_en": "Please {action} the following content in standard technical documentation format: 1.Accurate professional terminology 2.Clear and detailed steps 3.Include necessary precautions 4.Easy for technical personnel to understand and operate",
+                "parameters": {"temperature": 0.2},
+                "examples_zh": [
+                    "步骤1：打开配置文件config.yaml，修改以下参数...",
+                    "注意：在执行此操作前，请确保已备份相关数据。"
+                ],
+                "examples_en": [
+                    "Step 1: Open the configuration file config.yaml and modify the following parameters...",
+                    "Note: Please ensure relevant data is backed up before performing this operation."
+                ]
+            },
             "creative": {
                 "name": "创意文案",
                 "name_en": "Creative Writing",
@@ -227,60 +244,26 @@ class StyleTransferEngine:
             if temperature is None:
                 temperature = style_config['parameters']['temperature']
 
-            # 调用星火X1 API（增加超时与重试，并识别错误返回）
+            # 调用星火X1 API
             if self.spark_x1_client:
-                import time
-                retries = 2
-                backoff_seconds = [1, 2]
-                last_error_msg = None
+                result = self.spark_x1_client.format_text(
+                    instruction=prompt_instruction,
+                    content="",  # 内容已包含在instruction中
+                    temperature=temperature,
+                    max_tokens=3000,
+                    timeout=60
+                )
 
-                for attempt in range(retries + 1):
-                    try:
-                        result = self.spark_x1_client.format_text(
-                            instruction=prompt_instruction,
-                            content="",  # 内容已包含在instruction中
-                            temperature=temperature,
-                            max_tokens=3000,
-                            timeout=180
-                        )
-
-                        # spark_x1_client.format_text 在失败时会以字符串形式返回以"[错误]"开头的信息
-                        if isinstance(result, str) and result.strip().startswith("[错误]"):
-                            last_error_msg = result
-                            if attempt < retries:
-                                time.sleep(backoff_seconds[min(attempt, len(backoff_seconds)-1)])
-                                continue
-                            return {
-                                'success': False,
-                                'error': result.replace('[错误] ', '') or '星火接口返回错误',
-                                'style_id': style_id,
-                                'original_content': content
-                            }
-
-                        # 正常成功
-                        return {
-                            'success': True,
-                            'generated_content': result,
-                            'style_id': style_id,
-                            'style_name': style_config['name'] if language == 'zh' else style_config['name_en'],
-                            'language': language,
-                            'temperature': temperature,
-                            'original_content': content,
-                            'timestamp': datetime.now().isoformat()
-                        }
-                    except Exception as e:
-                        last_error_msg = str(e)
-                        # 读超时或网络类问题：重试
-                        if attempt < retries and ('timeout' in last_error_msg.lower() or '超时' in last_error_msg or '连接' in last_error_msg):
-                            time.sleep(backoff_seconds[min(attempt, len(backoff_seconds)-1)])
-                            continue
-                        # 最终失败
-                        return {
-                            'success': False,
-                            'error': f"星火接口调用失败: {last_error_msg}",
-                            'style_id': style_id,
-                            'original_content': content
-                        }
+                return {
+                    'success': True,
+                    'generated_content': result,
+                    'style_id': style_id,
+                    'style_name': style_config['name'] if language == 'zh' else style_config['name_en'],
+                    'language': language,
+                    'temperature': temperature,
+                    'original_content': content,
+                    'timestamp': datetime.now().isoformat()
+                }
             else:
                 raise Exception("星火X1客户端未初始化")
 
