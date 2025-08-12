@@ -1975,7 +1975,7 @@ def analyze_document():
                 'error': '文档内容不能为空'
             }), 400
 
-        # 执行文档审查
+        # 执行文档审查 - 使用默认的综合审查模式
         result = document_review_coordinator.review_document(
             document_content=document_content,
             review_type=review_type,

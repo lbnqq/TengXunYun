@@ -297,10 +297,10 @@
                 <div class="input-group">
                     <label for="upload-format-template">格式模板文档:</label>
                     <div class="file-upload-area" id="format-template-upload">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-template"
-                               title="选择格式模板文档" aria-label="上传格式模板文档">
-                        <div class="file-upload-text">点击或拖拽上传格式模板文档</div>
-                        <div class="file-upload-hint">AI将学习此文档的格式规范</div>
+                        <input type="file" accept=".txt" id="upload-format-template"
+                               title="选择TXT格式模板文档" aria-label="上传TXT格式模板文档">
+                        <div class="file-upload-text">点击或拖拽上传TXT格式模板文档</div>
+                        <div class="file-upload-hint">仅支持 .txt 格式</div>
                     </div>
                 </div>
 
@@ -330,10 +330,10 @@
                 <div class="input-group">
                     <label for="upload-format-document">选择文档:</label>
                     <div class="file-upload-area" id="format-document-upload-area">
-                        <input type="file" accept=".docx,.doc,.txt,.rtf,.pdf" id="upload-format-document"
-                               title="选择待处理文档" aria-label="上传待处理文档">
-                        <div class="file-upload-text">点击或拖拽上传待处理文档</div>
-                        <div class="file-upload-hint">支持 .docx, .doc, .txt, .rtf, .pdf 格式</div>
+                        <input type="file" accept=".txt" id="upload-format-document"
+                               title="选择TXT待处理文档" aria-label="上传TXT待处理文档">
+                        <div class="file-upload-text">点击或拖拽上传TXT待处理文档</div>
+                        <div class="file-upload-hint">仅支持 .txt 格式</div>
                     </div>
                 </div>
 
@@ -841,50 +841,26 @@
             <div class="step-indicator" role="progressbar" aria-label="文档审查进度">
                 <div class="step-item active">
                     <div class="step-number">1</div>
-                    <span>设置审查</span>
+                    <span>待输入内容</span>
                 </div>
                 <div class="step-line"></div>
                 <div class="step-item">
                     <div class="step-number">2</div>
-                    <span>输入内容</span>
+                    <span>开始审查</span>
                 </div>
                 <div class="step-line"></div>
                 <div class="step-item">
                     <div class="step-number">3</div>
-                    <span>智能审查</span>
+                    <span>正在审查文档</span>
                 </div>
                 <div class="step-line"></div>
                 <div class="step-item">
                     <div class="step-number">4</div>
-                    <span>导出报告</span>
+                    <span>审查结果</span>
                 </div>
             </div>
 
-            <!-- 步骤1: 审查设置 -->
-            <div class="workflow-block" id="review-settings">
-                <h3 class="workflow-title">⚙️ 审查设置</h3>
-
-                <div class="review-info">
-                    <div class="info-item">
-                        <div class="info-icon">🔍</div>
-                        <div class="info-content">
-                            <h4>关键词审查</h4>
-                            <p>自动识别并标记文档中的指定关键词</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label for="review-keywords">要审查的关键词（用逗号分隔）:</label>
-                    <input type="text" class="input-field" id="review-keywords"
-                           placeholder="例如：合同,协议,金额,截止日期"
-                           title="输入要审查的关键词" aria-label="输入要审查的关键词">
-                </div>
-            </div>
-
-
-
-            <!-- 步骤2: 内容输入 -->
+            <!-- 步骤1: 内容输入 -->
             <div class="workflow-block" id="review-content-input">
                 <h3 class="workflow-title">📄 输入待审查内容</h3>
 
@@ -922,7 +898,7 @@
                 </div>
             </div>
 
-            <!-- 步骤3: 操作块 -->
+            <!-- 步骤2: 操作块 -->
             <div class="action-block" id="review-action-block">
                 <h3 class="workflow-title">🚀 开始审查</h3>
                 <div class="action-buttons">
@@ -939,7 +915,7 @@
                 <div class="feedback-message" id="review-feedback" role="status" aria-live="polite"></div>
             </div>
 
-            <!-- 步骤4: 处理进度区域 -->
+            <!-- 步骤3: 处理进度区域 - 默认隐藏，只有点击开始审查后才显示 -->
             <div class="workflow-block hidden" id="review-processing-area">
                 <h3 class="workflow-title">⏳ 正在审查文档...</h3>
                 <div class="progress-container">
@@ -950,7 +926,7 @@
                 </div>
             </div>
 
-            <!-- 步骤5: 结果展示区域 -->
+            <!-- 步骤4: 结果展示区域 - 默认隐藏，只有审查完成后才显示 -->
             <div class="workflow-block hidden" id="review-result-area">
                 <h3 class="workflow-title">📋 审查结果</h3>
                 <div class="result-container">

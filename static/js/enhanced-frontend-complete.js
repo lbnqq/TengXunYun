@@ -101,7 +101,9 @@ class FileValidator {
             document: ['.docx', '.doc', '.txt', '.rtf', '.pdf'],
             image: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'],
             spreadsheet: ['.xlsx', '.xls', '.csv'],
-            presentation: ['.pptx', '.ppt']
+            presentation: ['.pptx', '.ppt'],
+            format_alignment: ['.txt'], // 格式对齐模块专用：只支持TXT
+            document_review: ['.txt']   // 文档审查模块专用：只支持TXT
         };
         this.maxFileSize = 50 * 1024 * 1024; // 50MB
         this.minFileSize = 1; // 1 byte
@@ -3918,12 +3920,61 @@ class FormatAlignmentManager {
 
     handleModeSwitch(mode) {
         console.log('🔄 格式对齐模式切换:', mode);
+        console.log('🧹 开始清理模式切换时的文件上传状态...');
 
-        // 清空之前的选择
+        // 清空之前的选择和状态
         this.selectedTemplate = null;
         this.uploadedDocument = null;
         this.uploadedTemplateDocument = null;
         this.currentTaskId = null;
+
+        // 清空文件上传输入框的值
+        const documentInput = document.getElementById('upload-format-document');
+        if (documentInput) {
+            documentInput.value = '';
+        }
+
+        const templateInput = document.getElementById('upload-format-template');
+        if (templateInput) {
+            templateInput.value = '';
+        }
+
+        // 完全重置文件上传区域的状态
+        const uploadArea = document.getElementById('format-document-upload-area');
+        if (uploadArea) {
+            uploadArea.classList.remove('has-file');
+            console.log('✅ 已移除待处理文档上传区域的has-file类');
+            const uploadText = uploadArea.querySelector('.file-upload-text');
+            if (uploadText) {
+                uploadText.textContent = '点击或拖拽上传TXT待处理文档';
+                uploadText.style.color = ''; // 重置颜色
+                console.log('✅ 已重置待处理文档上传区域的显示文本');
+            }
+            const uploadHint = uploadArea.querySelector('.file-upload-hint');
+            if (uploadHint) {
+                uploadHint.textContent = '仅支持 .txt 格式';
+                uploadHint.style.color = ''; // 重置颜色
+            }
+        }
+
+        const templateUploadArea = document.getElementById('format-template-upload');
+        if (templateUploadArea) {
+            templateUploadArea.classList.remove('has-file');
+            console.log('✅ 已移除格式模板上传区域的has-file类');
+            const templateUploadText = templateUploadArea.querySelector('.file-upload-text');
+            if (templateUploadText) {
+                templateUploadText.textContent = '点击或拖拽上传TXT格式模板文档';
+                templateUploadText.style.color = ''; // 重置颜色
+                console.log('✅ 已重置格式模板上传区域的显示文本');
+            }
+            const templateUploadHint = templateUploadArea.querySelector('.file-upload-hint');
+            if (templateUploadHint) {
+                templateUploadHint.textContent = '仅支持 .txt 格式';
+                templateUploadHint.style.color = ''; // 重置颜色
+            }
+        }
+
+        console.log('✅ 模式切换时的文件上传状态清理完成');
 
         // 更新当前模式
         this.currentMode = mode;
@@ -3946,11 +3997,101 @@ class FormatAlignmentManager {
         // 更新模式选择的视觉状态
         this.updateModeSelectionUI(mode);
 
+        // 禁用开始按钮，因为文件已被清空
+        const startBtn = document.getElementById('start-format-alignment');
+        if (startBtn) {
+            startBtn.disabled = true;
+        }
+
         // 重置步骤状态
         this.updateStepStatus(1, true);
         this.resetProcessingState();
 
-        console.log('✅ 格式对齐模式切换完成');
+        // 额外确保文件上传状态被完全清空
+        setTimeout(() => {
+            this.forceResetFileUploadState();
+        }, 100); // 延迟100ms确保所有DOM操作完成
+
+        console.log('✅ 格式对齐模式切换完成，已清空文件上传状态');
+    }
+
+    forceResetFileUploadState() {
+        console.log('🔧 强制重置文件上传状态...');
+
+        // 强制重置待处理文档上传区域
+        const uploadArea = document.getElementById('format-document-upload-area');
+        if (uploadArea) {
+            uploadArea.classList.remove('has-file');
+            const textElement = uploadArea.querySelector('.file-upload-text');
+            const hintElement = uploadArea.querySelector('.file-upload-hint');
+
+            if (textElement) {
+                textElement.textContent = '点击或拖拽上传TXT待处理文档';
+                textElement.style.color = '';
+                textElement.style.fontWeight = '';
+            }
+            if (hintElement) {
+                hintElement.textContent = '仅支持 .txt 格式';
+                hintElement.style.color = '';
+            }
+            console.log('✅ 强制重置待处理文档上传区域');
+        }
+
+        // 强制重置模板文档上传区域
+        const templateArea = document.getElementById('format-template-upload');
+        if (templateArea) {
+            templateArea.classList.remove('has-file');
+            const textElement = templateArea.querySelector('.file-upload-text');
+            const hintElement = templateArea.querySelector('.file-upload-hint');
+
+            if (textElement) {
+                textElement.textContent = '点击或拖拽上传TXT格式模板文档';
+                textElement.style.color = '';
+                textElement.style.fontWeight = '';
+            }
+            if (hintElement) {
+                hintElement.textContent = '仅支持 .txt 格式';
+                hintElement.style.color = '';
+            }
+            console.log('✅ 强制重置模板文档上传区域');
+        }
+
+        // 强制重置文件输入框 - 使用更彻底的方法
+        const documentInput = document.getElementById('upload-format-document');
+        const templateInput = document.getElementById('upload-format-template');
+
+        if (documentInput) {
+            // 彻底重置文件输入框
+            const newDocumentInput = documentInput.cloneNode(true);
+            documentInput.parentNode.replaceChild(newDocumentInput, documentInput);
+
+            // 重新绑定事件
+            const self = this;
+            newDocumentInput.addEventListener('change', (e) => {
+                self.handleDocumentUpload(e.target.files[0]);
+            });
+            console.log('✅ 彻底重置文档输入框并重新绑定事件');
+        }
+
+        if (templateInput) {
+            // 彻底重置文件输入框
+            const newTemplateInput = templateInput.cloneNode(true);
+            templateInput.parentNode.replaceChild(newTemplateInput, templateInput);
+
+            // 重新绑定事件
+            const self = this;
+            newTemplateInput.addEventListener('change', (e) => {
+                self.handleTemplateDocumentUpload(e.target.files[0]);
+            });
+            console.log('✅ 彻底重置模板输入框并重新绑定事件');
+        }
+
+        // 强制重置内部状态
+        this.uploadedDocument = null;
+        this.uploadedTemplateDocument = null;
+        console.log('✅ 强制重置内部文件状态');
+
+        console.log('✅ 强制重置文件上传状态完成');
     }
 
     showBlockWithAnimation(element) {
@@ -4028,8 +4169,10 @@ class FormatAlignmentManager {
         try {
             console.log('📄 上传格式模板文档:', file.name);
 
-            // 验证文件
-            if (!fileValidator.validateFile(file)) {
+            // 验证文件 - 格式对齐模块只支持TXT格式
+            const validation = fileValidator.validateFile(file, 'format_alignment');
+            if (!validation.isValid) {
+                errorHandler.handleError(new Error(validation.errors.join(', ')), 'file_validation');
                 return;
             }
 
@@ -4080,10 +4223,14 @@ class FormatAlignmentManager {
             const textElement = area.querySelector('.file-upload-text');
             if (textElement) {
                 if (area.id === 'format-template-upload') {
-                    textElement.textContent = '点击或拖拽上传格式模板文档';
+                    textElement.textContent = '点击或拖拽上传TXT格式模板文档';
                 } else {
-                    textElement.textContent = '点击或拖拽上传待处理文档';
+                    textElement.textContent = '点击或拖拽上传TXT待处理文档';
                 }
+            }
+            const hintElement = area.querySelector('.file-upload-hint');
+            if (hintElement) {
+                hintElement.textContent = '仅支持 .txt 格式';
             }
         });
 
@@ -4120,8 +4267,10 @@ class FormatAlignmentManager {
         try {
             console.log('📄 上传文档:', file.name);
 
-            // 验证文件
-            if (!fileValidator.validateFile(file)) {
+            // 验证文件 - 格式对齐模块只支持TXT格式
+            const validation = fileValidator.validateFile(file, 'format_alignment');
+            if (!validation.isValid) {
+                errorHandler.handleError(new Error(validation.errors.join(', ')), 'file_validation');
                 return;
             }
 
@@ -4553,7 +4702,11 @@ class FormatAlignmentManager {
             uploadArea.classList.remove('has-file');
             const textElement = uploadArea.querySelector('.file-upload-text');
             if (textElement) {
-                textElement.textContent = '点击或拖拽上传待处理文档';
+                textElement.textContent = '点击或拖拽上传TXT待处理文档';
+            }
+            const hintElement = uploadArea.querySelector('.file-upload-hint');
+            if (hintElement) {
+                hintElement.textContent = '仅支持 .txt 格式';
             }
         }
 
@@ -4596,12 +4749,12 @@ class FormatAlignmentManager {
         // 重置文件上传区域的显示文本
         const uploadText = document.querySelector('#format-document-upload-area .file-upload-text');
         if (uploadText) {
-            uploadText.textContent = '点击或拖拽上传待处理文档';
+            uploadText.textContent = '点击或拖拽上传TXT待处理文档';
         }
 
         const templateUploadText = document.querySelector('#format-template-upload .file-upload-text');
         if (templateUploadText) {
-            templateUploadText.textContent = '点击或拖拽上传格式模板文档';
+            templateUploadText.textContent = '点击或拖拽上传TXT格式模板文档';
         }
 
         // 重置内部状态
@@ -4735,6 +4888,7 @@ class DocumentReviewManager {
     init() {
         try {
             this.bindEvents();
+            this.ensureInitialState();
             console.log('✅ 文档审查管理器初始化完成');
         } catch (error) {
             console.error('❌ 文档审查管理器初始化过程出错:', error);
@@ -4744,7 +4898,26 @@ class DocumentReviewManager {
     async initialize() {
         // 重新初始化方法，用于场景切换时调用
         console.log('🔄 重新初始化文档审查管理器...');
+        this.ensureInitialState();
         console.log('✅ 文档审查管理器重新初始化完成');
+    }
+
+    ensureInitialState() {
+        // 确保初始状态下进度条和结果区域完全隐藏
+        const processingArea = document.getElementById('review-processing-area');
+        const resultArea = document.getElementById('review-result-area');
+
+        if (processingArea) {
+            processingArea.classList.add('hidden');
+            processingArea.style.display = 'none';
+        }
+
+        if (resultArea) {
+            resultArea.classList.add('hidden');
+            resultArea.style.display = 'none';
+        }
+
+        console.log('✅ 已确保初始状态：进度条和结果区域完全隐藏');
     }
 
     bindEvents() {
@@ -4850,15 +5023,7 @@ class DocumentReviewManager {
                 return;
             }
 
-            // 获取审查参数
-            const keywords = document.getElementById('review-keywords')?.value?.trim() || '';
-
-            if (!keywords) {
-                errorHandler.handleError(new Error('请输入要审查的关键词'), 'validation');
-                return;
-            }
-
-            // 显示进度
+            // 显示进度 - 只有在点击开始审查按钮时才显示
             this.showProcessingProgress();
 
             // 调用API - 文档审查需要更长的超时时间
@@ -4868,8 +5033,7 @@ class DocumentReviewManager {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    content: content,
-                    keywords: keywords
+                    content: content
                 }),
                 timeout: 120000  // 2分钟超时，因为文档审查可能需要较长时间
             });
@@ -4962,23 +5126,34 @@ class DocumentReviewManager {
         const processingArea = document.getElementById('review-processing-area');
         const resultArea = document.getElementById('review-result-area');
 
-        // 隐藏上一轮的审查结果
+        // 严格确保审查结果区域完全隐藏
         if (resultArea) {
             resultArea.classList.add('hidden');
-            console.log('✅ 已隐藏上一轮审查结果');
+            resultArea.style.display = 'none';
+            console.log('✅ 已完全隐藏审查结果区域');
         }
 
-        // 显示进度区域
+        // 只有在点击开始审查按钮的瞬间才显示进度区域
         if (processingArea) {
             processingArea.classList.remove('hidden');
-            console.log('✅ 已显示审查进度区域');
+            processingArea.style.display = 'block';
+            console.log('✅ 点击开始审查，立即显示进度区域');
+        }
+
+        // 重置进度条到初始状态
+        const progressFill = document.getElementById('review-progress-fill');
+        const progressText = document.getElementById('review-progress-text');
+
+        if (progressFill) {
+            progressFill.style.width = '0%';
+            progressFill.style.transition = 'width 0.3s ease';
+        }
+        if (progressText) {
+            progressText.textContent = '开始审查文档...';
         }
 
         // 模拟进度更新
         let progress = 0;
-        const progressFill = document.getElementById('review-progress-fill');
-        const progressText = document.getElementById('review-progress-text');
-
         const updateProgress = () => {
             progress += Math.random() * 15;
             if (progress > 90) progress = 90;
@@ -5007,8 +5182,11 @@ class DocumentReviewManager {
         const processingArea = document.getElementById('review-processing-area');
         if (processingArea) {
             processingArea.classList.add('hidden');
+            processingArea.style.display = 'none';
+            console.log('✅ 已完全隐藏进度区域');
         }
 
+        // 清除进度条定时器
         if (this.progressInterval) {
             clearInterval(this.progressInterval);
             this.progressInterval = null;
@@ -5016,13 +5194,17 @@ class DocumentReviewManager {
     }
 
     displayReviewResult(data) {
+        // 先完全隐藏进度区域
         this.hideProcessingProgress();
 
+        // 只有当审查完全完成时才显示结果区域
         const resultArea = document.getElementById('review-result-area');
         const resultContent = document.getElementById('review-result-content');
 
         if (resultArea) {
             resultArea.classList.remove('hidden');
+            resultArea.style.display = 'block';
+            console.log('✅ 审查完全完成，显示结果区域');
         }
 
         if (resultContent) {
@@ -5045,6 +5227,7 @@ class DocumentReviewManager {
 
         // 保存结果用于导出
         this.currentReviewResult = data;
+        console.log('✅ 审查结果显示完成');
     }
 
     markdownToHtml(markdown) {
@@ -5064,12 +5247,6 @@ class DocumentReviewManager {
         // @AI-Generated: 2025-01-25, Confidence: 0.99, Model: Claude Sonnet 4, Prompt: reset_review
         console.log('🔄 开始重置文档审查...');
 
-        // 清空审查设置输入框
-        const keywordsInput = document.getElementById('review-keywords');
-        if (keywordsInput) {
-            keywordsInput.value = '';
-        }
-
         // 清空文本输入框
         const textInput = document.getElementById('review-content-text');
         if (textInput) {
@@ -5088,9 +5265,17 @@ class DocumentReviewManager {
             uploadText.textContent = '点击或拖拽上传文档文件';
         }
 
-        // 隐藏结果区域
+        // 完全隐藏进度区域
+        const processingArea = document.getElementById('review-processing-area');
+        if (processingArea) {
+            processingArea.classList.add('hidden');
+            processingArea.style.display = 'none';
+        }
+
+        // 完全隐藏结果区域
         const resultArea = document.getElementById('review-result-area');
         if (resultArea) {
+            resultArea.classList.add('hidden');
             resultArea.style.display = 'none';
         }
 
@@ -5098,6 +5283,12 @@ class DocumentReviewManager {
         const resultContent = document.getElementById('review-result-content');
         if (resultContent) {
             resultContent.innerHTML = '';
+        }
+
+        // 清除进度条定时器
+        if (this.progressInterval) {
+            clearInterval(this.progressInterval);
+            this.progressInterval = null;
         }
 
         // 重置标签页到文本输入
