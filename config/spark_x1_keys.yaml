@@ -102,7 +102,7 @@ api:
   base_url: "https://spark-api-open.xf-yun.com/v2/chat/completions"
   
   # 超时设置
-  timeout: 30
+  timeout: 120
   
   # 模型配置
   model: "x1"
